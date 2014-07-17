@@ -17,6 +17,7 @@ var url = require('url');
 var eventServer = require('./eventServer.js');
 var config = require('./config.js');
 
+//Census/Application status. Turns false if census queries fail, or timeout.
 var online = true;
 
 //SOE Census Service ID
@@ -69,8 +70,6 @@ var zones = [2,4,6,8];
 /**********************
     Initialisation    *
 **********************/
-
-var ready = false;
 
 //Cache and Query Queue System - See Census Query Processor
 var characters = {}; //Used for combat events.
