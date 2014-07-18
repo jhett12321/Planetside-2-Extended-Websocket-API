@@ -105,58 +105,61 @@ function init(callback)
 	//Update Alert Data
 	setTimeout(function()
 	{
-		var timestamp = Math.round(Date.now() / 1000) - 7201;
-		GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, function(success, data)
+		if(online)
 		{
-			if(success)
+			var timestamp = Math.round(Date.now() / 1000) - 7201;
+			GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, function(success, data)
 			{
-				var finishedAlerts = [];
-				
-				for(var i = 0; i < data.world_event_list.length; i++)
+				if(success)
 				{
-					var alert = data.world_event_list[i];
-					if(alert.metagame_event_state == 137 || alert.metagame_event_state == 138)
+					var finishedAlerts = [];
+					
+					for(var i = 0; i < data.world_event_list.length; i++)
 					{
-						finishedAlerts.push(alert.instance_id);
-					}
-				}
-				
-				pool.getConnection(function(err, dbConnection)
-				{
-					dbConnection.query('DELETE FROM AlertEvents WHERE status = 1', function(err, result)
-					{
-						if (err) throw err;
-						dbConnection.release();
-					});
-				});
-				
-				for(var i = 0; i < data.world_event_list.length; i++)
-				{
-					var alert = data.world_event_list[i];
-					if((alert.metagame_event_state == 135 || alert.metagame_event_state == 136) && finishedAlerts.indexOf(alert.instance_id) < 0)
-					{
-						//Dummy Alert Message
-						var dummyMessage =
+						var alert = data.world_event_list[i];
+						if(alert.metagame_event_state == 137 || alert.metagame_event_state == 138)
 						{
-							"payload":
-							{
-								"event_name": "MetagameEvent",
-								"instance_id": alert.instance_id,
-								"metagame_event_id": alert.metagame_event_id,
-								"metagame_event_state": alert.metagame_event_state,
-								"timestamp": alert.timestamp,
-								"world_id": alert.world_id
-							},
-							"service":"event",
-							"type":"serviceMessage"
-						};
-						processMessage(JSON.stringify(dummyMessage));
+							finishedAlerts.push(alert.instance_id);
+						}
 					}
+					
+					pool.getConnection(function(err, dbConnection)
+					{
+						dbConnection.query('DELETE FROM AlertEvents WHERE status = 1', function(err, result)
+						{
+							if (err) throw err;
+							dbConnection.release();
+						});
+					});
+					
+					for(var i = 0; i < data.world_event_list.length; i++)
+					{
+						var alert = data.world_event_list[i];
+						if((alert.metagame_event_state == 135 || alert.metagame_event_state == 136) && finishedAlerts.indexOf(alert.instance_id) < 0)
+						{
+							//Dummy Alert Message
+							var dummyMessage =
+							{
+								"payload":
+								{
+									"event_name": "MetagameEvent",
+									"instance_id": alert.instance_id,
+									"metagame_event_id": alert.metagame_event_id,
+									"metagame_event_state": alert.metagame_event_state,
+									"timestamp": alert.timestamp,
+									"world_id": alert.world_id
+								},
+								"service":"event",
+								"type":"serviceMessage"
+							};
+							processMessage(JSON.stringify(dummyMessage));
+						}
+					}
+					
+					callback();
 				}
-				
-				callback();
-			}
-		});
+			});
+		}
 	}, worlds.length * 1000);
 }
 
@@ -178,20 +181,16 @@ function initRegionData(world)
 					var facilityID = regionData.map_region.facility_id;
 					var facilityTypeID = regionData.map_region.facility_type_id;
 					
-					if(facilityTypeID != 7)
-					{
-						var regionInfo = {
-							'facility_type_id': facilityTypeID,
-							'hex_data': regionData.map_region.hex,
-							'owner': regionData.FactionId,
-							'location_x': regionData.map_region.location_x,
-							'location_y': regionData.map_region.location_z,
-							'zone_id': zoneID
-						};
-						
-						regions[world][facilityID] = regionInfo;
-
-					}
+					var regionInfo = {
+						'facility_type_id': facilityTypeID,
+						'hex_data': regionData.map_region.hex,
+						'owner': regionData.FactionId,
+						'location_x': regionData.map_region.location_x,
+						'location_y': regionData.map_region.location_z,
+						'zone_id': zoneID
+					};
+					
+					regions[world][facilityID] = regionInfo;
 				}
 			}
 		}
@@ -564,7 +563,7 @@ function processMessage(messageData)
 			}
 			
 			//Process Event-Specific Data
-			if(eventType == "MetagameEvent")
+			else if(eventType == "MetagameEvent")
 			{
 				if(payload.metagame_event_state == 135 || payload.metagame_event_state == 136)
 				{
@@ -600,7 +599,6 @@ function processMessage(messageData)
 							control_nc: controlNC,
 							control_tr: controlTR,
 							majority_controller: majorityController,
-							facilities: alerts[uID].regions,
 							domination: 0,
 							zone_id: alertTypes[payload.metagame_event_id].zone,
 							facility_type_id: alertTypes[payload.metagame_event_id].facility,
@@ -640,13 +638,13 @@ function processMessage(messageData)
 				
 				else if(payload.metagame_event_state == 137 || payload.metagame_event_state == 138)
 				{
-					var uID = payload.world_id + "_" + payload.instance_id;
-					
 					var zoneID = alertTypes[payload.metagame_event_id].zone;
 					var facilityTypeID = alertTypes[payload.metagame_event_id].facility;
 					
-					calculateTerritoryControl(payload.world_id, zoneID,facilityTypeID , function(controlVS, controlNC, controlTR, majorityController)
+					calculateTerritoryControl(payload.world_id, zoneID, facilityTypeID , function(controlVS, controlNC, controlTR, majorityController)
 					{
+						var uID = payload.world_id + "_" + payload.instance_id;
+						
 						var domination = 0;
 						if(controlVS >= 94 || controlNC >= 94 || controlTR >= 94)
 						{
@@ -675,7 +673,6 @@ function processMessage(messageData)
 							control_nc: controlNC,
 							control_tr: controlTR,
 							majority_controller: majorityController,
-							facilities: alerts[uID].regions,
 							domination: domination,
 							zone_id: alertTypes[payload.metagame_event_id].zone,
 							facility_type_id: alertTypes[payload.metagame_event_id].facility,
@@ -717,7 +714,7 @@ function processMessage(messageData)
 						delete alerts[uID];
 						
 						//Add Entry to Continent Locks
-						post =
+						var lockPost =
 						{
 							zone_id: alertTypes[payload.metagame_event_id].zone,
 							world_id: payload.world_id,
@@ -727,7 +724,7 @@ function processMessage(messageData)
 						};
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT INTO ContinetLockEvents SET ?', post, function(err, result)
+							dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
 							{
 								if (err) throw err;
 								dbConnection.release();
@@ -736,7 +733,8 @@ function processMessage(messageData)
 					});
 				}
 			}
-			else
+			
+			if(eventType == "FacilityControl")
 			{
 				if(isValidZone(payload.zone_id) && payload.old_faction_id != payload.new_faction_id)
 				{
@@ -842,7 +840,7 @@ function processMessage(messageData)
 											};
 											pool.getConnection(function(err, dbConnection)
 											{
-												dbConnection.query('INSERT INTO ContinetLockEvents SET ?', post, function(err, result)
+												dbConnection.query('INSERT INTO ContinentLockEvents SET ?', post, function(err, result)
 												{
 													if (err) throw err;
 													dbConnection.release();
@@ -935,20 +933,23 @@ function calculateTerritoryControl(worldID, zoneID, facilityTypeID, callback)
 	
 	for(var region in regions[worldID])
 	{
-		if((regions[worldID][region].zone_id == zoneID && facilityTypeID == 0) || (zoneID == 0 && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
+		if(regions[worldID][region].facility_type_id != 7)
 		{
-			totalRegions++;
-			if(regions[worldID][region].owner == 1)
+			if((regions[worldID][region].zone_id == zoneID && facilityTypeID == 0) || (zoneID == 0 && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
 			{
-				facilitiesVS++;
-			}
-			else if(regions[worldID][region].owner == 2)
-			{
-				facilitiesNC++;
-			}
-			else if(regions[worldID][region].owner == 3)
-			{
-				facilitiesTR++;
+				totalRegions++;
+				if(regions[worldID][region].owner == 1)
+				{
+					facilitiesVS++;
+				}
+				else if(regions[worldID][region].owner == 2)
+				{
+					facilitiesNC++;
+				}
+				else if(regions[worldID][region].owner == 3)
+				{
+					facilitiesTR++;
+				}
 			}
 		}
 	}
@@ -993,7 +994,7 @@ function updateRegions(worldID, zoneIDs, callback)
 		{
 			for(var i=0;i<data.map_list[0].Regions.Row.length;i++)
 			{
-				var region = data.map_list[i].Regions.Row[j].RowData;
+				var region = data.map_list[0].Regions.Row[i].RowData;
 				var facilityID = region.map_region.facility_id;
 				
 				regions[worldID][facilityID].owner = region.FactionId;
