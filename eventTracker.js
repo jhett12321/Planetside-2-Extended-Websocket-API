@@ -14,7 +14,7 @@ var mysql = require('mysql');
 var http = require('http');
 var url = require('url');
 
-var eventServer = require('./eventServer.js');
+var eventServer;
 var config = require('./config.js');
 
 //Census/Application status. Turns false if census queries fail, or timeout.
@@ -87,7 +87,6 @@ var regions = {};
 //Websocket Client. Connects to SOE's Census REST API.
 var wsClient = new persistentClient();
 
-
 function init(callback)
 {
 	//Reset Failure Count
@@ -99,71 +98,70 @@ function init(callback)
 		var world = worlds[i] + 0;
 		regions[world] = {};
 		
-		setTimeout(initRegionData(world), i * 1000);
-	}
-	
-	//Update Alert Data
-	setTimeout(function()
-	{
-		if(online)
+		initRegionData(world, function(isLastWorld)
 		{
-			var timestamp = Math.round(Date.now() / 1000) - 7201;
-			GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, function(success, data)
+			if(isLastWorld)
 			{
-				if(success)
+				//Update Alert Data
+				var timestamp = Math.round(Date.now() / 1000) - 7201;
+				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, function(success, data)
 				{
-					var finishedAlerts = [];
-					
-					for(var i = 0; i < data.world_event_list.length; i++)
+					if(success)
 					{
-						var alert = data.world_event_list[i];
-						if(alert.metagame_event_state == 137 || alert.metagame_event_state == 138)
+						var finishedAlerts = [];
+						
+						for(var i = 0; i < data.world_event_list.length; i++)
 						{
-							finishedAlerts.push(alert.instance_id);
-						}
-					}
-					
-					pool.getConnection(function(err, dbConnection)
-					{
-						dbConnection.query('DELETE FROM AlertEvents WHERE status = 1', function(err, result)
-						{
-							if (err) throw err;
-							dbConnection.release();
-						});
-					});
-					
-					for(var i = 0; i < data.world_event_list.length; i++)
-					{
-						var alert = data.world_event_list[i];
-						if((alert.metagame_event_state == 135 || alert.metagame_event_state == 136) && finishedAlerts.indexOf(alert.instance_id) < 0)
-						{
-							//Dummy Alert Message
-							var dummyMessage =
+							var alert = data.world_event_list[i];
+							if(alert.metagame_event_state == 137 || alert.metagame_event_state == 138)
 							{
-								"payload":
-								{
-									"event_name": "MetagameEvent",
-									"instance_id": alert.instance_id,
-									"metagame_event_id": alert.metagame_event_id,
-									"metagame_event_state": alert.metagame_event_state,
-									"timestamp": alert.timestamp,
-									"world_id": alert.world_id
-								},
-								"service":"event",
-								"type":"serviceMessage"
-							};
-							processMessage(JSON.stringify(dummyMessage));
+								finishedAlerts.push(alert.instance_id);
+							}
 						}
+						
+						pool.getConnection(function(err, dbConnection)
+						{
+							dbConnection.query('DELETE FROM AlertEvents WHERE status = 1', function(err, result)
+							{
+								if (err) throw err;
+								dbConnection.release();
+							});
+						});
+						
+						for(var i = 0; i < data.world_event_list.length; i++)
+						{
+							var alert = data.world_event_list[i];
+							if((alert.metagame_event_state == 135 || alert.metagame_event_state == 136) && finishedAlerts.indexOf(alert.instance_id) < 0)
+							{
+								//Dummy Alert Message
+								var dummyMessage =
+								{
+									"payload":
+									{
+										"event_name": "MetagameEvent",
+										"instance_id": alert.instance_id,
+										"metagame_event_id": alert.metagame_event_id,
+										"metagame_event_state": alert.metagame_event_state,
+										"timestamp": alert.timestamp,
+										"world_id": alert.world_id
+									},
+									"service":"event",
+									"type":"serviceMessage"
+								};
+								processMessage(JSON.stringify(dummyMessage));
+							}
+						}
+						
+						eventServer = require('./eventServer.js');
+						callback();
 					}
-					
-					callback();
-				}
-			});
-		}
-	}, worlds.length * 1000);
+				});
+			}
+		});
+	}
 }
 
-function initRegionData(world)
+function initRegionData(world, callback)
 {
 	//Region Data
 	GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + world + "&zone_ids=" + zones.join(",") + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id'location_x'location_z(map_hex^on:map_region_id^to:map_region_id^list:1^show:x'y^inject_at:hex)", function(success, data)
@@ -191,6 +189,15 @@ function initRegionData(world)
 					
 					regions[world][facilityID] = regionInfo;
 				}
+			}
+			
+			if(world == worlds[worlds.length - 1])
+			{
+				callback(true);
+			}
+			else
+			{
+				callback(false);
 			}
 		}
 	});
@@ -348,9 +355,7 @@ function persistentClient()
 		client.on('open', function()
 		{
 			console.log((new Date()) + ' WebSocket client connected!');
-			//Uncomment when zones/alerts aren't borked.
 			var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy"]}';
-			//var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","PlayerLogin","PlayerLogout","VehicleDestroy"]}';
 			client.send(messageToSend);
 		});
 		
@@ -529,7 +534,7 @@ function processMessage(messageData)
 					
 					regions[worldID][facilityID].owner = payload.new_faction_id;
 					
-					calculateTerritoryControl(worldID, payload.zone_id, 0, function(controlVS, controlNC, controlTR, majorityController)
+					calculateTerritoryControl(getSelectedRegions(worldID, payload.zone_id, 0), function(controlVS, controlNC, controlTR, majorityController)
 					{
 						var post =
 						{
@@ -557,6 +562,88 @@ function processMessage(messageData)
 								dbConnection.release();
 							});
 						});
+						
+						var messageData =
+						{
+							facility_id: payload.facility_id,
+							duration_held: payload.duration_held,
+							new_faction_id: payload.new_faction_id,
+							old_faction_id: payload.old_faction_id,
+							timestamp: payload.timestamp,
+							zone_id: payload.zone_id,
+							location_x: regions[worldID][facilityID].location_x,
+							location_y: regions[worldID][facilityID].location_y,
+							hex_data: regions[worldID][facilityID].hex_data,
+							control_vs: controlVS,
+							control_nc: controlNC,
+							control_tr: controlTR,
+							majority_controller: majorityController,
+							world_id: payload.world_id
+						}
+						
+						var filterData = 
+						{
+							facilities: [payload.facility_id],
+							factions: [payload.new_faction_id, payload.old_faction_id],
+							zones: [payload.zone_id],
+							worlds: [payload.world_id]
+						}
+						
+						var eventData =
+						{
+							eventType: "FacilityControl",
+							messageData: messageData,
+							filterData: filterData
+						};
+					
+						eventServer.broadcastEvent(eventData);
+						
+						//Check if continent is locked.
+						if(controlVS == 100 || controlNC == 100 || controlTR == 100)
+						{
+							var lockPost =
+							{
+								zone_id: payload.zone_id,
+								world_id: payload.world_id,
+								timestamp: payload.timestamp,
+								locked_by: majorityController,
+							};
+							
+							var lockMessageData =
+							{
+								zone_id: payload.zone_id,
+								world_id: payload.world_id,
+								timestamp: payload.timestamp,
+								locked_by: majorityController,
+							}
+							
+							var lockFilterData = 
+							{
+								zones: [payload.zone_id],
+								worlds: [payload.world_id],
+								factions: [majorityController],
+							}
+							
+							var lockEventData =
+							{
+								eventType: "ContinentLock",
+								messageData: lockMessageData,
+								filterData: lockFilterData
+							};
+						
+							eventServer.broadcastEvent(lockEventData);
+							
+							pool.getConnection(function(err, dbConnection)
+							{
+								dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+								{
+									if (err) throw err;
+									dbConnection.release();
+								});
+							});
+							
+							updateRegions(payload.worldID);
+						}
 					});
 				}
 			}
@@ -570,6 +657,12 @@ function processMessage(messageData)
 					{
 						alerts[uID].start_time = payload.timestamp;
 						
+						var worldID = payload.world_id;
+						var zoneID = alertTypes[payload.metagame_event_id].zone;
+						var facilityID = alertTypes[payload.metagame_event_id].facility;
+						
+						var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
+						
 						var post =
 						{
 							alert_id: payload.instance_id,
@@ -582,9 +675,9 @@ function processMessage(messageData)
 							control_tr: controlTR,
 							majority_controller: majorityController,
 							domination: 0,
-							zone_id: alertTypes[payload.metagame_event_id].zone,
-							facility_type_id: alertTypes[payload.metagame_event_id].facility,
-							world_id: payload.world_id
+							zone_id: zoneID,
+							facility_type_id: facilityID,
+							world_id: worldID
 						};
 						
 						var messageData =
@@ -597,6 +690,7 @@ function processMessage(messageData)
 							control_vs: controlVS,
 							control_nc: controlNC,
 							control_tr: controlTR,
+							facilities: selectedRegions,
 							majority_controller: majorityController,
 							domination: 0,
 							zone_id: alertTypes[payload.metagame_event_id].zone,
@@ -631,7 +725,10 @@ function processMessage(messageData)
 							filterData: filterData
 						};
 						
-						eventServer.broadcastEvent(eventData);
+						if(eventServer != undefined)
+						{
+							eventServer.broadcastEvent(eventData);
+						}
 					});
 				}
 				
@@ -640,7 +737,9 @@ function processMessage(messageData)
 					var zoneID = alertTypes[payload.metagame_event_id].zone;
 					var facilityTypeID = alertTypes[payload.metagame_event_id].facility;
 					
-					calculateTerritoryControl(payload.world_id, zoneID, facilityTypeID , function(controlVS, controlNC, controlTR, majorityController)
+					var selectedRegions = getSelectedRegions(payload.world_id, zoneID, facilityTypeID);
+					
+					calculateTerritoryControl(selectedRegions, function(controlVS, controlNC, controlTR, majorityController)
 					{
 						var uID = payload.world_id + "_" + payload.instance_id;
 						
@@ -671,6 +770,7 @@ function processMessage(messageData)
 							control_vs: controlVS,
 							control_nc: controlNC,
 							control_tr: controlTR,
+							facilities: selectedRegions,
 							majority_controller: majorityController,
 							domination: domination,
 							zone_id: alertTypes[payload.metagame_event_id].zone,
@@ -711,27 +811,6 @@ function processMessage(messageData)
 						
 						var uID = payload.world_id + "_" + alertID;
 						delete alerts[uID];
-						
-						//Add Entry to Continent Locks
-						if(majorityController != 0)
-						{
-							var lockPost =
-							{
-								zone_id: alertTypes[payload.metagame_event_id].zone,
-								world_id: payload.world_id,
-								timestamp: payload.timestamp,
-								locked_by: majorityController,
-								lock_type: 1
-							};
-							pool.getConnection(function(err, dbConnection)
-							{
-								dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
-								{
-									if (err) throw err;
-									dbConnection.release();
-								});
-							});
-						}
 					});
 				}
 			}
@@ -758,7 +837,9 @@ function processMessage(messageData)
 						var zoneID = alertTypes[alerts[uID].alert_type_id].zone;
 						var facilityTypeID = alertTypes[alerts[uID].alert_type_id].facility;
 						
-						calculateTerritoryControl(payload.world_id, zoneID, facilityTypeID, function(controlVS, controlNC, controlTR, majorityController)
+						var selectedRegions = getSelectedRegions(payload.world_id, zoneID, facilityTypeID);
+						
+						calculateTerritoryControl(selectedRegions, function(controlVS, controlNC, controlTR, majorityController)
 						{
 							var post =
 							{
@@ -781,6 +862,7 @@ function processMessage(messageData)
 								control_vs: controlVS,
 								control_nc: controlNC,
 								control_tr: controlTR,
+								facilities: selectedRegions,
 								domination: 0,
 								zone_id: alertTypes[alertTypeID].zone,
 								facility_type_id: alertTypes[alertTypeID].facility,
@@ -818,42 +900,6 @@ function processMessage(messageData)
 							eventServer.broadcastEvent(eventData);
 						});
 					}
-					
-					calculateTerritoryControl(payload.world_id, payload.zone_id, 0, function(controlVS, controlNC, controlTR, majorityController)
-					{
-						if(controlVS >= 90 || controlNC >= 90 || controlTR >= 90)
-						{
-							var facilityID = payload.facility_id;
-							updateRegions(payload.world_id, payload.zone_id, function(success)
-							{
-								if(success)
-								{
-									calculateTerritoryControl(payload.world_id, payload.zone_id, 0, function(controlVS, controlNC, controlTR, majorityController)
-									{
-										if(controlVS == 100 || controlNC == 100 || controlTR == 100)
-										{
-											post =
-											{
-												zone_id: payload.zone_id,
-												world_id: payload.world_id,
-												timestamp: payload.timestamp,
-												locked_by: majorityController,
-												lock_type: 2
-											};
-											pool.getConnection(function(err, dbConnection)
-											{
-												dbConnection.query('INSERT INTO ContinentLockEvents SET ?', post, function(err, result)
-												{
-													if (err) throw err;
-													dbConnection.release();
-												});
-											});
-										}
-									});
-								}
-							});
-						}
-					});
 				}
 			}
 		}
@@ -926,33 +972,28 @@ function retrieveCharacterInfo(charList, callback)
 	queriesToProcess.push(query);
 }
 
-function calculateTerritoryControl(worldID, zoneID, facilityTypeID, callback)
+//Calculates territory control for the given regions.
+function calculateTerritoryControl(selectedRegions, callback)
 {
 	var totalRegions = 0;
 	var facilitiesVS = 0;
 	var facilitiesNC = 0;
 	var facilitiesTR = 0;
 	
-	for(var region in regions[worldID])
+	for(var region in selectedRegions)
 	{
-		if(regions[worldID][region].facility_type_id != 7)
+		totalRegions++;
+		if(selectedRegions[region].owner == 1)
 		{
-			if((regions[worldID][region].zone_id == zoneID && facilityTypeID == 0) || (zoneID == 0 && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
-			{
-				totalRegions++;
-				if(regions[worldID][region].owner == 1)
-				{
-					facilitiesVS++;
-				}
-				else if(regions[worldID][region].owner == 2)
-				{
-					facilitiesNC++;
-				}
-				else if(regions[worldID][region].owner == 3)
-				{
-					facilitiesTR++;
-				}
-			}
+			facilitiesVS++;
+		}
+		else if(selectedRegions[region].owner == 2)
+		{
+			facilitiesNC++;
+		}
+		else if(selectedRegions[region].owner == 3)
+		{
+			facilitiesTR++;
 		}
 	}
 	
@@ -986,10 +1027,55 @@ function calculateTerritoryControl(worldID, zoneID, facilityTypeID, callback)
 	callback(controlVS, controlNC, controlTR, majorityController);
 }
 
-//Updates all regions on a given continent. Required since Census doesn't send events for continent locks.
-function updateRegions(worldID, zoneIDs, callback)
+//Gets Regions for a selected alert.
+var getActiveAlerts = function()
 {
-	var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + worldID + "&zone_ids=" + zoneIDs + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^show:facility_id'facility_type_id^inject_at:map_region";
+	var activeAlerts =
+	{
+		'alerts': {}
+	};
+	
+	for(var alert in alerts)
+	{
+		if(alert in alerts)
+		{
+			activeAlerts['alerts'][alert] = alerts[alert];
+			var worldID = alerts[alert].world_id;
+			var zoneID = alerts[alert].zone_id;
+			var facilityTypeID = alerts[alert].facility_type_id;
+			var alertRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
+			
+			activeAlerts['alerts'][alert]['regions'] = alertRegions;
+		}
+	}
+	
+	return activeAlerts;
+};
+exports.getActiveAlerts = getActiveAlerts;
+
+//Returns a list of regions based on their world, zone and facility type. Use 0 for facility id if you want to select all non-warpgate regions.
+function getSelectedRegions(worldID, zoneID, facilityTypeID)
+{
+	var selectedRegions = {};
+	
+	for(var region in regions[worldID])
+	{
+		if(regions[worldID][region].facility_type_id != 7)
+		{
+			if((regions[worldID][region].zone_id == zoneID && facilityTypeID == 0) || (zoneID == 0 && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
+			{
+				selectedRegions[region] = regions[worldID][region];
+			}
+		}
+	}
+	
+	return selectedRegions;
+}
+
+//Updates all regions for a given world. Required since Census doesn't send events for continent locks.
+function updateRegions(worldID)
+{
+	var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + worldID + "&zone_ids=" + zones.join() + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^show:facility_id'facility_type_id^inject_at:map_region";
 	GetCensusData(url, function(success, data)
 	{
 		if(success)
@@ -1002,7 +1088,6 @@ function updateRegions(worldID, zoneIDs, callback)
 				regions[worldID][facilityID].owner = region.FactionId;
 			}
 		}
-		callback(success);
 	});
 }
 
@@ -1022,8 +1107,9 @@ function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
 		
 		var zoneID = alertTypes[alertTypeID].zone;
 		var facilityTypeID = alertTypes[alertTypeID].facility;
+		var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
 		
-		calculateTerritoryControl(worldID, zoneID, facilityTypeID, function(controlVS, controlNC, controlTR, majorityController)
+		calculateTerritoryControl(selectedRegions, function(controlVS, controlNC, controlTR, majorityController)
 		{
 			callback(uID, controlVS, controlNC, controlTR, majorityController);
 		});

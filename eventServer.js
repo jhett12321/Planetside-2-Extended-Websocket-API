@@ -59,7 +59,7 @@ var wsServer = new WebSocketServer(
 **************/
 	
 wsServer.on('request', function(request)
-{	
+{
 	var apiKey = request.resourceURL.query.apikey;
 	
 	verifyAPIKey(apiKey, function(isValid, errorMsg) //Verify this client's API Key.
@@ -101,7 +101,7 @@ wsServer.on('request', function(request)
 							}
 							else
 							{
-								for(var property in decodedMessage) //TODO Get Key of Data.
+								for(var property in decodedMessage)
 								{
 									if(property in subscriptionData)
 									{
@@ -118,7 +118,7 @@ wsServer.on('request', function(request)
 							}
 							else
 							{
-								for(var property in decodedMessage) //TODO Get Key of Data.
+								for(var property in decodedMessage)
 								{
 									if(property in subscriptionData)
 									{
@@ -139,7 +139,7 @@ wsServer.on('request', function(request)
 						
 						else if(eventType == "Alert" && decodedMessage.action == "activeAlerts")
 						{
-							clientConnection.sendUTF(JSON.stringify(eventTracker.alerts));
+							clientConnection.sendUTF(JSON.stringify(eventTracker.getActiveAlerts()));
 						}
 					}
 					
@@ -147,30 +147,33 @@ wsServer.on('request', function(request)
 					{
 						clientConnection.subscriptions = getBlankSubscription();
 					}
+					
+					if(decodedMessage.action == "subscribe" || decodedMessage.action == "unsubscribe" || decodedMessage.action == "unsubscribeAll")
+					{
+						var returnObject =
+						{
+							'subscriptions': {}
+						};
+						
+						for(var subscription in clientConnection.subscriptions)
+						{
+							for(var property in clientConnection.subscriptions[subscription])
+							{
+								if((clientConnection.subscriptions[subscription][property].length > 0 && property != "all") || (property == "all" && clientConnection.subscriptions[subscription][property] == 'true'))
+								{
+									returnObject['subscriptions'][subscription] = clientConnection.subscriptions[subscription];
+									break;
+								}
+							}
+						}
+						
+						clientConnection.sendUTF(JSON.stringify(returnObject));
+					}
 				}
 				catch(exception)
 				{
 					clientConnection.sendUTF('{"error": "BADJSON", "message": "You have supplied an invalid JSON string. Please check your syntax."}');
 				}
-				
-				var returnObject =
-				{
-					'subscriptions': {}
-				};
-				
-				for(var subscription in clientConnection.subscriptions)
-				{
-					for(var property in clientConnection.subscriptions[subscription])
-					{
-						if((clientConnection.subscriptions[subscription][property].length > 0 && property != "all") || (property == "all" && clientConnection.subscriptions[subscription][property] == 'true'))
-						{
-							returnObject['subscriptions'][subscription] = clientConnection.subscriptions[subscription];
-							break;
-						}
-					}
-				}
-				
-				clientConnection.sendUTF(JSON.stringify(returnObject));
 			});
 			
 			clientConnection.on('close', function(reasonCode, description)
@@ -304,8 +307,22 @@ function getBlankSubscription()
 			zones: [],
 			facilityTypes: [],
 			worlds: []
+		},
+		'FacilityControl':
+		{
+			all: "false",
+			facilities: [],
+			factions: [],
+			zones: [],
+			worlds: []
+		},
+		'ContinentLock':
+		{
+			all: "false",
+			factions: [],
+			zones: [],
+			worlds: [],
 		}
 	};
-	
 	return blankSubscription;
 }
