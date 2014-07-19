@@ -55,7 +55,7 @@ var alertTypes = {
 };
 
 //World IDs
-var worlds = [1,9,10,11,13,17,25];
+var worlds = [1,9,10,11,13,17,19,25];
 
 //Zone IDs
 var zones = [2,4,6,8];
@@ -179,10 +179,9 @@ function initRegionData(world)
 				{
 					var regionData = zoneData.Regions.Row[k].RowData;
 					var facilityID = regionData.map_region.facility_id;
-					var facilityTypeID = regionData.map_region.facility_type_id;
 					
 					var regionInfo = {
-						'facility_type_id': facilityTypeID,
+						'facility_type_id': regionData.map_region.facility_type_id,
 						'hex_data': regionData.map_region.hex,
 						'owner': regionData.FactionId,
 						'location_x': regionData.map_region.location_x,
@@ -714,22 +713,25 @@ function processMessage(messageData)
 						delete alerts[uID];
 						
 						//Add Entry to Continent Locks
-						var lockPost =
+						if(majorityController != 0)
 						{
-							zone_id: alertTypes[payload.metagame_event_id].zone,
-							world_id: payload.world_id,
-							timestamp: payload.timestamp,
-							locked_by: majorityController,
-							lock_type: 1
-						};
-						pool.getConnection(function(err, dbConnection)
-						{
-							dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+							var lockPost =
 							{
-								if (err) throw err;
-								dbConnection.release();
+								zone_id: alertTypes[payload.metagame_event_id].zone,
+								world_id: payload.world_id,
+								timestamp: payload.timestamp,
+								locked_by: majorityController,
+								lock_type: 1
+							};
+							pool.getConnection(function(err, dbConnection)
+							{
+								dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+								{
+									if (err) throw err;
+									dbConnection.release();
+								});
 							});
-						});
+						}
 					});
 				}
 			}
@@ -817,7 +819,7 @@ function processMessage(messageData)
 						});
 					}
 					
-					calculateTerritoryControl(payload.world_id, zoneID,facilityTypeID , function(controlVS, controlNC, controlTR, majorityController)
+					calculateTerritoryControl(payload.world_id, payload.zone_id, 0, function(controlVS, controlNC, controlTR, majorityController)
 					{
 						if(controlVS >= 90 || controlNC >= 90 || controlTR >= 90)
 						{
@@ -826,7 +828,7 @@ function processMessage(messageData)
 							{
 								if(success)
 								{
-									calculateTerritoryControl(payload.world_id, zoneID,facilityTypeID , function(controlVS, controlNC, controlTR, majorityController)
+									calculateTerritoryControl(payload.world_id, payload.zone_id, 0, function(controlVS, controlNC, controlTR, majorityController)
 									{
 										if(controlVS == 100 || controlNC == 100 || controlTR == 100)
 										{
