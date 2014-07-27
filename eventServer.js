@@ -43,7 +43,7 @@ var clientConnections = {}; //Stores all connections to this server, and their s
 var alerts = {}; //Stores all active alerts
 var connectionIDCounter = 0; //Connection Unique ID's.
 
-server.listen(8080, function()
+server.listen(config.serverPort, function()
 {
 	console.log((new Date()) + ' Websocket Server is listening on port 8080');
 });
@@ -80,7 +80,7 @@ wsServer.on('request', function(request)
 			
 			clientConnections[clientConnection.id] = clientConnection;
 		
-			console.log((new Date()) + ' Connection ID ' + clientConnection.id + ' accepted.');
+			console.log((new Date()) + ' Connection ID ' + clientConnection.id + ' accepted. API Key: ' + apiKey);
 			
 			//Events
 			clientConnection.on('message', function(message)
@@ -232,6 +232,8 @@ exports.broadcastEvent = function(rawData)
 			}
 			else
 			{
+				var sendMessage;
+				
 				for(var property in subscriptionProperties)
 				{
 					if(property != "all")
@@ -242,11 +244,25 @@ exports.broadcastEvent = function(rawData)
 						{
 							if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
 							{
-								clientConnection.send(JSON.stringify(rawData.messageData));
+								sendMessage = true;
 								break;
 							}
+							else if(subscriptionProperties[property].length > 0)
+							{
+								sendMessage = false;
+							}
+						}
+						
+						if(sendMessage == false)
+						{
+							break;
 						}
 					}
+				}
+				
+				if(sendMessage == true)
+				{
+					clientConnection.send(JSON.stringify(rawData.messageData));
 				}
 			}
 		}
@@ -312,6 +328,7 @@ function getBlankSubscription()
 		{
 			all: "false",
 			facilities: [],
+			facility_types: [],
 			factions: [],
 			zones: [],
 			worlds: []

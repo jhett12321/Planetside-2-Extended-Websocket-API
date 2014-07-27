@@ -3,10 +3,9 @@
 //TODO:
 		//Census Events:
 			//Fully Implemented: 						Death
-			//Mostly Implemented [No hist. API]: 		VehicleDestroy, MetagameEvent
-			//Client Implemented [No Relay/hist. API]:  PlayerLogin, PlayerLogout
-			//Not Yet Implemented: 						FacilityControl***, BattleRankUp, ItemAdded, SkillAdded
-			//***FacilityControl events are currently use for MetagameEvent updates.
+			//Mostly Implemented [No hist. API]: 		VehicleDestroy, MetagameEvent, FacilityControl
+			//Client Implemented [No Relay/hist. API]:  PlayerLogin, PlayerLogout, BattleRankUp
+			//Not Yet Implemented: 						ItemAdded, SkillAdded
 
 //Includes
 var WebSocket = require('ws');
@@ -35,7 +34,13 @@ var pool = mysql.createPool(
 	bigNumberStrings: true
 });
 
-//Alert Identifiers.
+//Planetside 2 Game Data
+	//Loadout ID's (For Faction Mapping)
+var loadoutsVS = [15,17,18,19,20,21];
+var loadoutsNC = [1,3,4,5,6,7];
+var loadoutsTR = [8,10,11,12,13,14];
+
+	//Alert ID's.
 var alertTypes = {
 	1:{zone:2, facility:0}, //Indar Territory
 	2:{zone:8, facility:0}, //Esamir Territory
@@ -54,10 +59,10 @@ var alertTypes = {
 	18:{zone:4, facility:2} //Hossin Amp Station
 };
 
-//World IDs
+	//World IDs
 var worlds = [1,9,10,11,13,17,19,25];
 
-//Zone IDs
+	//Zone IDs
 var zones = [2,4,6,8];
 
 //-------------------------------------------------------------------
@@ -81,6 +86,9 @@ var maxFailures = 10;
 var alerts = {};
 exports.alerts = alerts;	 //Used for tracking alert facility control.
 
+//Continent Locks
+var lastLockID = ""; //A hack to prevent multiple lock messages/events.
+
 //Regions
 var regions = {};
 
@@ -101,7 +109,7 @@ function init(callback)
 		initRegionData(world, function(isLastWorld)
 		{
 			if(isLastWorld)
-			{
+			{	
 				//Update Alert Data
 				var timestamp = Math.round(Date.now() / 1000) - 7201;
 				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, function(success, data)
@@ -179,6 +187,7 @@ function initRegionData(world, callback)
 					var facilityID = regionData.map_region.facility_id;
 					
 					var regionInfo = {
+						'facility_id': facilityID,
 						'facility_type_id': regionData.map_region.facility_type_id,
 						'hex_data': regionData.map_region.hex,
 						'owner': regionData.FactionId,
@@ -236,7 +245,7 @@ function censusProcessor()
 			}
 		}
 		
-		var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/character?character_id=" + charList.join(",") + "&c:show=character_id,faction_id&c:join=outfit_member^on:character_id^to:character_id^show:outfit_id";
+		var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/character?character_id=" + charList.join(",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^on:character_id^to:character_id^show:outfit_id";
 		GetCensusData(url, function(success, data)
 		{
 			if(success)
@@ -245,8 +254,9 @@ function censusProcessor()
 				{
 					characters[charList[j]] =
 					{
-						outfitID: 0,
-						factionID: 0
+						outfit_id: 0,
+						faction_id: 0,
+						character_name: ""
 					};
 				}
 				
@@ -259,14 +269,17 @@ function censusProcessor()
 						if(character.character_id == charList[j])
 						{
 							var characterFactionID = character.faction_id;
+							var characterName = character.name.first;
 							var characterOutfitID = 0;
+							
 							if(character.character_id_join_outfit_member != null)
 							{
 								characterOutfitID = character.character_id_join_outfit_member.outfit_id;
 							}
 						
-							characters[charList[j]].outfitID = characterOutfitID;
-							characters[charList[j]].factionID = characterFactionID;
+							characters[charList[j]].outfit_id = characterOutfitID;
+							characters[charList[j]].faction_id = characterFactionID;
+							characters[charList[j]].character_name = characterName;
 						}
 					}
 				}
@@ -355,7 +368,7 @@ function persistentClient()
 		client.on('open', function()
 		{
 			console.log((new Date()) + ' WebSocket client connected!');
-			var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy"]}';
+			var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy", "BattleRankUp"]}';
 			client.send(messageToSend);
 		});
 		
@@ -398,81 +411,109 @@ function processMessage(messageData)
 				var attackerCharacterID = payload.attacker_character_id;
 				var characterID = payload.character_id;
 				
-				if(isValidCharacter(characterID) || isValidCharacter(attackerCharacterID))
+				if(payload.attacker_loadout_id != 0)
 				{
-					if(!isValidCharacter(characterID))	
+					if(isValidCharacter(characterID) || isValidCharacter(attackerCharacterID))
 					{
-						characterID = attackerCharacterID;
-					}
-					if(!isValidCharacter(attackerCharacterID))
-					{
-						attackerCharacterID = characterID;
-					}
-					
-					var eventCharacters = [characterID, attackerCharacterID];
-				
-					retrieveCharacterInfo(eventCharacters, function(success)
-					{
-						if(success)
+						if(!isValidCharacter(characterID))	
 						{
-							var characterOutfitID = characters[characterID].outfitID;
-							var characterFactionID = characters[characterID].factionID;
+							characterID = attackerCharacterID;
+						}
+						if(!isValidCharacter(attackerCharacterID))
+						{
+							attackerCharacterID = characterID;
+						}
 						
-							var attackerOutfitID = characters[attackerCharacterID].outfitID;
-							var attackerFactionID = characters[attackerCharacterID].factionID;
-							
-							var type = "";
-							var post = {};
-							var filterData = {};
-							
-							if(eventType == "Death")
+						var eventCharacters = [characterID, attackerCharacterID];
+					
+						retrieveCharacterInfo(eventCharacters, function(success)
+						{
+							if(success)
 							{
-								type = "Combat";
-								post =
-								{
-									attacker_character_id: attackerCharacterID,
-									attacker_outfit_id: attackerOutfitID,
-									attacker_faction_id: attackerFactionID,
-									attacker_loadout_id: payload.attacker_loadout_id,
-									victim_character_id: characterID,
-									victim_outfit_id: characterOutfitID,
-									victim_faction_id: characterFactionID,
-									victim_loadout_id: payload.character_loadout_id,
-									timestamp: payload.timestamp,
-									weapon_id: payload.attacker_weapon_id,
-									vehicle_id: payload.attacker_vehicle_id,
-									headshot: payload.is_headshot,
-									zone_id: payload.zone_id,
-									world_id: payload.world_id
-								};
+								var characterOutfitID = characters[characterID].outfit_id;
+								var characterFactionID = characters[characterID].faction_id;
+								var characterName = characters[characterID].character_name;
+							
+								var attackerOutfitID = characters[attackerCharacterID].outfit_id;
+								var attackerFactionID = calculateFactionFromLoadout(payload.attacker_loadout_id);
 								
-								filterData = 
-								{
-									characters: [attackerCharacterID, characterID],
-									outfits: [attackerOutfitID,characterOutfitID],
-									factions: [attackerFactionID,characterFactionID],
-									loadouts: [payload.attacker_loadout_id,payload.character_loadout_id],
-									vehicles: [payload.attacker_vehicle_id],
-									weapons: [payload.attacker_weapon_id],
-									headshots: [payload.is_headshot],
-									zones: [payload.zone_id],
-									worlds: [payload.world_id]
-								}
+								var attackerCharacterName = characters[attackerCharacterID].characterName;
 								
-								pool.getConnection(function(err, dbConnection)
+								var type = "";
+								var post = {};
+								var messageData = {};
+								var filterData = {};
+								
+								if(eventType == "Death")
 								{
-									dbConnection.query('INSERT INTO CombatEvents SET ?', post, function(err, result)
+									characterFactionID = calculateFactionFromLoadout(payload.character_loadout_id);
+									
+									type = "Combat";
+									post =
 									{
-										if (err) throw err;
-										dbConnection.release();
+										attacker_character_id: attackerCharacterID,
+										attacker_outfit_id: attackerOutfitID,
+										attacker_faction_id: attackerFactionID,
+										attacker_loadout_id: payload.attacker_loadout_id,
+										victim_character_id: characterID,
+										victim_outfit_id: characterOutfitID,
+										victim_faction_id: characterFactionID,
+										victim_loadout_id: payload.character_loadout_id,
+										timestamp: payload.timestamp,
+										weapon_id: payload.attacker_weapon_id,
+										vehicle_id: payload.attacker_vehicle_id,
+										headshot: payload.is_headshot,
+										zone_id: payload.zone_id,
+										world_id: payload.world_id
+									};
+									
+									messageData =
+									{
+										attacker_character_id: attackerCharacterID,
+										attacker_character_name: attackerCharacterName,
+										attacker_outfit_id: attackerOutfitID,
+										attacker_faction_id: attackerFactionID,
+										attacker_loadout_id: payload.attacker_loadout_id,
+										victim_character_id: characterID,
+										victim_character_name: characterName,
+										victim_outfit_id: characterOutfitID,
+										victim_faction_id: characterFactionID,
+										victim_loadout_id: payload.character_loadout_id,
+										timestamp: payload.timestamp,
+										weapon_id: payload.attacker_weapon_id,
+										vehicle_id: payload.attacker_vehicle_id,
+										headshot: payload.is_headshot,
+										zone_id: payload.zone_id,
+										world_id: payload.world_id
+									};
+									
+									filterData = 
+									{
+										characters: [attackerCharacterID, characterID],
+										outfits: [attackerOutfitID,characterOutfitID],
+										factions: [attackerFactionID,characterFactionID],
+										loadouts: [payload.attacker_loadout_id,payload.character_loadout_id],
+										vehicles: [payload.attacker_vehicle_id],
+										weapons: [payload.attacker_weapon_id],
+										headshots: [payload.is_headshot],
+										zones: [payload.zone_id],
+										worlds: [payload.world_id]
+									}
+									
+									pool.getConnection(function(err, dbConnection)
+									{
+										dbConnection.query('INSERT INTO CombatEvents SET ?', post, function(err, result)
+										{
+											if (err) throw err;
+											dbConnection.release();
+										});
 									});
-								});
-							}
-							else if(eventType == "VehicleDestroy")
-							{
-								type = "VehicleCombat";
-								post =
+								}
+								else if(eventType == "VehicleDestroy")
 								{
+									type = "VehicleCombat";
+									post =
+									{
 										attacker_character_id: attackerCharacterID,
 										attacker_outfit_id: attackerOutfitID,
 										attacker_faction_id: attackerFactionID,
@@ -485,39 +526,59 @@ function processMessage(messageData)
 										weapon_id: payload.attacker_weapon_id,
 										zone_id: payload.zone_id,
 										world_id: payload.world_id
-								};
-								filterData = 
-								{
-									characters: [attackerCharacterID, characterID],
-									outfits: [attackerOutfitID,characterOutfitID],
-									factions: [attackerFactionID,characterFactionID],
-									loadouts: [payload.attacker_loadout_id],
-									vehicles: [payload.attacker_vehicle_id,payload.vehicle_id],
-									weapons: [payload.attacker_weapon_id],
-									zones: [payload.zone_id],
-									worlds: [payload.world_id]
+									};
+									
+									messageData =
+									{
+										attacker_character_id: attackerCharacterID,
+										attacker_character_name: attackerCharacterName,
+										attacker_outfit_id: attackerOutfitID,
+										attacker_faction_id: attackerFactionID,
+										attacker_vehicle_id: payload.attacker_vehicle_id,
+										victim_character_id: characterID,
+										victim_character_name: characterName,
+										victim_outfit_id: characterOutfitID,
+										victim_faction_id: characterFactionID,
+										victim_vehicle_id: payload.vehicle_id,
+										timestamp: payload.timestamp,
+										weapon_id: payload.attacker_weapon_id,
+										zone_id: payload.zone_id,
+										world_id: payload.world_id
+									};	
+								
+									filterData = 
+									{
+										characters: [attackerCharacterID, characterID],
+										outfits: [attackerOutfitID,characterOutfitID],
+										factions: [attackerFactionID,characterFactionID],
+										loadouts: [payload.attacker_loadout_id],
+										vehicles: [payload.attacker_vehicle_id,payload.vehicle_id],
+										weapons: [payload.attacker_weapon_id],
+										zones: [payload.zone_id],
+										worlds: [payload.world_id]
+									}
+									
+									pool.getConnection(function(err, dbConnection)
+									{
+										dbConnection.query('INSERT INTO VehicleCombatEvents SET ?', post, function(err, result)
+										{
+											if (err) throw err;
+											dbConnection.release();
+										});
+									});
 								}
 								
-								pool.getConnection(function(err, dbConnection)
+								var eventData =
 								{
-									dbConnection.query('INSERT INTO VehicleCombatEvents SET ?', post, function(err, result)
-									{
-										if (err) throw err;
-										dbConnection.release();
-									});
-								});
+									eventType: type,
+									messageData: messageData,
+									filterData: filterData
+								};
+									
+								eventServer.broadcastEvent(eventData);
 							}
-							
-							var eventData =
-							{
-								eventType: type,
-								messageData: post,
-								filterData: filterData
-							};
-								
-							eventServer.broadcastEvent(eventData);
-						}
-					});
+						});
+					}
 				}
 			}
 		}
@@ -539,6 +600,7 @@ function processMessage(messageData)
 						var post =
 						{
 							facility_id: payload.facility_id,
+							facility_type_id: regions[worldID][facilityID].facility_type_id,
 							duration_held: payload.duration_held,
 							new_faction_id: payload.new_faction_id,
 							old_faction_id: payload.old_faction_id,
@@ -566,6 +628,7 @@ function processMessage(messageData)
 						var messageData =
 						{
 							facility_id: payload.facility_id,
+							facility_type_id: payload.facility_type_id,
 							duration_held: payload.duration_held,
 							new_faction_id: payload.new_faction_id,
 							old_faction_id: payload.old_faction_id,
@@ -584,6 +647,7 @@ function processMessage(messageData)
 						var filterData = 
 						{
 							facilities: [payload.facility_id],
+							facility_types: [payload.facility_type_id],
 							factions: [payload.new_faction_id, payload.old_faction_id],
 							zones: [payload.zone_id],
 							worlds: [payload.world_id]
@@ -641,8 +705,6 @@ function processMessage(messageData)
 									dbConnection.release();
 								});
 							});
-							
-							updateRegions(payload.worldID);
 						}
 					});
 				}
@@ -743,74 +805,77 @@ function processMessage(messageData)
 					{
 						var uID = payload.world_id + "_" + payload.instance_id;
 						
-						var domination = 0;
-						if(controlVS >= 94 || controlNC >= 94 || controlTR >= 94)
+						if(alerts[uID] != undefined)
 						{
-							domination = 1;
-						}
-						
-						var post =
-						{
-							end_time: payload.timestamp,
-							status: 0,
-							control_vs: controlVS,
-							control_nc: controlNC,
-							control_tr: controlTR,
-							majority_controller: majorityController,
-							domination: domination
-						};
-						
-						var messageData =
-						{
-							alert_id: payload.instance_id,
-							alert_type_id: payload.metagame_event_id,
-							start_time: alerts[uID].start_time,
-							end_time: payload.timestamp,
-							status: 0,
-							control_vs: controlVS,
-							control_nc: controlNC,
-							control_tr: controlTR,
-							facilities: selectedRegions,
-							majority_controller: majorityController,
-							domination: domination,
-							zone_id: alertTypes[payload.metagame_event_id].zone,
-							facility_type_id: alertTypes[payload.metagame_event_id].facility,
-							world_id: payload.world_id
-						}
-						
-						var filterData = 
-						{
-							alerts: [payload.instance_id],
-							alert_types: [payload.metagame_event_id],
-							statuses: [0],
-							dominations: [domination],
-							zones: [alertTypes[payload.metagame_event_id].zone],
-							facilityTypes: [alertTypes[payload.metagame_event_id].facility],
-							worlds: [payload.world_id]
-						}
-						
-						var alertID = payload.instance_id;
-						var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
-						pool.getConnection(function(err, dbConnection)
-						{
-							dbConnection.query(sql, post, function(err, result)
+							var domination = 0;
+							if(controlVS >= 94 || controlNC >= 94 || controlTR >= 94)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
-						});	
-						
-						var eventData =
-						{
-							eventType: "Alert",
-							messageData: messageData,
-							filterData: filterData
-						};
-						
-						eventServer.broadcastEvent(eventData);
-						
-						var uID = payload.world_id + "_" + alertID;
-						delete alerts[uID];
+								domination = 1;
+							}
+							
+							var post =
+							{
+								end_time: payload.timestamp,
+								status: 0,
+								control_vs: controlVS,
+								control_nc: controlNC,
+								control_tr: controlTR,
+								majority_controller: majorityController,
+								domination: domination
+							};
+							
+							var messageData =
+							{
+								alert_id: payload.instance_id,
+								alert_type_id: payload.metagame_event_id,
+								start_time: alerts[uID].start_time,
+								end_time: payload.timestamp,
+								status: 0,
+								control_vs: controlVS,
+								control_nc: controlNC,
+								control_tr: controlTR,
+								facilities: selectedRegions,
+								majority_controller: majorityController,
+								domination: domination,
+								zone_id: alertTypes[payload.metagame_event_id].zone,
+								facility_type_id: alertTypes[payload.metagame_event_id].facility,
+								world_id: payload.world_id
+							}
+							
+							var filterData = 
+							{
+								alerts: [payload.instance_id],
+								alert_types: [payload.metagame_event_id],
+								statuses: [0],
+								dominations: [domination],
+								zones: [alertTypes[payload.metagame_event_id].zone],
+								facilityTypes: [alertTypes[payload.metagame_event_id].facility],
+								worlds: [payload.world_id]
+							}
+							
+							var alertID = payload.instance_id;
+							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
+							pool.getConnection(function(err, dbConnection)
+							{
+								dbConnection.query(sql, post, function(err, result)
+								{
+									if (err) throw err;
+									dbConnection.release();
+								});
+							});	
+							
+							var eventData =
+							{
+								eventType: "Alert",
+								messageData: messageData,
+								filterData: filterData
+							};
+							
+							eventServer.broadcastEvent(eventData);
+							
+							var uID = payload.world_id + "_" + alertID;
+							delete alerts[uID];
+						}
 					});
 				}
 			}
@@ -850,6 +915,7 @@ function processMessage(messageData)
 							
 							var alertID = alerts[uID].alert_id;
 							var alertTypeID = alerts[uID].alert_type_id;
+							var region = regions[payload.world_id][payload.facility_id];
 							
 							var messageData =
 							{
@@ -862,7 +928,7 @@ function processMessage(messageData)
 								control_vs: controlVS,
 								control_nc: controlNC,
 								control_tr: controlTR,
-								facilities: selectedRegions,
+								facility_captured: region,
 								domination: 0,
 								zone_id: alertTypes[alertTypeID].zone,
 								facility_type_id: alertTypes[alertTypeID].facility,
@@ -928,6 +994,47 @@ function processMessage(messageData)
 				});
 			});
 		}
+		
+		else if(eventType == "BattleRankUp")
+		{
+			var character = payload.character_id;
+			
+			if(payload.battle_rank > 10)
+			{
+				if(isValidCharacter(character))
+				{
+					retrieveCharacterInfo([character], function(success)
+					{
+						if(success)
+						{
+							var characterOutfitID = characters[character].outfit_id;
+							var characterFactionID = characters[character].faction_id;
+							
+							var post =
+							{
+								character_id: character,
+								outfit_id: characterOutfitID,
+								faction_id: characterFactionID,
+								battle_rank: payload.battle_rank,
+								timestamp: payload.timestamp,
+								zone_id: payload.zone_id,
+								world_id: payload.world_id
+							};
+							
+							pool.getConnection(function(err, dbConnection)
+							{
+								dbConnection.query('INSERT INTO BattleRankEvents SET ?', post, function(err, result)
+								{
+									if (err) throw err;
+									dbConnection.release();
+								});
+							});
+						}
+					});
+				}
+			}
+		}
+		
 	}
 	else
 	{
@@ -970,6 +1077,30 @@ function retrieveCharacterInfo(charList, callback)
 		charList: charList
 	};
 	queriesToProcess.push(query);
+}
+
+function calculateFactionFromLoadout(loadoutID)
+{
+	loadoutID = parseInt(loadoutID);
+	
+	var factionID = 0;
+	
+	if(loadoutsVS.indexOf(loadoutID) >= 0)
+	{
+		factionID = 1;
+	}
+	
+	else if(loadoutsNC.indexOf(loadoutID) >= 0)
+	{
+		factionID = 2;
+	}
+	
+	else if(loadoutsTR.indexOf(loadoutID) >= 0)
+	{
+		factionID = 3;
+	}
+	
+	return factionID;
 }
 
 //Calculates territory control for the given regions.
@@ -1040,9 +1171,13 @@ var getActiveAlerts = function()
 		if(alert in alerts)
 		{
 			activeAlerts['alerts'][alert] = alerts[alert];
+			
 			var worldID = alerts[alert].world_id;
-			var zoneID = alerts[alert].zone_id;
-			var facilityTypeID = alerts[alert].facility_type_id;
+			var alert_type_id = alerts[alert].alert_type_id;
+			
+			var zoneID = alertTypes[alert_type_id].zone;
+			var facilityTypeID = alertTypes[alert_type_id].facility;
+			
 			var alertRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
 			
 			activeAlerts['alerts'][alert]['regions'] = alertRegions;
@@ -1070,25 +1205,6 @@ function getSelectedRegions(worldID, zoneID, facilityTypeID)
 	}
 	
 	return selectedRegions;
-}
-
-//Updates all regions for a given world. Required since Census doesn't send events for continent locks.
-function updateRegions(worldID)
-{
-	var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + worldID + "&zone_ids=" + zones.join() + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^show:facility_id'facility_type_id^inject_at:map_region";
-	GetCensusData(url, function(success, data)
-	{
-		if(success)
-		{
-			for(var i=0;i<data.map_list[0].Regions.Row.length;i++)
-			{
-				var region = data.map_list[0].Regions.Row[i].RowData;
-				var facilityID = region.map_region.facility_id;
-				
-				regions[worldID][facilityID].owner = region.FactionId;
-			}
-		}
-	});
 }
 
 //Processes the Alert Census Request. The callback is called once the alert's facilities, and the facility owners have been resolved.
@@ -1226,7 +1342,7 @@ function EnterOfflineMode()
 				{
 					if(success2)
 					{
-						GetCensusData("/get/ps2:v2/map?world_id=25&zone_ids=2&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id(map_hex^on:map_region_id^to:map_region_id^list:1^show:x'y^inject_at:hex)", function(success3, data3)
+						GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=25&zone_ids=2&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id(map_hex^on:map_region_id^to:map_region_id^list:1^show:x'y^inject_at:hex)", function(success3, data3)
 						{
 							if(success3)
 							{
