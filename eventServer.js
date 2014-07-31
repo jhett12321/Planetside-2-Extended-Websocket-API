@@ -7,6 +7,9 @@ var mysql = require('mysql');
 var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
+//Version
+var version = "0.9.1";
+
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
 
@@ -33,7 +36,7 @@ var pool = mysql.createPool(
 **********************/
 
 //HTTP server. Used for websocket server.
-var server = http.createServer(function(request, response)
+var httpServer = http.createServer(function(request, response)
 {
 	response.writeHead(404);
 	response.end();
@@ -43,14 +46,14 @@ var clientConnections = {}; //Stores all connections to this server, and their s
 var alerts = {}; //Stores all active alerts
 var connectionIDCounter = 0; //Connection Unique ID's.
 
-server.listen(config.serverPort, function()
+httpServer.listen(config.serverPort, function()
 {
 	console.log((new Date()) + ' Websocket Server is listening on port 8080');
 });
 
 var wsServer = new WebSocketServer(
 {
-	httpServer: server,
+	httpServer: httpServer,
 	autoAcceptclientConnections: false
 });
 	
@@ -62,7 +65,7 @@ wsServer.on('request', function(request)
 {
 	var apiKey = request.resourceURL.query.apikey;
 	
-	verifyAPIKey(apiKey, function(isValid, errorMsg) //Verify this client's API Key.
+	verifyAPIKey(apiKey, function(isValid, errorMsg, apiUsername) //Verify this client's API Key.
 	{
 		if(!isValid)
 		{
@@ -80,7 +83,15 @@ wsServer.on('request', function(request)
 			
 			clientConnections[clientConnection.id] = clientConnection;
 		
-			console.log((new Date()) + ' Connection ID ' + clientConnection.id + ' accepted. API Key: ' + apiKey);
+			console.log((new Date()) + ' User ' + apiUsername + ' connected. API Key: ' + apiKey);
+			
+			var message = 
+			{
+				message: "Welcome to ps2_events (v" + version + ") " + apiUsername + ", please enjoy your stay!",
+				service: "ps2_events",
+				websocket_event: "connectionStateChange"
+			}
+			clientConnection.sendUTF(JSON.stringify(message));
 			
 			//Events
 			clientConnection.on('message', function(message)
@@ -99,14 +110,12 @@ wsServer.on('request', function(request)
 							{
 								subscriptionData["all"] = "true";
 							}
-							else
+							
+							for(var property in decodedMessage)
 							{
-								for(var property in decodedMessage)
+								if(property in subscriptionData && property != "all")
 								{
-									if(property in subscriptionData)
-									{
-										subscriptionData[property] = subscriptionData[property].concat(decodedMessage[property]);
-									}
+									subscriptionData[property] = subscriptionData[property].concat(decodedMessage[property]);
 								}
 							}
 						}
@@ -116,14 +125,12 @@ wsServer.on('request', function(request)
 							{
 								subscriptionData["all"] = "false";
 							}
-							else
+							
+							for(var property in decodedMessage)
 							{
-								for(var property in decodedMessage)
+								if(property in subscriptionData && property != "all")
 								{
-									if(property in subscriptionData)
-									{
-										subscriptionData[property] = subscriptionData[property].filter(function(x) { return decodedMessage[property].indexOf(x) < 0 });
-									}
+									subscriptionData[property] = subscriptionData[property].filter(function(x) { return decodedMessage[property].indexOf(x) < 0 });
 								}
 							}
 						}
@@ -178,7 +185,7 @@ wsServer.on('request', function(request)
 			
 			clientConnection.on('close', function(reasonCode, description)
 			{
-				console.log((new Date()) + ' Peer ' + clientConnection.remoteAddress + ' disconnected. ' + "Connection ID: " + clientConnection.id);
+				console.log((new Date()) + ' User ' + apiUsername + ' disconnected. API Key: ' + apiKey);
 				delete clientConnections[clientConnection.id];
 			});
 		}
@@ -202,11 +209,11 @@ function verifyAPIKey(APIKey, callback)
 			{
 				if(rows.length > 0)
 				{
-					callback(true, "");
+					callback(true, "", rows[0].name);
 				}
 				else
 				{
-					callback(false, "Invalid API Key Specified.");
+					callback(false, "Invalid API Key Specified.", "");
 				}
 			});
 		});
@@ -220,15 +227,40 @@ function verifyAPIKey(APIKey, callback)
 // Broadcast Event to all open clientConnections
 exports.broadcastEvent = function(rawData)
 {
+	var messageToSend = {};
+	
+	messageToSend.payload = rawData.messageData;
+	messageToSend.event_type = rawData.eventType;
+
 	Object.keys(clientConnections).forEach(function(key)
 	{
 		var clientConnection = clientConnections[key];
 		if (clientConnection.connected)
 		{
 			var subscriptionProperties = clientConnection.subscriptions[rawData.eventType];
+			
+			if(subscriptionProperties["show"].length > 0 || subscriptionProperties["hide"].length > 0)
+			{
+				messageToSend.payload = {};
+				for(var field in rawData.messageData)
+				{
+					if(subscriptionProperties["show"].indexOf(field) >= 0)
+					{
+						messageToSend.payload[field] = rawData.messageData[field];
+					}
+				}
+				for(var field in messageToSend.payload)
+				{
+					if(subscriptionProperties["hide"].indexOf(field) >= 0)
+					{
+						delete(messageToSend.payload[field]);
+					}
+				}
+			}
+			
 			if(subscriptionProperties["all"] == "true")
 			{
-				clientConnection.send(JSON.stringify(rawData.messageData));
+				clientConnection.send(JSON.stringify(messageToSend));
 			}
 			else
 			{
@@ -236,7 +268,7 @@ exports.broadcastEvent = function(rawData)
 				
 				for(var property in subscriptionProperties)
 				{
-					if(property != "all" && property != "useAND")
+					if(property != "all" && property != "useAND" && property != "show" && property != "hide")
 					{
 						var filterData = rawData.filterData[property];
 						
@@ -281,7 +313,7 @@ exports.broadcastEvent = function(rawData)
 				
 				if(sendMessage == true)
 				{
-					clientConnection.send(JSON.stringify(rawData.messageData));
+					clientConnection.send(JSON.stringify(messageToSend));
 				}
 			}
 		}
@@ -311,6 +343,8 @@ function getBlankSubscription()
 		{
 			all: "false",
 			useAND: [],
+			show: [],
+			hide: [],
 			characters: [],
 			outfits: [],
 			factions: [],
@@ -325,6 +359,8 @@ function getBlankSubscription()
 		{
 			all: "false",
 			useAND: [],
+			show: [],
+			hide: [],
 			characters: [],
 			outfits: [],
 			factions: [],
@@ -338,6 +374,8 @@ function getBlankSubscription()
 		{
 			all: "false",
 			useAND: [],
+			show: [],
+			hide: [],
 			alerts: [],
 			alert_types: [],
 			statuses: [],
@@ -350,9 +388,12 @@ function getBlankSubscription()
 		{
 			all: "false",
 			useAND: [],
+			show: [],
+			hide: [],
 			facilities: [],
 			facility_types: [],
 			factions: [],
+			captures: [],
 			zones: [],
 			worlds: []
 		},
@@ -360,10 +401,38 @@ function getBlankSubscription()
 		{
 			all: "false",
 			useAND: [],
+			show: [],
+			hide: [],
 			factions: [],
 			zones: [],
 			worlds: [],
+		},
+		'BattleRank':
+		{
+			all: "false",
+			useAND: [],
+			show: [],
+			hide: [],
+			characters: [],
+			outfits: [],
+			factions: [],
+			battle_ranks: [],
+			zones: [],
+			worlds: []
+		},
+		'Login':
+		{
+			all: "false",
+			useAND: [],
+			show: [],
+			hide: [],
+			characters: [],
+			outfits: [],
+			factions: [],
+			login_types: [],
+			worlds: []
 		}
 	};
+	
 	return blankSubscription;
 }

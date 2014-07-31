@@ -36,34 +36,34 @@ var pool = mysql.createPool(
 
 //Planetside 2 Game Data
 	//Loadout ID's (For Faction Mapping)
-var loadoutsVS = [15,17,18,19,20,21];
-var loadoutsNC = [1,3,4,5,6,7];
-var loadoutsTR = [8,10,11,12,13,14];
+var loadoutsVS = ["15","17","18","19","20","21"];
+var loadoutsNC = ["1","3","4","5","6","7"];
+var loadoutsTR = ["8","10","11","12","13","14"];
 
 	//Alert ID's.
 var alertTypes = {
-	1:{zone:2, facility:0}, //Indar Territory
-	2:{zone:8, facility:0}, //Esamir Territory
-	3:{zone:6, facility:0}, //Amerish Territory
-	4:{zone:4, facility:3}, //Hossin Territory
-	7:{zone:6, facility:3}, //Amerish Bio Lab
-	8:{zone:6, facility:4}, //Amerish Tech Plant
-	9:{zone:6, facility:2}, //Amerish Amp Station
-	10:{zone:2, facility:3}, //Indar Bio Lab
-	11:{zone:2, facility:4}, //Indar Tech Plant
-	12:{zone:2, facility:2}, //Indar Amp Station
-	13:{zone:8, facility:3}, //Esamir Bio Lab
-	14:{zone:8, facility:2},  //Esamir Amp Station
-	16:{zone:4, facility:3}, //Hossin Bio Lab
-	17:{zone:4, facility:4}, //Hossin Tech Plant
-	18:{zone:4, facility:2} //Hossin Amp Station
+	"1":{zone:"2", facility:"0"}, //Indar Territory
+	"2":{zone:"8", facility:"0"}, //Esamir Territory
+	"3":{zone:"6", facility:"0"}, //Amerish Territory
+	"4":{zone:"4", facility:"3"}, //Hossin Territory
+	"7":{zone:"6", facility:"3"}, //Amerish Bio Lab
+	"8":{zone:"6", facility:"4"}, //Amerish Tech Plant
+	"9":{zone:"6", facility:"2"}, //Amerish Amp Station
+	"10":{zone:"2", facility:"3"}, //Indar Bio Lab
+	"11":{zone:"2", facility:"4"}, //Indar Tech Plant
+	"12":{zone:"2", facility:"2"}, //Indar Amp Station
+	"13":{zone:"8", facility:"3"}, //Esamir Bio Lab
+	"14":{zone:"8", facility:"2"},  //Esamir Amp Station
+	"16":{zone:"4", facility:"3"}, //Hossin Bio Lab
+	"17":{zone:"4", facility:"4"}, //Hossin Tech Plant
+	"18":{zone:"4", facility:"2"} //Hossin Amp Station
 };
 
 	//World IDs
-var worlds = [1,9,10,11,13,17,19,25];
+var worlds = ["1","9","10","11","13","17","19","25"];
 
 	//Zone IDs
-var zones = [2,4,6,8];
+var zones = ["2","4","6","8"];
 
 //-------------------------------------------------------------------
 /**
@@ -103,7 +103,7 @@ function init(callback)
 	//Region Data
 	for(var i=0; i<worlds.length; i++)
 	{
-		var world = worlds[i] + 0;
+		var world = worlds[i];
 		regions[world] = {};
 		
 		initRegionData(world, function(isLastWorld)
@@ -121,7 +121,7 @@ function init(callback)
 						for(var i = 0; i < data.world_event_list.length; i++)
 						{
 							var alert = data.world_event_list[i];
-							if(alert.metagame_event_state == 137 || alert.metagame_event_state == 138)
+							if(alert.metagame_event_state == "137" || alert.metagame_event_state == "138")
 							{
 								finishedAlerts.push(alert.instance_id);
 							}
@@ -139,7 +139,7 @@ function init(callback)
 						for(var i = 0; i < data.world_event_list.length; i++)
 						{
 							var alert = data.world_event_list[i];
-							if((alert.metagame_event_state == 135 || alert.metagame_event_state == 136) && finishedAlerts.indexOf(alert.instance_id) < 0)
+							if((alert.metagame_event_state == "135" || alert.metagame_event_state == "136") && finishedAlerts.indexOf(alert.instance_id) < 0)
 							{
 								//Dummy Alert Message
 								var dummyMessage =
@@ -172,16 +172,16 @@ function init(callback)
 function initRegionData(world, callback)
 {
 	//Region Data
-	GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + world + "&zone_ids=" + zones.join(",") + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id'location_x'location_z(map_hex^on:map_region_id^to:map_region_id^list:1^show:x'y^inject_at:hex)", function(success, data)
+	GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + world + "&zone_ids=" + zones.join(",") + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id", function(success, data)
 	{
 		if(success)
 		{
-			for(var j=0; j<data.map_list.length; j++)
+			for(var j = 0; j < data.map_list.length; j++)
 			{
 				var zoneData = data.map_list[j];
 				var zoneID = zoneData.ZoneId;
 				
-				for(var k=0; k<zoneData.Regions.Row.length; k++)
+				for(var k = 0; k < zoneData.Regions.Row.length; k++)
 				{
 					var regionData = zoneData.Regions.Row[k].RowData;
 					var facilityID = regionData.map_region.facility_id;
@@ -189,10 +189,7 @@ function initRegionData(world, callback)
 					var regionInfo = {
 						'facility_id': facilityID,
 						'facility_type_id': regionData.map_region.facility_type_id,
-						'hex_data': regionData.map_region.hex,
 						'owner': regionData.FactionId,
-						'location_x': regionData.map_region.location_x,
-						'location_y': regionData.map_region.location_z,
 						'zone_id': zoneID
 					};
 					
@@ -254,8 +251,8 @@ function censusProcessor()
 				{
 					characters[charList[j]] =
 					{
-						outfit_id: 0,
-						faction_id: 0,
+						outfit_id: "0",
+						faction_id: "0",
 						character_name: ""
 					};
 				}
@@ -270,7 +267,7 @@ function censusProcessor()
 						{
 							var characterFactionID = character.faction_id;
 							var characterName = character.name.first;
-							var characterOutfitID = 0;
+							var characterOutfitID = "0";
 							
 							if(character.character_id_join_outfit_member != null)
 							{
@@ -411,7 +408,7 @@ function processMessage(messageData)
 				var attackerCharacterID = payload.attacker_character_id;
 				var characterID = payload.character_id;
 				
-				if(payload.attacker_loadout_id != 0)
+				if(payload.attacker_loadout_id != "0")
 				{
 					if(isValidCharacter(characterID) || isValidCharacter(attackerCharacterID))
 					{
@@ -436,8 +433,7 @@ function processMessage(messageData)
 							
 								var attackerOutfitID = characters[attackerCharacterID].outfit_id;
 								var attackerFactionID = calculateFactionFromLoadout(payload.attacker_loadout_id);
-								
-								var attackerCharacterName = characters[attackerCharacterID].characterName;
+								var attackerCharacterName = characters[attackerCharacterID].character_name;
 								
 								var type = "";
 								var post = {};
@@ -595,125 +591,134 @@ function processMessage(messageData)
 					
 					regions[worldID][facilityID].owner = payload.new_faction_id;
 					
-					calculateTerritoryControl(getSelectedRegions(worldID, payload.zone_id, 0), function(controlVS, controlNC, controlTR, majorityController)
+					var selectedRegions = getSelectedRegions(worldID, payload.zone_id, "0");
+					
+					var controlInfo = calculateTerritoryControl(selectedRegions);
+					
+					var controlVS = controlInfo.controlVS;
+					var controlNC = controlInfo.controlNC;
+					var controlTR = controlInfo.controlTR;
+					var majorityController = controlInfo.majorityController;
+					
+					var isCapture = "0";
+					if(payload.old_faction_id != payload.new_faction_id)
 					{
-						var post =
+						isCapture = "1";
+					}
+					
+					var post =
+					{
+						facility_id: payload.facility_id,
+						facility_type_id: regions[worldID][facilityID].facility_type_id,
+						duration_held: payload.duration_held,
+						new_faction_id: payload.new_faction_id,
+						old_faction_id: payload.old_faction_id,
+						is_capture: isCapture,
+						timestamp: payload.timestamp,
+						zone_id: payload.zone_id,
+						control_vs: controlVS,
+						control_nc: controlNC,
+						control_tr: controlTR,
+						majority_controller: majorityController,
+						world_id: payload.world_id
+					};
+					
+					pool.getConnection(function(err, dbConnection)
+					{
+						dbConnection.query('INSERT INTO FacilityControlEvents SET ?', post, function(err, result)
 						{
-							facility_id: payload.facility_id,
-							facility_type_id: regions[worldID][facilityID].facility_type_id,
-							duration_held: payload.duration_held,
-							new_faction_id: payload.new_faction_id,
-							old_faction_id: payload.old_faction_id,
-							timestamp: payload.timestamp,
+							if (err) throw err;
+							dbConnection.release();
+						});
+					});
+					
+					var messageData =
+					{
+						facility_id: payload.facility_id,
+						facility_type_id: payload.facility_type_id,
+						duration_held: payload.duration_held,
+						new_faction_id: payload.new_faction_id,
+						old_faction_id: payload.old_faction_id,
+						is_capture: isCapture,
+						timestamp: payload.timestamp,
+						zone_id: payload.zone_id,
+						control_vs: controlVS,
+						control_nc: controlNC,
+						control_tr: controlTR,
+						majority_controller: majorityController,
+						world_id: payload.world_id
+					}
+					
+					var filterData = 
+					{
+						facilities: [payload.facility_id],
+						facility_types: [payload.facility_type_id],
+						factions: [payload.new_faction_id, payload.old_faction_id],
+						captures: [isCapture],
+						zones: [payload.zone_id],
+						worlds: [payload.world_id]
+					}
+					
+					var eventData =
+					{
+						eventType: "FacilityControl",
+						messageData: messageData,
+						filterData: filterData
+					};
+				
+					eventServer.broadcastEvent(eventData);
+					
+					//Check if continent is locked.
+					if(controlVS == 100 || controlNC == 100 || controlTR == 100)
+					{
+						var lockPost =
+						{
 							zone_id: payload.zone_id,
-							location_x: regions[worldID][facilityID].location_x,
-							location_y: regions[worldID][facilityID].location_y,
-							hex_data: JSON.stringify(regions[worldID][facilityID].hex_data),
-							control_vs: controlVS,
-							control_nc: controlNC,
-							control_tr: controlTR,
-							majority_controller: majorityController,
-							world_id: payload.world_id
+							world_id: payload.world_id,
+							timestamp: payload.timestamp,
+							locked_by: majorityController,
 						};
+						
+						var lockMessageData =
+						{
+							zone_id: payload.zone_id,
+							world_id: payload.world_id,
+							timestamp: payload.timestamp,
+							locked_by: majorityController,
+						}
+						
+						var lockFilterData = 
+						{
+							zones: [payload.zone_id],
+							worlds: [payload.world_id],
+							factions: [majorityController],
+						}
+						
+						var lockEventData =
+						{
+							eventType: "ContinentLock",
+							messageData: lockMessageData,
+							filterData: lockFilterData
+						};
+					
+						eventServer.broadcastEvent(lockEventData);
 						
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT INTO FacilityControlEvents SET ?', post, function(err, result)
+							dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
 							{
 								if (err) throw err;
 								dbConnection.release();
 							});
 						});
-						
-						var messageData =
-						{
-							facility_id: payload.facility_id,
-							facility_type_id: payload.facility_type_id,
-							duration_held: payload.duration_held,
-							new_faction_id: payload.new_faction_id,
-							old_faction_id: payload.old_faction_id,
-							timestamp: payload.timestamp,
-							zone_id: payload.zone_id,
-							location_x: regions[worldID][facilityID].location_x,
-							location_y: regions[worldID][facilityID].location_y,
-							hex_data: regions[worldID][facilityID].hex_data,
-							control_vs: controlVS,
-							control_nc: controlNC,
-							control_tr: controlTR,
-							majority_controller: majorityController,
-							world_id: payload.world_id
-						}
-						
-						var filterData = 
-						{
-							facilities: [payload.facility_id],
-							facility_types: [payload.facility_type_id],
-							factions: [payload.new_faction_id, payload.old_faction_id],
-							zones: [payload.zone_id],
-							worlds: [payload.world_id]
-						}
-						
-						var eventData =
-						{
-							eventType: "FacilityControl",
-							messageData: messageData,
-							filterData: filterData
-						};
-					
-						eventServer.broadcastEvent(eventData);
-						
-						//Check if continent is locked.
-						if(controlVS == 100 || controlNC == 100 || controlTR == 100)
-						{
-							var lockPost =
-							{
-								zone_id: payload.zone_id,
-								world_id: payload.world_id,
-								timestamp: payload.timestamp,
-								locked_by: majorityController,
-							};
-							
-							var lockMessageData =
-							{
-								zone_id: payload.zone_id,
-								world_id: payload.world_id,
-								timestamp: payload.timestamp,
-								locked_by: majorityController,
-							}
-							
-							var lockFilterData = 
-							{
-								zones: [payload.zone_id],
-								worlds: [payload.world_id],
-								factions: [majorityController],
-							}
-							
-							var lockEventData =
-							{
-								eventType: "ContinentLock",
-								messageData: lockMessageData,
-								filterData: lockFilterData
-							};
-						
-							eventServer.broadcastEvent(lockEventData);
-							
-							pool.getConnection(function(err, dbConnection)
-							{
-								dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
-								{
-									if (err) throw err;
-									dbConnection.release();
-								});
-							});
-						}
-					});
+					}
 				}
 			}
 			
 			//Process Event-Specific Data
 			else if(eventType == "MetagameEvent")
 			{
-				if(payload.metagame_event_state == 135 || payload.metagame_event_state == 136)
+				if(payload.metagame_event_state == "135" || payload.metagame_event_state == "136")
 				{
 					retrieveAlertInfo(payload.instance_id, payload.metagame_event_id, payload.world_id, function(uID, controlVS, controlNC, controlTR, majorityController)
 					{
@@ -730,13 +735,13 @@ function processMessage(messageData)
 							alert_id: payload.instance_id,
 							alert_type_id: payload.metagame_event_id,
 							start_time: payload.timestamp,
-							end_time: 0,
-							status: 1,
+							end_time: "0",
+							status: "1",
 							control_vs: controlVS,
 							control_nc: controlNC,
 							control_tr: controlTR,
 							majority_controller: majorityController,
-							domination: 0,
+							domination: "0",
 							zone_id: zoneID,
 							facility_type_id: facilityID,
 							world_id: worldID
@@ -747,14 +752,14 @@ function processMessage(messageData)
 							alert_id: payload.instance_id,
 							alert_type_id: payload.metagame_event_id,
 							start_time: payload.timestamp,
-							end_time: 0,
-							status: 1,
+							end_time: "0",
+							status: "1",
 							control_vs: controlVS,
 							control_nc: controlNC,
 							control_tr: controlTR,
 							facilities: selectedRegions,
 							majority_controller: majorityController,
-							domination: 0,
+							domination: "0",
 							zone_id: alertTypes[payload.metagame_event_id].zone,
 							facility_type_id: alertTypes[payload.metagame_event_id].facility,
 							world_id: payload.world_id
@@ -764,8 +769,8 @@ function processMessage(messageData)
 						{
 							alerts: [payload.instance_id],
 							alert_types: [payload.metagame_event_id],
-							statuses: [1],
-							dominations: [0],
+							statuses: ["1"],
+							dominations: ["0"],
 							zones: [alertTypes[payload.metagame_event_id].zone],
 							facilityTypes: [alertTypes[payload.metagame_event_id].facility],
 							worlds: [payload.world_id]
@@ -794,89 +799,93 @@ function processMessage(messageData)
 					});
 				}
 				
-				else if(payload.metagame_event_state == 137 || payload.metagame_event_state == 138)
+				else if(payload.metagame_event_state == "137" || payload.metagame_event_state == "138")
 				{
 					var zoneID = alertTypes[payload.metagame_event_id].zone;
 					var facilityTypeID = alertTypes[payload.metagame_event_id].facility;
 					
 					var selectedRegions = getSelectedRegions(payload.world_id, zoneID, facilityTypeID);
 					
-					calculateTerritoryControl(selectedRegions, function(controlVS, controlNC, controlTR, majorityController)
+					var controlInfo = calculateTerritoryControl(selectedRegions);
+					
+					var controlVS = controlInfo.controlVS;
+					var controlNC = controlInfo.controlNC;
+					var controlTR = controlInfo.controlTR;
+					var majorityController = controlInfo.majorityController;
+					
+					var uID = payload.world_id + "_" + payload.instance_id;
+					
+					if(alerts[uID] != undefined)
 					{
-						var uID = payload.world_id + "_" + payload.instance_id;
-						
-						if(alerts[uID] != undefined)
+						var domination = "0";
+						if(controlVS >= 94 || controlNC >= 94 || controlTR >= 94)
 						{
-							var domination = 0;
-							if(controlVS >= 94 || controlNC >= 94 || controlTR >= 94)
-							{
-								domination = 1;
-							}
-							
-							var post =
-							{
-								end_time: payload.timestamp,
-								status: 0,
-								control_vs: controlVS,
-								control_nc: controlNC,
-								control_tr: controlTR,
-								majority_controller: majorityController,
-								domination: domination
-							};
-							
-							var messageData =
-							{
-								alert_id: payload.instance_id,
-								alert_type_id: payload.metagame_event_id,
-								start_time: alerts[uID].start_time,
-								end_time: payload.timestamp,
-								status: 0,
-								control_vs: controlVS,
-								control_nc: controlNC,
-								control_tr: controlTR,
-								facilities: selectedRegions,
-								majority_controller: majorityController,
-								domination: domination,
-								zone_id: alertTypes[payload.metagame_event_id].zone,
-								facility_type_id: alertTypes[payload.metagame_event_id].facility,
-								world_id: payload.world_id
-							}
-							
-							var filterData = 
-							{
-								alerts: [payload.instance_id],
-								alert_types: [payload.metagame_event_id],
-								statuses: [0],
-								dominations: [domination],
-								zones: [alertTypes[payload.metagame_event_id].zone],
-								facilityTypes: [alertTypes[payload.metagame_event_id].facility],
-								worlds: [payload.world_id]
-							}
-							
-							var alertID = payload.instance_id;
-							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
-							pool.getConnection(function(err, dbConnection)
-							{
-								dbConnection.query(sql, post, function(err, result)
-								{
-									if (err) throw err;
-									dbConnection.release();
-								});
-							});	
-							
-							var eventData =
-							{
-								eventType: "Alert",
-								messageData: messageData,
-								filterData: filterData
-							};
-							
-							eventServer.broadcastEvent(eventData);
-							
-							var uID = payload.world_id + "_" + alertID;
-							delete alerts[uID];
+							domination = "1";
 						}
-					});
+						
+						var post =
+						{
+							end_time: payload.timestamp,
+							status: "0",
+							control_vs: controlVS,
+							control_nc: controlNC,
+							control_tr: controlTR,
+							majority_controller: majorityController,
+							domination: domination
+						};
+						
+						var messageData =
+						{
+							alert_id: payload.instance_id,
+							alert_type_id: payload.metagame_event_id,
+							start_time: alerts[uID].start_time,
+							end_time: payload.timestamp,
+							status: "0",
+							control_vs: controlVS,
+							control_nc: controlNC,
+							control_tr: controlTR,
+							facilities: selectedRegions,
+							majority_controller: majorityController,
+							domination: domination,
+							zone_id: alertTypes[payload.metagame_event_id].zone,
+							facility_type_id: alertTypes[payload.metagame_event_id].facility,
+							world_id: payload.world_id
+						}
+						
+						var filterData = 
+						{
+							alerts: [payload.instance_id],
+							alert_types: [payload.metagame_event_id],
+							statuses: ["0"],
+							dominations: [domination],
+							zones: [alertTypes[payload.metagame_event_id].zone],
+							facilityTypes: [alertTypes[payload.metagame_event_id].facility],
+							worlds: [payload.world_id]
+						}
+						
+						var alertID = payload.instance_id;
+						var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
+						pool.getConnection(function(err, dbConnection)
+						{
+							dbConnection.query(sql, post, function(err, result)
+							{
+								if (err) throw err;
+								dbConnection.release();
+							});
+						});	
+						
+						var eventData =
+						{
+							eventType: "Alert",
+							messageData: messageData,
+							filterData: filterData
+						};
+						
+						eventServer.broadcastEvent(eventData);
+						
+						var uID = payload.world_id + "_" + alertID;
+						delete alerts[uID];
+					}
 				}
 			}
 			
@@ -904,67 +913,71 @@ function processMessage(messageData)
 						
 						var selectedRegions = getSelectedRegions(payload.world_id, zoneID, facilityTypeID);
 						
-						calculateTerritoryControl(selectedRegions, function(controlVS, controlNC, controlTR, majorityController)
+						var controlInfo = calculateTerritoryControl(selectedRegions);
+						
+						var controlVS = controlInfo.controlVS;
+						var controlNC = controlInfo.controlNC;
+						var controlTR = controlInfo.controlTR;
+						var majorityController = controlInfo.majorityController;
+						
+						var post =
 						{
-							var post =
+							control_vs: controlVS,
+							control_nc: controlNC,
+							control_tr: controlTR
+						};
+						
+						var alertID = alerts[uID].alert_id;
+						var alertTypeID = alerts[uID].alert_type_id;
+						var region = regions[payload.world_id][payload.facility_id];
+						
+						var messageData =
+						{
+							alert_id: alertID,
+							alert_type_id: alertTypeID,
+							start_time: alerts[uID].start_time,
+							end_time: "0",
+							timestamp: payload.timestamp,
+							status: "2",
+							control_vs: controlVS,
+							control_nc: controlNC,
+							control_tr: controlTR,
+							facility_captured: region,
+							domination: "0",
+							zone_id: alertTypes[alertTypeID].zone,
+							facility_type_id: alertTypes[alertTypeID].facility,
+							world_id: payload.world_id
+						}
+						
+						var filterData = 
+						{
+							alerts: [alertID],
+							alert_types: [alertTypeID],
+							statuses: ["2"],
+							dominations: ["0"],
+							zones: [alertTypes[alertTypeID].zone],
+							facilityTypes: [alertTypes[alertTypeID].facility],
+							worlds: [payload.world_id]
+						}
+						
+						var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
+						pool.getConnection(function(err, dbConnection)
+						{
+							dbConnection.query(sql, post, function(err, result)
 							{
-								control_vs: controlVS,
-								control_nc: controlNC,
-								control_tr: controlTR
-							};
-							
-							var alertID = alerts[uID].alert_id;
-							var alertTypeID = alerts[uID].alert_type_id;
-							var region = regions[payload.world_id][payload.facility_id];
-							
-							var messageData =
-							{
-								alert_id: alertID,
-								alert_type_id: alertTypeID,
-								start_time: alerts[uID].start_time,
-								end_time: 0,
-								timestamp: payload.timestamp,
-								status: 2,
-								control_vs: controlVS,
-								control_nc: controlNC,
-								control_tr: controlTR,
-								facility_captured: region,
-								domination: 0,
-								zone_id: alertTypes[alertTypeID].zone,
-								facility_type_id: alertTypes[alertTypeID].facility,
-								world_id: payload.world_id
-							}
-							
-							var filterData = 
-							{
-								alerts: [alertID],
-								alert_types: [alertTypeID],
-								statuses: [2],
-								dominations: [0],
-								zones: [alertTypes[alertTypeID].zone],
-								facilityTypes: [alertTypes[alertTypeID].facility],
-								worlds: [payload.world_id]
-							}
-							
-							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
-							pool.getConnection(function(err, dbConnection)
-							{
-								dbConnection.query(sql, post, function(err, result)
-								{
-									if (err) throw err;
-									dbConnection.release();
-								});
+								if (err) throw err;
+								dbConnection.release();
 							});
-							
-							var eventData =
-							{
-								eventType: "Alert",
-								messageData: messageData,
-								filterData: filterData
-							};
-							
-							eventServer.broadcastEvent(eventData);
 						});
+						
+						var eventData =
+						{
+							eventType: "Alert",
+							messageData: messageData,
+							filterData: filterData
+						};
+						
+						eventServer.broadcastEvent(eventData);
 					}
 				}
 			}
@@ -972,27 +985,72 @@ function processMessage(messageData)
 		
 		else if(eventType == "PlayerLogin" || eventType == "PlayerLogout")
 		{
-			var isLogin = 0;
+			var isLogin = "0";
 			if(eventType == "PlayerLogin")
 			{
-				isLogin = 1;
+				isLogin = "1";
 			}
-			var post =
-			{
-				character_id: payload.character_id,
-				is_login: isLogin,
-				timestamp: payload.timestamp,
-				world_id: payload.world_id
-			};
 			
-			pool.getConnection(function(err, dbConnection)
+			var character = payload.character_id;
+			
+			if(isValidCharacter(character))
 			{
-				dbConnection.query('INSERT INTO LoginEvents SET ?', post, function(err, result)
+				retrieveCharacterInfo([character], function(success)
 				{
-					if (err) throw err;
-					dbConnection.release();
+					if(success)
+					{
+						var characterOutfitID = characters[character].outfit_id;
+						var characterFactionID = characters[character].faction_id;
+						
+						var post =
+						{
+							character_id: character,
+							outfit_id: characterOutfitID,
+							faction_id: characterFactionID,
+							is_login: isLogin,
+							timestamp: payload.timestamp,
+							world_id: payload.world_id
+						};
+					
+						pool.getConnection(function(err, dbConnection)
+						{
+							dbConnection.query('INSERT INTO LoginEvents SET ?', post, function(err, result)
+							{
+								if (err) throw err;
+								dbConnection.release();
+							});
+						});
+
+						var messageData =
+						{
+							character_id: character,
+							outfit_id: characterOutfitID,
+							faction_id: characterFactionID,
+							is_login: isLogin,
+							timestamp: payload.timestamp,
+							world_id: payload.world_id
+						}
+						
+						var filterData = 
+						{
+							characters: [character],
+							outfits: [characterOutfitID],
+							factions: [characterFactionID],
+							login_types: [isLogin],
+							worlds: [payload.world_id]
+						}
+						
+						var eventData =
+						{
+							eventType: "Login",
+							messageData: messageData,
+							filterData: filterData
+						};
+						
+						eventServer.broadcastEvent(eventData);
+					}
 				});
-			});
+			}
 		}
 		
 		else if(eventType == "BattleRankUp")
@@ -1029,6 +1087,36 @@ function processMessage(messageData)
 									dbConnection.release();
 								});
 							});
+
+							var messageData =
+							{
+								character_id: character,
+								outfit_id: characterOutfitID,
+								faction_id: characterFactionID,
+								battle_rank: payload.battle_rank,
+								timestamp: payload.timestamp,
+								zone_id: payload.zone_id,
+								world_id: payload.world_id
+							}
+							
+							var filterData = 
+							{
+								characters: [character],
+								outfits: [characterOutfitID],
+								factions: [characterFactionID],
+								battle_ranks: [payload.battle_rank],
+								zones: [payload.zone_id],
+								worlds: [payload.world_id]
+							}
+							
+							var eventData =
+							{
+								eventType: "BattleRank",
+								messageData: messageData,
+								filterData: filterData
+							};
+							
+							eventServer.broadcastEvent(eventData);
 						}
 					});
 				}
@@ -1047,7 +1135,7 @@ function isValidZone(zoneID)
 {
 	if(zoneID != undefined && zoneID != null)
 	{
-		if(parseInt(zoneID) < 90)
+		if(zoneID < 90)
 		{		
 			return true;	
 		}
@@ -1080,31 +1168,29 @@ function retrieveCharacterInfo(charList, callback)
 }
 
 function calculateFactionFromLoadout(loadoutID)
-{
-	loadoutID = parseInt(loadoutID);
-	
-	var factionID = 0;
+{	
+	var factionID = "0";
 	
 	if(loadoutsVS.indexOf(loadoutID) >= 0)
 	{
-		factionID = 1;
+		factionID = "1";
 	}
 	
 	else if(loadoutsNC.indexOf(loadoutID) >= 0)
 	{
-		factionID = 2;
+		factionID = "2";
 	}
 	
 	else if(loadoutsTR.indexOf(loadoutID) >= 0)
 	{
-		factionID = 3;
+		factionID = "3";
 	}
 	
 	return factionID;
 }
 
 //Calculates territory control for the given regions.
-function calculateTerritoryControl(selectedRegions, callback)
+function calculateTerritoryControl(selectedRegions)
 {
 	var totalRegions = 0;
 	var facilitiesVS = 0;
@@ -1114,15 +1200,15 @@ function calculateTerritoryControl(selectedRegions, callback)
 	for(var region in selectedRegions)
 	{
 		totalRegions++;
-		if(selectedRegions[region].owner == 1)
+		if(selectedRegions[region].owner == "1")
 		{
 			facilitiesVS++;
 		}
-		else if(selectedRegions[region].owner == 2)
+		else if(selectedRegions[region].owner == "2")
 		{
 			facilitiesNC++;
 		}
-		else if(selectedRegions[region].owner == 3)
+		else if(selectedRegions[region].owner == "3")
 		{
 			facilitiesTR++;
 		}
@@ -1140,29 +1226,36 @@ function calculateTerritoryControl(selectedRegions, callback)
 	}
 	
 	var majorityControl = controlVS;
-	var majorityController = 1;
+	var majorityController = "1";
 	
 	if(controlNC > majorityControl)
 	{
 		majorityControl = controlNC;
-		majorityController = 2;
+		majorityController = "2";
 	}
 	else if(controlNC == majorityControl)
 	{
-		majorityController = 0;
+		majorityController = "0";
 	}
 	
 	if(controlTR > majorityControl)
 	{
 		majorityControl = controlTR;
-		majorityController = 3;
+		majorityController = "3";
 	}
 	else if(controlTR == majorityControl)
 	{
-		majorityController = 0;
+		majorityController = "0";
 	}
 	
-	callback(controlVS, controlNC, controlTR, majorityController);
+	var controlInfo = {};
+	
+	controlInfo.controlVS = controlVS.toString();
+	controlInfo.controlNC = controlNC.toString();
+	controlInfo.controlTR = controlTR.toString();
+	controlInfo.majorityController = majorityController;
+	
+	return controlInfo;
 }
 
 //Gets Regions for a selected alert.
@@ -1202,9 +1295,9 @@ function getSelectedRegions(worldID, zoneID, facilityTypeID)
 	
 	for(var region in regions[worldID])
 	{
-		if(regions[worldID][region].facility_type_id != 7)
+		if(regions[worldID][region].facility_type_id != "7")
 		{
-			if((regions[worldID][region].zone_id == zoneID && facilityTypeID == 0) || (zoneID == 0 && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
+			if((regions[worldID][region].zone_id == zoneID && facilityTypeID == "0") || (zoneID == "0" && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
 			{
 				selectedRegions[region] = regions[worldID][region];
 			}
@@ -1224,7 +1317,7 @@ function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
 		{
 			alert_id: alertID,
 			world_id: worldID,
-			start_time: 0,
+			start_time: "0",
 			alert_type_id: alertTypeID
 		}
 		
@@ -1232,10 +1325,14 @@ function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
 		var facilityTypeID = alertTypes[alertTypeID].facility;
 		var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
 		
-		calculateTerritoryControl(selectedRegions, function(controlVS, controlNC, controlTR, majorityController)
-		{
-			callback(uID, controlVS, controlNC, controlTR, majorityController);
-		});
+		var controlInfo = calculateTerritoryControl(selectedRegions);
+		
+		var controlVS = controlInfo.controlVS;
+		var controlNC = controlInfo.controlNC;
+		var controlTR = controlInfo.controlTR;
+		var majorityController = controlInfo.majorityController;
+		
+		callback(uID, controlVS, controlNC, controlTR, majorityController);
 	}
 }
 
@@ -1279,7 +1376,7 @@ function GetCensusData(url, callback)
 				}
 			}
 			
-			if(data != null && data.returned != undefined && data.returned != null && data.returned != 0)
+			if(data != null && data.returned != undefined && data.returned != null && data.returned != "0")
 			{
 				callback(true, data);
 			}
@@ -1349,7 +1446,7 @@ function EnterOfflineMode()
 				{
 					if(success2)
 					{
-						GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=25&zone_ids=2&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id(map_hex^on:map_region_id^to:map_region_id^list:1^show:x'y^inject_at:hex)", function(success3, data3)
+						GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=25&zone_ids=2&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id", function(success3, data3)
 						{
 							if(success3)
 							{
