@@ -1128,9 +1128,16 @@ function calculateTerritoryControl(selectedRegions, callback)
 		}
 	}
 	
-	var controlVS = Math.floor(facilitiesVS / totalRegions * 100);
-	var controlNC = Math.floor(facilitiesNC / totalRegions * 100);
-	var controlTR = Math.floor(facilitiesTR / totalRegions * 100);
+	var controlVS = 0;
+	var controlNC = 0;
+	var controlTR = 0;
+	
+	if(totalRegions > 0)
+	{
+		controlVS = Math.floor(facilitiesVS / totalRegions * 100);
+		controlNC = Math.floor(facilitiesNC / totalRegions * 100);
+		controlTR = Math.floor(facilitiesTR / totalRegions * 100);
+	}
 	
 	var majorityControl = controlVS;
 	var majorityController = 1;

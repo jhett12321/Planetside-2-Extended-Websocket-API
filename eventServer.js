@@ -236,20 +236,39 @@ exports.broadcastEvent = function(rawData)
 				
 				for(var property in subscriptionProperties)
 				{
-					if(property != "all")
+					if(property != "all" && property != "useAND")
 					{
 						var filterData = rawData.filterData[property];
 						
-						for(var i=0;i<filterData.length; i++)
+						if(subscriptionProperties["useAND"].indexOf(property) >= 0)
 						{
-							if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+							for(var i=0;i<filterData.length; i++)
 							{
-								sendMessage = true;
-								break;
+								if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+								{
+									sendMessage = true;
+								}
+								else if(subscriptionProperties[property].length > 0)
+								{
+									sendMessage = false;
+									break;
+								}
 							}
-							else if(subscriptionProperties[property].length > 0)
+						}
+						
+						else
+						{
+							for(var i=0;i<filterData.length; i++)
 							{
-								sendMessage = false;
+								if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+								{
+									sendMessage = true;
+									break;
+								}
+								else if(subscriptionProperties[property].length > 0)
+								{
+									sendMessage = false;
+								}
 							}
 						}
 						
@@ -291,6 +310,7 @@ function getBlankSubscription()
 		'Combat': 
 		{
 			all: "false",
+			useAND: [],
 			characters: [],
 			outfits: [],
 			factions: [],
@@ -304,6 +324,7 @@ function getBlankSubscription()
 		'VehicleCombat':
 		{
 			all: "false",
+			useAND: [],
 			characters: [],
 			outfits: [],
 			factions: [],
@@ -316,6 +337,7 @@ function getBlankSubscription()
 		'Alert':
 		{
 			all: "false",
+			useAND: [],
 			alerts: [],
 			alert_types: [],
 			statuses: [],
@@ -327,6 +349,7 @@ function getBlankSubscription()
 		'FacilityControl':
 		{
 			all: "false",
+			useAND: [],
 			facilities: [],
 			facility_types: [],
 			factions: [],
@@ -336,6 +359,7 @@ function getBlankSubscription()
 		'ContinentLock':
 		{
 			all: "false",
+			useAND: [],
 			factions: [],
 			zones: [],
 			worlds: [],
