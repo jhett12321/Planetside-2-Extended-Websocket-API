@@ -41,22 +41,29 @@ var loadoutsNC = ["1","3","4","5","6","7"];
 var loadoutsTR = ["8","10","11","12","13","14"];
 
 	//Alert ID's.
+//var alertTypes = {
+//	"1":{zone:"2", facility:"0"}, //Indar Territory
+//	"2":{zone:"8", facility:"0"}, //Esamir Territory
+//	"3":{zone:"6", facility:"0"}, //Amerish Territory
+//	"4":{zone:"4", facility:"0"}, //Hossin Territory
+//	"7":{zone:"6", facility:"3"}, //Amerish Bio Lab
+//	"8":{zone:"6", facility:"4"}, //Amerish Tech Plant
+//	"9":{zone:"6", facility:"2"}, //Amerish Amp Station
+//	"10":{zone:"2", facility:"3"}, //Indar Bio Lab
+//	"11":{zone:"2", facility:"4"}, //Indar Tech Plant
+//	"12":{zone:"2", facility:"2"}, //Indar Amp Station
+//	"13":{zone:"8", facility:"3"}, //Esamir Bio Lab
+//	"14":{zone:"8", facility:"2"},  //Esamir Amp Station
+//	"16":{zone:"4", facility:"3"}, //Hossin Bio Lab
+//	"17":{zone:"4", facility:"4"}, //Hossin Tech Plant
+//	"18":{zone:"4", facility:"2"} //Hossin Amp Station
+//};
+
 var alertTypes = {
-	"1":{zone:"2", facility:"0"}, //Indar Territory
-	"2":{zone:"8", facility:"0"}, //Esamir Territory
-	"3":{zone:"6", facility:"0"}, //Amerish Territory
-	"4":{zone:"4", facility:"3"}, //Hossin Territory
-	"7":{zone:"6", facility:"3"}, //Amerish Bio Lab
-	"8":{zone:"6", facility:"4"}, //Amerish Tech Plant
-	"9":{zone:"6", facility:"2"}, //Amerish Amp Station
-	"10":{zone:"2", facility:"3"}, //Indar Bio Lab
-	"11":{zone:"2", facility:"4"}, //Indar Tech Plant
-	"12":{zone:"2", facility:"2"}, //Indar Amp Station
-	"13":{zone:"8", facility:"3"}, //Esamir Bio Lab
-	"14":{zone:"8", facility:"2"},  //Esamir Amp Station
-	"16":{zone:"4", facility:"3"}, //Hossin Bio Lab
-	"17":{zone:"4", facility:"4"}, //Hossin Tech Plant
-	"18":{zone:"4", facility:"2"} //Hossin Amp Station
+	"31":{zone:"2", facility:"0"}, //Indar Lock
+	"32":{zone:"8", facility:"0"}, //Esamir Lock
+	"33":{zone:"6", facility:"0"}, //Amerish Lock
+	"34":{zone:"4", facility:"0"}, //Hossin Lock
 };
 
 	//World IDs
