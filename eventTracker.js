@@ -498,7 +498,7 @@ function processMessage(messageData)
 									
 									pool.getConnection(function(err, dbConnection)
 									{
-										dbConnection.query('INSERT INTO CombatEvents SET ?', post, function(err, result)
+										dbConnection.query('INSERT IGNORE INTO CombatEvents SET ?', post, function(err, result)
 										{
 											if (err) throw err;
 											dbConnection.release();
@@ -556,7 +556,7 @@ function processMessage(messageData)
 									
 									pool.getConnection(function(err, dbConnection)
 									{
-										dbConnection.query('INSERT INTO VehicleCombatEvents SET ?', post, function(err, result)
+										dbConnection.query('INSERT IGNORE INTO VehicleCombatEvents SET ?', post, function(err, result)
 										{
 											if (err) throw err;
 											dbConnection.release();
@@ -625,7 +625,7 @@ function processMessage(messageData)
 					
 					pool.getConnection(function(err, dbConnection)
 					{
-						dbConnection.query('INSERT INTO FacilityControlEvents SET ?', post, function(err, result)
+						dbConnection.query('INSERT IGNORE INTO FacilityControlEvents SET ?', post, function(err, result)
 						{
 							if (err) throw err;
 							dbConnection.release();
@@ -705,7 +705,7 @@ function processMessage(messageData)
 						
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+							dbConnection.query('INSERT IGNORE INTO ContinentLockEvents SET ?', lockPost, function(err, result)
 							{
 								if (err) throw err;
 								dbConnection.release();
@@ -778,7 +778,7 @@ function processMessage(messageData)
 						
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT INTO AlertEvents SET ?', post, function(err, result)
+							dbConnection.query('INSERT IGNORE INTO AlertEvents SET ?', post, function(err, result)
 							{
 								if (err) throw err;
 								dbConnection.release();
@@ -1014,7 +1014,7 @@ function processMessage(messageData)
 					
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT INTO LoginEvents SET ?', post, function(err, result)
+							dbConnection.query('INSERT IGNORE INTO LoginEvents SET ?', post, function(err, result)
 							{
 								if (err) throw err;
 								dbConnection.release();
@@ -1081,7 +1081,7 @@ function processMessage(messageData)
 							
 							pool.getConnection(function(err, dbConnection)
 							{
-								dbConnection.query('INSERT INTO BattleRankEvents SET ?', post, function(err, result)
+								dbConnection.query('INSERT IGNORE INTO BattleRankEvents SET ?', post, function(err, result)
 								{
 									if (err) throw err;
 									dbConnection.release();
