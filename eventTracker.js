@@ -362,11 +362,13 @@ function persistentClient()
 	{
 		console.log((new Date()) + ' Connect Error: ' + error.toString());
 		connected = false;
+		online = false;
 	});
 	client.on('close', function(code)
 	{
 		console.log((new Date()) + ' Websocket Connection Closed [' + code +']');
 		connected = false;
+		online = false;
 	});
 	
 
@@ -418,7 +420,6 @@ function processMessage(messageData)
 		}
 		else if(message.online == "false")
 		{
-			
 			GoOffline();
 		}
 	}
