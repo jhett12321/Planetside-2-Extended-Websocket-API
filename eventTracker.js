@@ -17,7 +17,7 @@ var eventServer;
 var config = require('./config.js');
 
 //Census/Application status. Turns false if census queries fail, or timeout.
-var online = true;
+var online = false;
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID; 
@@ -35,31 +35,16 @@ var pool = mysql.createPool(
 });
 
 //Planetside 2 Game Data
-	//Loadout ID's (For Faction Mapping)
+	//Loadout ID's
+	//Used to resolve faction ID's for Combat Events
 var loadoutsVS = ["15","17","18","19","20","21"];
 var loadoutsNC = ["1","3","4","5","6","7"];
 var loadoutsTR = ["8","10","11","12","13","14"];
 
-	//Alert ID's.
-//var alertTypes = {
-//	"1":{zone:"2", facility:"0"}, //Indar Territory
-//	"2":{zone:"8", facility:"0"}, //Esamir Territory
-//	"3":{zone:"6", facility:"0"}, //Amerish Territory
-//	"4":{zone:"4", facility:"0"}, //Hossin Territory
-//	"7":{zone:"6", facility:"3"}, //Amerish Bio Lab
-//	"8":{zone:"6", facility:"4"}, //Amerish Tech Plant
-//	"9":{zone:"6", facility:"2"}, //Amerish Amp Station
-//	"10":{zone:"2", facility:"3"}, //Indar Bio Lab
-//	"11":{zone:"2", facility:"4"}, //Indar Tech Plant
-//	"12":{zone:"2", facility:"2"}, //Indar Amp Station
-//	"13":{zone:"8", facility:"3"}, //Esamir Bio Lab
-//	"14":{zone:"8", facility:"2"},  //Esamir Amp Station
-//	"16":{zone:"4", facility:"3"}, //Hossin Bio Lab
-//	"17":{zone:"4", facility:"4"}, //Hossin Tech Plant
-//	"18":{zone:"4", facility:"2"} //Hossin Amp Station
-//};
-
-var alertTypes = {
+	//Alert ID's
+	//Used to resolve Continent and Facility ID's for Alert Events.
+var alertTypes =
+{
 	"31":{zone:"2", facility:"0"}, //Indar Lock
 	"32":{zone:"8", facility:"0"}, //Esamir Lock
 	"33":{zone:"6", facility:"0"}, //Amerish Lock
@@ -67,9 +52,11 @@ var alertTypes = {
 };
 
 	//World IDs
-var worlds = ["1","9","10","11","13","17","19","25"];
+	//Used for map queries.
+var worlds = ["1","10","13","17","19","25"];
 
 	//Zone IDs
+	//Used for map queries.
 var zones = ["2","4","6","8"];
 
 //-------------------------------------------------------------------
@@ -93,9 +80,6 @@ var maxFailures = 10;
 var alerts = {};
 exports.alerts = alerts;	 //Used for tracking alert facility control.
 
-//Continent Locks
-var lastLockID = ""; //A hack to prevent multiple lock messages/events.
-
 //Regions
 var regions = {};
 
@@ -118,8 +102,8 @@ function init(callback)
 			if(isLastWorld)
 			{	
 				//Update Alert Data
-				var timestamp = Math.round(Date.now() / 1000) - 7201;
-				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, function(success, data)
+				var limit = worlds.length * zones.length * 2; //Max possible alert events - 1 start and end event for each continent on each server
+				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=" + limit + "&c:lang=en", function(success, data)
 				{
 					if(success)
 					{
@@ -136,11 +120,20 @@ function init(callback)
 						
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('DELETE FROM AlertEvents WHERE status = 1', function(err, result)
+							if(dbConnection != undefined)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
+								dbConnection.query('DELETE FROM AlertEvents WHERE status = 1', function(err, result)
+								{
+									if (err)
+									{
+										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+									}
+									else
+									{
+										dbConnection.release();
+									}
+								});
+							}
 						});
 						
 						for(var i = 0; i < data.world_event_list.length; i++)
@@ -225,16 +218,13 @@ function watcher()
 {
 	if(!wsClient.isConnected())
 	{
-		if(online)
-		{
-			console.log('Reconnecting...');
-			wsClient = new persistentClient();
-		}
+		console.log('Reconnecting...');
+		wsClient = new persistentClient();
 	}
 }
 
-//Census Query Processor
-function censusProcessor()
+//Processes live character info
+function queryCharacterInfo()
 {
 	var queries = queriesToProcess.splice(0);
 	
@@ -334,7 +324,7 @@ function censusProcessor()
 	}
 }
 setInterval(watcher, 3000);
-setInterval(censusProcessor, 1000);
+setInterval(queryCharacterInfo, 1000);
 
 /**************
     Client    *
@@ -354,43 +344,61 @@ function persistentClient()
 	//Returns the client associated with this connection.
 	this.GetClient = function()
 	{
-		if(client != undefined)
-		{
-			return client;
-		}
-		else
-		{
-			return undefined;
-		}
+		return client;
 	}
 	
-	init(function()
-	{
-		client = new WebSocket('wss://push.planetside2.com/streaming?service-id=s:' + serviceID);
-			
-		//Events
-		client.on('open', function()
-		{
-			console.log((new Date()) + ' WebSocket client connected!');
-			var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy", "BattleRankUp"]}';
-			client.send(messageToSend);
-		});
+	client = new WebSocket('wss://push.planetside2.com/streaming?service-id=s:' + serviceID);
 		
-		client.on('message', function(data, flags)
-		{
-			processMessage(data);
-		});
-		client.on('error', function(error)
-		{
-			console.log((new Date()) + ' Connect Error: ' + error.toString());
-			connected = false;
-		});
-		client.on('close', function(code)
-		{
-			console.log((new Date()) + ' Websocket Connection Closed [' + code +']');
-			connected = false;
-		});
+	//Events
+	client.on('open', function()
+	{
+		console.log((new Date()) + ' WebSocket client connected!');
 	});
+	client.on('message', function(data, flags)
+	{
+		processMessage(data);
+	});
+	client.on('error', function(error)
+	{
+		console.log((new Date()) + ' Connect Error: ' + error.toString());
+		connected = false;
+	});
+	client.on('close', function(code)
+	{
+		console.log((new Date()) + ' Websocket Connection Closed [' + code +']');
+		connected = false;
+	});
+	
+
+}
+
+function GoOnline()
+{
+	if(!online)
+	{
+		online = true;
+		if(wsClient.GetClient() != undefined)
+		{
+			init(function()
+			{
+				var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy", "BattleRankUp"]}';
+				wsClient.GetClient().send(messageToSend);
+			});
+		}
+	}
+}
+
+function GoOffline()
+{
+	if(online)
+	{
+		online = false;
+		if(wsClient.GetClient() != undefined)
+		{
+			var messageToSend = '{"action":"clearSubscribe","all":"true","service":"event"}';
+			wsClient.GetClient().send(messageToSend);
+		}
+	}
 }
 
 /************************
@@ -401,6 +409,19 @@ function persistentClient()
 function processMessage(messageData)
 {
 	var message = JSON.parse(messageData);
+	
+	if(message.service == "event" && message.type == "serviceStateChanged" && message.detail == "EventServerEndpoint_1")
+	{
+		if(message.online == "true")
+		{
+			GoOnline();
+		}
+		else if(message.online == "false")
+		{
+			
+			GoOffline();
+		}
+	}
 	
 	if(message.service == "event" && message.type == "serviceMessage" && message.payload != undefined)
 	{
@@ -505,11 +526,20 @@ function processMessage(messageData)
 									
 									pool.getConnection(function(err, dbConnection)
 									{
-										dbConnection.query('INSERT IGNORE INTO CombatEvents SET ?', post, function(err, result)
+										if(dbConnection != undefined)
 										{
-											if (err) throw err;
-											dbConnection.release();
-										});
+											dbConnection.query('INSERT IGNORE INTO CombatEvents SET ?', post, function(err, result)
+											{
+												if (err)
+												{
+													 console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+												}
+												else
+												{
+													dbConnection.release();
+												}
+											});
+										}
 									});
 								}
 								else if(eventType == "VehicleDestroy")
@@ -563,11 +593,20 @@ function processMessage(messageData)
 									
 									pool.getConnection(function(err, dbConnection)
 									{
-										dbConnection.query('INSERT IGNORE INTO VehicleCombatEvents SET ?', post, function(err, result)
+										if(dbConnection != undefined)
 										{
-											if (err) throw err;
-											dbConnection.release();
-										});
+											dbConnection.query('INSERT IGNORE INTO VehicleCombatEvents SET ?', post, function(err, result)
+											{
+												if (err)
+												{
+													console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+												}
+												else
+												{
+													dbConnection.release();
+												}
+											});
+										}
 									});
 								}
 								
@@ -632,11 +671,20 @@ function processMessage(messageData)
 					
 					pool.getConnection(function(err, dbConnection)
 					{
-						dbConnection.query('INSERT IGNORE INTO FacilityControlEvents SET ?', post, function(err, result)
+						if(dbConnection != undefined)
 						{
-							if (err) throw err;
-							dbConnection.release();
-						});
+							dbConnection.query('INSERT IGNORE INTO FacilityControlEvents SET ?', post, function(err, result)
+							{
+								if (err)
+								{
+									console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+								}
+								else
+								{
+									dbConnection.release();
+								}
+							});
+						}
 					});
 					
 					var messageData =
@@ -712,11 +760,20 @@ function processMessage(messageData)
 						
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT IGNORE INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+							if(dbConnection != undefined)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
+								dbConnection.query('INSERT IGNORE INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+								{
+									if (err)
+									{
+										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+									}
+									else
+									{
+										dbConnection.release();
+									}
+								});
+							}
 						});
 					}
 				}
@@ -785,11 +842,20 @@ function processMessage(messageData)
 						
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT IGNORE INTO AlertEvents SET ?', post, function(err, result)
+							if(dbConnection != undefined)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
+								dbConnection.query('INSERT IGNORE INTO AlertEvents SET ?', post, function(err, result)
+								{
+									if (err)
+									{
+										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+									}
+									else
+									{
+										dbConnection.release();
+									}
+								});
+							}
 						});
 						
 						var eventData =
@@ -874,11 +940,20 @@ function processMessage(messageData)
 						var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query(sql, post, function(err, result)
+							if(dbConnection != undefined)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
+								dbConnection.query(sql, post, function(err, result)
+								{
+									if (err)
+									{
+										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+									}
+									else
+									{
+										dbConnection.release();
+									}
+								});
+							}
 						});	
 						
 						var eventData =
@@ -970,11 +1045,20 @@ function processMessage(messageData)
 						var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query(sql, post, function(err, result)
+							if(dbConnection != undefined)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
+								dbConnection.query(sql, post, function(err, result)
+								{
+									if (err)
+									{
+										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+									}
+									else
+									{
+										dbConnection.release();
+									}
+								});
+							}
 						});
 						
 						var eventData =
@@ -1021,11 +1105,20 @@ function processMessage(messageData)
 					
 						pool.getConnection(function(err, dbConnection)
 						{
-							dbConnection.query('INSERT IGNORE INTO LoginEvents SET ?', post, function(err, result)
+							if(dbConnection != undefined)
 							{
-								if (err) throw err;
-								dbConnection.release();
-							});
+								dbConnection.query('INSERT IGNORE INTO LoginEvents SET ?', post, function(err, result)
+								{
+									if (err)
+									{
+										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+									}
+									else
+									{
+										dbConnection.release();
+									}
+								});
+							}
 						});
 
 						var messageData =
@@ -1088,11 +1181,20 @@ function processMessage(messageData)
 							
 							pool.getConnection(function(err, dbConnection)
 							{
-								dbConnection.query('INSERT IGNORE INTO BattleRankEvents SET ?', post, function(err, result)
+								if(dbConnection != undefined)
 								{
-									if (err) throw err;
-									dbConnection.release();
-								});
+									dbConnection.query('INSERT IGNORE INTO BattleRankEvents SET ?', post, function(err, result)
+									{
+										if (err)
+										{
+											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+										}
+										else
+										{
+											dbConnection.release();
+										}
+									});
+								}
 							});
 
 							var messageData =
@@ -1365,20 +1467,14 @@ function GetCensusData(url, callback)
 			{
 				if(failureCount >= maxFailures)
 				{
-					if(online)
-					{
-						console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Entering Offline Mode. Will try reconnect in 5 minutes.");
-						EnterOfflineMode();
-					}
+					console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Dropping event.");
+					console.log("Caused by Census Query: " + url);
 					callback(false, null);
 				}
 				else
 				{
-					if(online)
-					{
-						console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
-					}
-					failureCount ++;
+					console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
+					failureCount++;
 					GetCensusData(url, callback);
 				}
 			}
@@ -1392,19 +1488,13 @@ function GetCensusData(url, callback)
 			{
 				if(failureCount >= maxFailures)
 				{
-					if(online)
-					{
-						console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Entering Offline Mode. Will try reconnect in 5 minutes.");
-						EnterOfflineMode();
-					}
+					console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Dropping event.");
+					console.log("Caused by Census Query: " + url);
 					callback(false, null);
 				}
 				else
 				{
-					if(online)
-					{
-						console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
-					}
+					console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
 					failureCount++;
 					GetCensusData(url, callback);
 				}
@@ -1414,67 +1504,15 @@ function GetCensusData(url, callback)
 	{
 		if(failureCount >= maxFailures)
 		{
-			if(online)
-			{
-				console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Entering Offline Mode. Will try reconnect in 5 minutes.");
-				EnterOfflineMode();
-			}
+			console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Dropping event.");
+			console.log("Caused by Census Query: " + url);
 			callback(false, null);
 		}
 		else
 		{
-			if(online)
-			{
-				console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
-			}
+			console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
 			failureCount++;
 			GetCensusData(url, callback);
 		}
 	});
-}
-
-//This closes all connections with Census.
-function EnterOfflineMode()
-{
-	if(wsClient.GetClient() != undefined)
-	{
-		wsClient.GetClient().close();
-	}
-	online = false;
-	
-	//Test all of our required queries....
-	setInterval(function()
-	{
-		GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=10&c:lang=en", function(success, data)
-		{
-			if(success)
-			{
-				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/character?character_id=5428010917272162465&c:show=character_id,faction_id&c:join=outfit_member^on:character_id^to:character_id^show:outfit_id", function(success2, data2)
-				{
-					if(success2)
-					{
-						GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=25&zone_ids=2&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id", function(success3, data3)
-						{
-							if(success3)
-							{
-								online = true;
-							}
-							else
-							{
-								console.log("Error: Census Query for map failed. Retrying in 5 Minutes.");
-							}
-						});
-					}
-					else
-					{
-						console.log("Error: Census Query for character failed. Retrying in 5 Minutes.");
-					}
-				});
-			}
-			else
-			{
-				console.log("Error: Census Query for world_event failed. Retrying in 5 Minutes.");
-			}
-		});
-	}, 300000);
 }

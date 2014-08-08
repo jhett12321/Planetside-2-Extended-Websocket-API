@@ -8,7 +8,7 @@ var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
 //Version
-var version = "0.9.1";
+var version = "0.9.2";
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
@@ -48,7 +48,7 @@ var connectionIDCounter = 0; //Connection Unique ID's.
 
 httpServer.listen(config.serverPort, function()
 {
-	console.log((new Date()) + ' Websocket Server is listening on port 8080');
+	console.log((new Date()) + ' Websocket Server is listening on port ' + config.serverPort);
 });
 
 var wsServer = new WebSocketServer(
