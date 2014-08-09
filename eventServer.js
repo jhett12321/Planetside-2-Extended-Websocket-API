@@ -1,5 +1,5 @@
 //Includes
-var WebSocketServer = require('websocket').server; //TODO Move into new library.
+var WebSocketServer = require('ws').Server;
 var http = require('http');
 var url = require('url');
 var mysql = require('mysql');
@@ -8,7 +8,7 @@ var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
 //Version
-var version = "0.9.2";
+var version = "0.9.3";
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
@@ -53,52 +53,71 @@ httpServer.listen(config.serverPort, function()
 
 var wsServer = new WebSocketServer(
 {
-	httpServer: httpServer,
-	autoAcceptclientConnections: false
+	server: httpServer,
+	clientTracking: false, //We do our own tracking.
+	verifyClient: function(info, callback)
+	{
+		try
+		{
+			var apiKey = url.parse(info.req.url, true).query.apikey;
+			
+			verifyAPIKey(apiKey, function(isValid, apiUsername) //Verify this client's API Key.
+			{
+				if(!isValid)
+				{
+					callback(false, 401, 'Invalid or Disabled API Key Specified.'); // Make sure we only accept requests from a valid API Key
+				}
+				else
+				{
+					callback(true);
+				}
+			});
+		}
+		catch(err)
+		{
+			callback(false, 401, 'Invalid API Key Specified');
+		}
+	}
 });
 	
 /**************
     Events    *
 **************/
 	
-wsServer.on('request', function(request)
+wsServer.on('connection', function(clientConnection)
 {
-	var apiKey = request.resourceURL.query.apikey;
+	var apiKey = url.parse(clientConnection.upgradeReq.url, true).query.apikey;
 	
-	verifyAPIKey(apiKey, function(isValid, errorMsg, apiUsername) //Verify this client's API Key.
+	verifyAPIKey(apiKey, function(isValid, apiUsername) //Verify this client's API Key.
 	{
-		if(!isValid)
+		if(isValid)
 		{
-			request.reject(1008, errorMsg); // Make sure we only accept requests from a valid API Key
-		}
-		else
-		{
-			var clientConnection = request.accept(null, request.origin);
-
 			// Store a reference to the connection using an incrementing ID
 			clientConnection.id = connectionIDCounter ++;
 			
 			// Store references relating to this connection's subscriptions
 			clientConnection.subscriptions = getBlankSubscription();
 			
+			//Add to tracked client connections.
 			clientConnections[clientConnection.id] = clientConnection;
 		
 			console.log((new Date()) + ' User ' + apiUsername + ' connected. API Key: ' + apiKey);
 			
 			var message = 
 			{
-				message: "Welcome to ps2_events (v" + version + ") " + apiUsername + ", please enjoy your stay!",
 				service: "ps2_events",
-				websocket_event: "connectionStateChange"
+				version: version,
+				websocket_event: "connectionStateChange",
+				online: "true",
 			}
-			clientConnection.sendUTF(JSON.stringify(message));
+			clientConnection.send(JSON.stringify(message));
 			
 			//Events
 			clientConnection.on('message', function(message)
 			{
 				try
 				{
-					var decodedMessage = JSON.parse(message.utf8Data);
+					var decodedMessage = JSON.parse(message);
 					var eventType = decodedMessage.event;
 					
 					if(eventType in clientConnection.subscriptions)
@@ -146,7 +165,7 @@ wsServer.on('request', function(request)
 						
 						else if(eventType == "Alert" && decodedMessage.action == "activeAlerts")
 						{
-							clientConnection.sendUTF(JSON.stringify(eventTracker.getActiveAlerts()));
+							clientConnection.send(JSON.stringify(eventTracker.getActiveAlerts()));
 						}
 					}
 					
@@ -174,20 +193,24 @@ wsServer.on('request', function(request)
 							}
 						}
 						
-						clientConnection.sendUTF(JSON.stringify(returnObject));
+						clientConnection.send(JSON.stringify(returnObject));
 					}
 				}
 				catch(exception)
 				{
-					clientConnection.sendUTF('{"error": "BADJSON", "message": "You have supplied an invalid JSON string. Please check your syntax."}');
+					clientConnection.send('{"error": "BADJSON", "message": "You have supplied an invalid JSON string. Please check your syntax."}');
 				}
 			});
 			
-			clientConnection.on('close', function(reasonCode, description)
+			clientConnection.on('close', function(code, message)
 			{
 				console.log((new Date()) + ' User ' + apiUsername + ' disconnected. API Key: ' + apiKey);
 				delete clientConnections[clientConnection.id];
 			});
+		}
+		else
+		{
+			clientConnection.close(); //We should never get here.
 		}
 	});
 });
@@ -195,7 +218,7 @@ wsServer.on('request', function(request)
 /************************
     Server Functions    *
 ************************/
-	
+
 //Validate Connecting API Key
 function verifyAPIKey(APIKey, callback)
 {	
@@ -203,24 +226,25 @@ function verifyAPIKey(APIKey, callback)
 	{
 		pool.getConnection(function(err, dbConnection)
 		{
-			if (err) callback(false, "Invalid API Key Specified");
+			if (err) callback(false, null);
 			
 			dbConnection.query('SELECT * FROM APIKeys WHERE api_key = ? AND enabled = 1', APIKey, function(err, rows, fields)
 			{
+				dbConnection.release();
 				if(rows.length > 0)
 				{
-					callback(true, "", rows[0].name);
+					callback(true, rows[0].name);
 				}
 				else
 				{
-					callback(false, "Invalid API Key Specified.", "");
+					callback(false, null);
 				}
 			});
 		});
 	}
 	else
 	{
-		callback(false, "No API Key Specified.");
+		callback(false);
 	}
 }
 

@@ -226,7 +226,7 @@ function watcher()
 //Processes live character info
 function queryCharacterInfo()
 {
-	var queries = queriesToProcess.splice(0);
+	var queries = queriesToProcess.splice(0,150);
 	
 	if(queries.length > 0)
 	{
@@ -235,7 +235,13 @@ function queryCharacterInfo()
 		{
 			if(queries.hasOwnProperty(query))
 			{
-				charList = charList.concat(queries[query].charList);
+				for(var i=0; i<queries[query].charList.length; i++)
+				{
+					if(charList.indexOf(queries[query].charList[i]) == -1)
+					{
+						charList.push(queries[query].charList[i]);
+					}
+				}
 			}
 		}
 		
