@@ -8,7 +8,7 @@ var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
 //Version
-var version = "0.9.3";
+var version = "0.9.4";
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
@@ -259,7 +259,7 @@ exports.broadcastEvent = function(rawData)
 	Object.keys(clientConnections).forEach(function(key)
 	{
 		var clientConnection = clientConnections[key];
-		if (clientConnection.connected)
+		if(clientConnection.readyState == 1)
 		{
 			var subscriptionProperties = clientConnection.subscriptions[rawData.eventType];
 			
@@ -342,16 +342,6 @@ exports.broadcastEvent = function(rawData)
 			}
 		}
 	});
-}
-
-// Send a message to a connection by its connectionID
-exports.sendToConnectionId = function(connectionID, data)
-{
-	var clientConnection = clientConnections[connectionID];
-	if (clientConnection && clientConnection.connected)
-	{
-		clientConnection.send(data);
-	}
 }
 
 exports.currentAlerts = function(alerts)
@@ -454,6 +444,19 @@ function getBlankSubscription()
 			outfits: [],
 			factions: [],
 			login_types: [],
+			worlds: []
+		},
+		'DirectiveCompleted':
+		{
+			all: "false",
+			useAND: [],
+			show: [],
+			hide: [],
+			characters: [],
+			outfits: [],
+			factions: [],
+			directive_tiers: [],
+			directive_trees: [],
 			worlds: []
 		}
 	};
