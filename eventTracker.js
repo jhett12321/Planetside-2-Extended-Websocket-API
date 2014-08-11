@@ -71,7 +71,7 @@ var maxFailures = 10;
 var alerts = {};
 exports.alerts = alerts;	 //Used for tracking alert facility control.
 
-//Regions
+//Regions - Used for Territory Control calculations, and Continent locks.
 var regions = {};
 
 //Websocket Client. Connects to SOE's Census REST API.
@@ -118,11 +118,10 @@ function init(callback)
 									if (err)
 									{
 										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+										console.log(err);
 									}
-									else
-									{
-										dbConnection.release();
-									}
+									
+									dbConnection.release();
 								});
 							}
 						});
@@ -172,6 +171,12 @@ function initRegionData(world, callback)
 				var zoneData = data.map_list[j];
 				var zoneID = zoneData.ZoneId;
 				
+				regions[world][zoneID] =
+				{
+					regions: {},
+					locked: 'false'
+				}
+				
 				for(var k = 0; k < zoneData.Regions.Row.length; k++)
 				{
 					var regionData = zoneData.Regions.Row[k].RowData;
@@ -184,7 +189,13 @@ function initRegionData(world, callback)
 						'zone_id': zoneID
 					};
 					
-					regions[world][facilityID] = regionInfo;
+					regions[world][zoneID]['regions'][facilityID] = regionInfo;
+				}
+				
+				var regionInfo = calculateTerritoryControl(getSelectedRegions(world, zoneID, 0));
+				if(regionInfo.controlVS == 100 || regionInfo.controlNC == 100 || regionInfo.controlTR == 100)
+				{
+					regions[world][zoneID].locked = 'true';
 				}
 			}
 			
@@ -498,12 +509,11 @@ function processMessage(messageData)
 												{
 													if (err)
 													{
-														 console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+														console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+														console.log(err);
 													}
-													else
-													{
-														dbConnection.release();
-													}
+													
+													dbConnection.release();
 												});
 											}
 										});
@@ -566,11 +576,10 @@ function processMessage(messageData)
 													if (err)
 													{
 														console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+														console.log(err);
 													}
-													else
-													{
-														dbConnection.release();
-													}
+													
+													dbConnection.release();
 												});
 											}
 										});
@@ -599,11 +608,12 @@ function processMessage(messageData)
 					if(isValidZone(payload.zone_id))
 					{
 						var worldID = payload.world_id;
+						var zoneID = payload.zone_id;
 						var facilityID = payload.facility_id;
 						
-						regions[worldID][facilityID].owner = payload.new_faction_id;
+						regions[worldID][zoneID]['regions'][facilityID].owner = payload.new_faction_id;
 						
-						var selectedRegions = getSelectedRegions(worldID, payload.zone_id, "0");
+						var selectedRegions = getSelectedRegions(worldID, zoneID, "0");
 						
 						var controlInfo = calculateTerritoryControl(selectedRegions);
 						
@@ -621,7 +631,7 @@ function processMessage(messageData)
 						var post =
 						{
 							facility_id: payload.facility_id,
-							facility_type_id: regions[worldID][facilityID].facility_type_id,
+							facility_type_id: regions[worldID][zoneID]['regions'][facilityID].facility_type_id,
 							duration_held: payload.duration_held,
 							new_faction_id: payload.new_faction_id,
 							old_faction_id: payload.old_faction_id,
@@ -644,11 +654,10 @@ function processMessage(messageData)
 									if (err)
 									{
 										console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+										console.log(err);
 									}
-									else
-									{
-										dbConnection.release();
-									}
+									
+									dbConnection.release();
 								});
 							}
 						});
@@ -690,8 +699,9 @@ function processMessage(messageData)
 						eventServer.broadcastEvent(eventData);
 						
 						//Check if continent is locked.
-						if(controlVS == 100 || controlNC == 100 || controlTR == 100)
+						if((controlVS == 100 || controlNC == 100 || controlTR == 100) && regions[worldID][zoneID].locked == 'false')
 						{
+							regions[worldID][zoneID].locked = 'true';
 							var lockPost =
 							{
 								zone_id: payload.zone_id,
@@ -704,39 +714,46 @@ function processMessage(messageData)
 							{
 								if(dbConnection != undefined)
 								{
-									dbConnection.query('INSERT INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+									dbConnection.query('INSERT IGNORE INTO ContinentLockEvents SET ?', lockPost, function(err, result)
 									{
-										if (!err) //TODO Very hacky way of preventing duplicates.
+										if (err)
 										{
-											var lockMessageData =
-											{
-												zone_id: payload.zone_id,
-												world_id: payload.world_id,
-												timestamp: payload.timestamp,
-												locked_by: majorityController,
-											}
-											
-											var lockFilterData = 
-											{
-												zones: [payload.zone_id],
-												worlds: [payload.world_id],
-												factions: [majorityController],
-											}
-											
-											var lockEventData =
-											{
-												eventType: "ContinentLock",
-												messageData: lockMessageData,
-												filterData: lockFilterData
-											};
-										
-											eventServer.broadcastEvent(lockEventData);
+											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
 										}
 										
 										dbConnection.release();
 									});
 								}
 							});
+							
+							var lockMessageData =
+							{
+								zone_id: payload.zone_id,
+								world_id: payload.world_id,
+								timestamp: payload.timestamp,
+								locked_by: majorityController,
+							}
+							
+							var lockFilterData = 
+							{
+								zones: [payload.zone_id],
+								worlds: [payload.world_id],
+								factions: [majorityController],
+							}
+							
+							var lockEventData =
+							{
+								eventType: "ContinentLock",
+								messageData: lockMessageData,
+								filterData: lockFilterData
+							};
+						
+							eventServer.broadcastEvent(lockEventData);
+						}
+						else if((controlVS != 100 && controlNC != 100 && controlTR != 100) && regions[worldID][zoneID].locked == 'true')
+						{
+							regions[worldID][zoneID].locked = 'false';
 						}
 					}
 				}
@@ -812,11 +829,10 @@ function processMessage(messageData)
 										if (err)
 										{
 											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
 										}
-										else
-										{
-											dbConnection.release();
-										}
+										
+										dbConnection.release();
 									});
 								}
 							});
@@ -911,11 +927,10 @@ function processMessage(messageData)
 										if (err)
 										{
 											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
 										}
-										else
-										{
-											dbConnection.release();
-										}
+										
+										dbConnection.release();
 									});
 								}
 							});	
@@ -975,7 +990,7 @@ function processMessage(messageData)
 							
 							var alertID = alerts[uID].alert_id;
 							var alertTypeID = alerts[uID].alert_type_id;
-							var region = regions[payload.world_id][payload.facility_id];
+							var region = regions[payload.world_id][zoneID]['regions'][payload.facility_id];
 							
 							var messageData =
 							{
@@ -991,7 +1006,7 @@ function processMessage(messageData)
 								control_tr: controlTR,
 								facility_captured: region,
 								domination: "0",
-								zone_id: alertTypes[alertTypeID].zone,
+								zone_id: zoneID,
 								facility_type_id: alertTypes[alertTypeID].facility,
 								world_id: payload.world_id
 							}
@@ -1002,7 +1017,7 @@ function processMessage(messageData)
 								alert_types: [alertTypeID],
 								statuses: ["2"],
 								dominations: ["0"],
-								zones: [alertTypes[alertTypeID].zone],
+								zones: [zoneID],
 								facilityTypes: [alertTypes[alertTypeID].facility],
 								worlds: [payload.world_id]
 							}
@@ -1017,11 +1032,10 @@ function processMessage(messageData)
 										if (err)
 										{
 											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
 										}
-										else
-										{
-											dbConnection.release();
-										}
+										
+										dbConnection.release();
 									});
 								}
 							});
@@ -1077,11 +1091,10 @@ function processMessage(messageData)
 										if (err)
 										{
 											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
 										}
-										else
-										{
-											dbConnection.release();
-										}
+										
+										dbConnection.release();
 									});
 								}
 							});
@@ -1153,11 +1166,10 @@ function processMessage(messageData)
 											if (err)
 											{
 												console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+												console.log(err);
 											}
-											else
-											{
-												dbConnection.release();
-											}
+											
+											dbConnection.release();
 										});
 									}
 								});
@@ -1525,13 +1537,16 @@ function getSelectedRegions(worldID, zoneID, facilityTypeID)
 {
 	var selectedRegions = {};
 	
-	for(var region in regions[worldID])
+	for(var zone in regions[worldID])
 	{
-		if(regions[worldID][region].facility_type_id != "7")
+		for(var region in regions[worldID][zone]['regions'])
 		{
-			if((regions[worldID][region].zone_id == zoneID && facilityTypeID == "0") || (zoneID == "0" && regions[worldID][region].facility_type_id == facilityTypeID) || (regions[worldID][region].zone_id == zoneID && regions[worldID][region].facility_type_id == facilityTypeID))
+			if(regions[worldID][zone]['regions'][region].facility_type_id != "7")
 			{
-				selectedRegions[region] = regions[worldID][region];
+				if((zone == zoneID && facilityTypeID == "0") || (zoneID == "0" && regions[worldID][zone]['regions'][region].facility_type_id == facilityTypeID) || (zone == zoneID && regions[worldID][zone]['regions'][region].facility_type_id == facilityTypeID))
+				{
+					selectedRegions[region] = regions[worldID][zone]['regions'][region];
+				}
 			}
 		}
 	}
