@@ -8,7 +8,7 @@ var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
 //Version
-var version = "0.9.4";
+var version = "0.9.5";
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
@@ -395,7 +395,7 @@ function getBlankSubscription()
 			statuses: [],
 			dominations: [],
 			zones: [],
-			facilityTypes: [],
+			facility_types: [],
 			worlds: []
 		},
 		'FacilityControl':
@@ -457,6 +457,19 @@ function getBlankSubscription()
 			factions: [],
 			directive_tiers: [],
 			directive_trees: [],
+			worlds: []
+		},
+		'AchievementEarned':
+		{
+			all: "false",
+			useAND: [],
+			show: [],
+			hide: [],
+			characters: [],
+			outfits: [],
+			factions: [],
+			achievements: [],
+			zones: [],
 			worlds: []
 		}
 	};

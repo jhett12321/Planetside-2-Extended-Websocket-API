@@ -1,17 +1,15 @@
 //This file processes the raw data provided by SOE's Census REST API, and saves the data to a local database, and a relay Websocket Server.
 
-//Includes
+//Modules
 var WebSocket = require('ws');
 var mysql = require('mysql');
 var http = require('http');
 var url = require('url');
 
+//Event Tracker Components
 var eventServer;
 var config = require('./config.js');
 var gameData = require('./gameData.js');
-
-//Census PUSH API status. Turns false if event feed is offline.
-var online = false;
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID; 
@@ -29,22 +27,14 @@ var pool = mysql.createPool(
 });
 
 //Planetside 2 Game Data
-	//Loadout ID's
-	//Used to resolve faction ID's for Combat Events
+//See gameData.js for explanation of values.
 var loadoutsVS = gameData.loadoutsVS;
 var loadoutsNC = gameData.loadoutsNC;
 var loadoutsTR = gameData.loadoutsTR;
 
-	//Alert ID's
-	//Used to resolve Continent and Facility ID's for Alert Events.
 var alertTypes = gameData.alertTypes;
 
-	//World IDs
-	//Used for map queries.
 var worlds = gameData.worlds;
-
-	//Zone IDs
-	//Used for map queries.
 var zones = gameData.zones;
 
 //-------------------------------------------------------------------
@@ -53,23 +43,26 @@ var zones = gameData.zones;
 * 	Manages, records and relays information provided by the SOE API.
 */
 //-------------------------------------------------------------------
-	
+
 /**********************
     Initialisation    *
 **********************/
 
+//API status. Remains false while websocket is offline.
+var online = false;
+
 //Tracker Start time. Used for events
 var startTime = Math.round(Date.now() / 1000);
 
-//Cache and Query Queue System - See Census Query Processor
-var characters = {}; //Used for combat events.
-var queriesToProcess = []; //Census Character Query Queue
+//Cache and Query Queue System
+var characters = {};
+var queriesToProcess = [];
 var failureCount = 0;
 var maxFailures = 10;
 
-//Alerts
+//Used to track active alerts
 var alerts = {};
-exports.alerts = alerts;	 //Used for tracking alert facility control.
+exports.alerts = alerts;
 
 //Regions - Used for Territory Control calculations, and Continent locks.
 var regions = {};
@@ -83,18 +76,20 @@ function init(callback)
 	failureCount = 0;
 	
 	//Region Data
+	var worldsProcessed = 0;
 	for(var i=0; i<worlds.length; i++)
 	{
 		var world = worlds[i];
 		regions[world] = {};
 		
-		initRegionData(world, function(isLastWorld)
+		initRegionData(world, function()
 		{
-			if(isLastWorld)
-			{	
+			worldsProcessed++;
+			if(worldsProcessed >= worlds.length)
+			{
 				//Update Alert Data
-				var limit = worlds.length * zones.length * 2; //Max possible alert events - 1 start and end event for each continent on each server
-				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=" + limit + "&c:lang=en", function(success, data)
+				var timestamp = Math.round(Date.now() / 1000) - 7201;
+				GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/world_event/?type=METAGAME&c:limit=1000&c:lang=en&after=" + timestamp, true, function(success, data)
 				{
 					if(success)
 					{
@@ -162,7 +157,7 @@ function init(callback)
 function initRegionData(world, callback)
 {
 	//Region Data
-	GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + world + "&zone_ids=" + zones.join(",") + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id", function(success, data)
+	GetCensusData("http://census.soe.com/s:" + serviceID + "/get/ps2:v2/map?world_id=" + world + "&zone_ids=" + zones.join(",") + "&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_type_id'map_region_id", false, function(success, data)
 	{
 		if(success)
 		{
@@ -199,14 +194,13 @@ function initRegionData(world, callback)
 				}
 			}
 			
-			if(world == worlds[worlds.length - 1])
-			{
-				callback(true);
-			}
-			else
-			{
-				callback(false);
-			}
+			callback();
+		}
+		else
+		{
+			worlds.splice(worlds.indexOf(world), 1);
+			console.log("SEVERE: [World Resolve Error] - Could not retrieve region data for world " + world + ". Is the game server offline, or are your game data definitions out of date?");
+			callback();
 		}
 	});
 }
@@ -272,13 +266,22 @@ function GoOnline()
 {
 	if(!online)
 	{
-		online = true;
 		if(wsClient.GetClient() != undefined)
 		{
 			init(function()
 			{
-				var messageToSend = '{"service":"event","action":"subscribe","characters":["all"],"worlds":["all"],"eventNames":["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy", "BattleRankUp"]}';
+				var messageToSend = JSON.stringify(
+				{
+					"service": "event",
+					"action": "subscribe",
+					"characters": ["all"],
+					"worlds": worlds,
+					"eventNames": ["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy", "BattleRankUp"]
+				});
+				
 				wsClient.GetClient().send(messageToSend);
+				
+				online = true;
 			});
 		}
 	}
@@ -375,6 +378,77 @@ function processMessage(messageData)
 										eventServer.broadcastEvent(eventData);
 									}
 
+									dbConnection.release();
+								});
+							}
+						});
+					}
+				});
+			}
+		}
+		
+		else if(eventType == "AchievementEarned")
+		{
+			var character = payload.character_id;
+			
+			if(isValidCharacter(character))
+			{
+				retrieveCharacterInfo([character], function(success)
+				{
+					if(success)
+					{
+						var characterOutfitID = characters[character].outfit_id;
+						var characterFactionID = characters[character].faction_id;
+						
+						var post =
+						{
+							character_id: character,
+							outfit_id: characterOutfitID,
+							faction_id: characterFactionID,
+							achievement_id: payload.achievement_id,
+							timestamp: payload.timestamp,
+							zone_id: payload.zone_id,
+							world_id: payload.world_id
+						};
+					
+						pool.getConnection(function(err, dbConnection)
+						{
+							if(dbConnection != undefined)
+							{
+								dbConnection.query('INSERT INTO AchievementEvents SET ?', post, function(err, result)
+								{
+									if (!err) //TODO Very hacky way of preventing duplicates.
+									{
+										var messageData =
+										{
+											character_id: character,
+											outfit_id: characterOutfitID,
+											faction_id: characterFactionID,
+											achievement_id: payload.achievement_id,
+											timestamp: payload.timestamp,
+											zone_id: payload.zone_id,
+											world_id: payload.world_id
+										}
+										
+										var filterData = 
+										{
+											characters: [character],
+											outfits: [characterOutfitID],
+											factions: [characterFactionID],
+											achievements: [payload.achievement_id],
+											zones: [payload.zone_id],
+											worlds: [payload.world_id]
+										}
+										
+										var eventData =
+										{
+											eventType: "AchievementEarned",
+											messageData: messageData,
+											filterData: filterData
+										};
+										
+										eventServer.broadcastEvent(eventData);
+									}
 									dbConnection.release();
 								});
 							}
@@ -768,8 +842,8 @@ function processMessage(messageData)
 							alerts[uID].start_time = payload.timestamp;
 							
 							var worldID = payload.world_id;
-							var zoneID = alertTypes[payload.metagame_event_id].zone;
-							var facilityID = alertTypes[payload.metagame_event_id].facility;
+							var zoneID = alerts[uID].zone_id;
+							var facilityTypeID = alerts[uID].facility_type_id;
 							
 							var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
 							
@@ -786,7 +860,7 @@ function processMessage(messageData)
 								majority_controller: majorityController,
 								domination: "0",
 								zone_id: zoneID,
-								facility_type_id: facilityID,
+								facility_type_id: facilityTypeID,
 								world_id: worldID
 							};
 							
@@ -804,9 +878,9 @@ function processMessage(messageData)
 								facilities: selectedRegions,
 								majority_controller: majorityController,
 								domination: "0",
-								zone_id: alertTypes[payload.metagame_event_id].zone,
-								facility_type_id: alertTypes[payload.metagame_event_id].facility,
-								world_id: payload.world_id
+								zone_id: zoneID,
+								facility_type_id: facilityTypeID,
+								world_id: worldID
 							}
 							
 							var filterData = 
@@ -815,9 +889,9 @@ function processMessage(messageData)
 								alert_types: [payload.metagame_event_id],
 								statuses: ["1"],
 								dominations: ["0"],
-								zones: [alertTypes[payload.metagame_event_id].zone],
-								facilityTypes: [alertTypes[payload.metagame_event_id].facility],
-								worlds: [payload.world_id]
+								zones: [zoneID],
+								facility_types: [facilityTypeID],
+								worlds: [worldID]
 							}
 							
 							pool.getConnection(function(err, dbConnection)
@@ -853,22 +927,26 @@ function processMessage(messageData)
 					
 					else if(payload.metagame_event_state == "137" || payload.metagame_event_state == "138")
 					{
-						var zoneID = alertTypes[payload.metagame_event_id].zone;
-						var facilityTypeID = alertTypes[payload.metagame_event_id].facility;
-						
-						var selectedRegions = getSelectedRegions(payload.world_id, zoneID, facilityTypeID);
-						
-						var controlInfo = calculateTerritoryControl(selectedRegions);
-						
-						var controlVS = controlInfo.controlVS;
-						var controlNC = controlInfo.controlNC;
-						var controlTR = controlInfo.controlTR;
-						var majorityController = controlInfo.majorityController;
-						
 						var uID = payload.world_id + "_" + payload.instance_id;
 						
 						if(alerts[uID] != undefined)
 						{
+							var startTime = alerts[uID].start_time;
+							var zoneID = alerts[uID].zone_id;
+							var facilityTypeID = alerts[uID].facility_type_id;
+							
+							var alertID = payload.instance_id;
+							var worldID = payload.world_id;
+							
+							var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
+							
+							var controlInfo = calculateTerritoryControl(selectedRegions);
+							
+							var controlVS = controlInfo.controlVS;
+							var controlNC = controlInfo.controlNC;
+							var controlTR = controlInfo.controlTR;
+							var majorityController = controlInfo.majorityController;
+							
 							var domination = "0";
 							if(controlVS >= 94 || controlNC >= 94 || controlTR >= 94)
 							{
@@ -888,9 +966,9 @@ function processMessage(messageData)
 							
 							var messageData =
 							{
-								alert_id: payload.instance_id,
+								alert_id: alertID,
 								alert_type_id: payload.metagame_event_id,
-								start_time: alerts[uID].start_time,
+								start_time: startTime,
 								end_time: payload.timestamp,
 								status: "0",
 								status_name: "end",
@@ -900,9 +978,9 @@ function processMessage(messageData)
 								facilities: selectedRegions,
 								majority_controller: majorityController,
 								domination: domination,
-								zone_id: alertTypes[payload.metagame_event_id].zone,
-								facility_type_id: alertTypes[payload.metagame_event_id].facility,
-								world_id: payload.world_id
+								zone_id: zoneID,
+								facility_type_id: facilityTypeID,
+								world_id: worldID
 							}
 							
 							var filterData = 
@@ -911,13 +989,12 @@ function processMessage(messageData)
 								alert_types: [payload.metagame_event_id],
 								statuses: ["0"],
 								dominations: [domination],
-								zones: [alertTypes[payload.metagame_event_id].zone],
-								facilityTypes: [alertTypes[payload.metagame_event_id].facility],
-								worlds: [payload.world_id]
+								zones: [zoneID],
+								facility_types: [facilityTypeID],
+								worlds: [worldID]
 							}
 							
-							var alertID = payload.instance_id;
-							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
+							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + worldID;
 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
@@ -959,7 +1036,7 @@ function processMessage(messageData)
 						{
 							if (alerts.hasOwnProperty(alert))
 							{
-								if(parseInt(alerts[alert].world_id) == parseInt(payload.world_id))
+								if(alerts[alert].world_id == payload.world_id && alerts[alert].zone_id == payload.zone_id)
 								{
 									uID = alert;
 									break;
@@ -969,8 +1046,8 @@ function processMessage(messageData)
 						
 						if(uID != null)
 						{
-							var zoneID = alertTypes[alerts[uID].alert_type_id].zone;
-							var facilityTypeID = alertTypes[alerts[uID].alert_type_id].facility;
+							var zoneID = alerts[uID].zone_id;
+							var facilityTypeID = alerts[uID].facility_type_id;
 							
 							var selectedRegions = getSelectedRegions(payload.world_id, zoneID, facilityTypeID);
 							
@@ -991,6 +1068,7 @@ function processMessage(messageData)
 							var alertID = alerts[uID].alert_id;
 							var alertTypeID = alerts[uID].alert_type_id;
 							var region = regions[payload.world_id][zoneID]['regions'][payload.facility_id];
+							var worldID = payload.world_id;
 							
 							var messageData =
 							{
@@ -1007,8 +1085,8 @@ function processMessage(messageData)
 								facility_captured: region,
 								domination: "0",
 								zone_id: zoneID,
-								facility_type_id: alertTypes[alertTypeID].facility,
-								world_id: payload.world_id
+								facility_type_id: facilityTypeID,
+								world_id: worldID
 							}
 							
 							var filterData = 
@@ -1018,8 +1096,8 @@ function processMessage(messageData)
 								statuses: ["2"],
 								dominations: ["0"],
 								zones: [zoneID],
-								facilityTypes: [alertTypes[alertTypeID].facility],
-								worlds: [payload.world_id]
+								facility_types: [facilityTypeID],
+								worlds: [worldID]
 							}
 							
 							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
@@ -1244,7 +1322,7 @@ function queryCharacterInfo()
 		
 		var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/character?character_id=" + charList.join(",") + "&c:show=character_id,faction_id,name.first" + 
 		"&c:join=outfit_member^show:outfit_id^inject_at:outfit";
-		GetCensusData(url, function(success, data)
+		GetCensusData(url, false, function(success, data)
 		{
 			if(success)
 			{
@@ -1332,43 +1410,86 @@ setInterval(queryCharacterInfo, 1000);
 //Processes Character Events that are not available within the websocket API. Events here will hopefully be temporary as websocket events get added to the Census API.
 function CensusEvents()
 {
-	var queryTimestamp = Math.round(Date.now() / 1000) - 1800;
-	
-	if(queryTimestamp < startTime)
+	if(online)
 	{
-		queryTimestamp = startTime;
-	}
-	
-	var url = "http://census.soe.com/get/ps2:v2/characters_directive_tier?completion_time=>" + queryTimestamp + "&c:limit=5000&c:join=characters_world^on:character_id^to:character_id^show:world_id^inject_at:characters_world";
-	GetCensusData(url, function(success, data)
-	{
-		if(success)
+		var queryTimestamp = Math.round(Date.now() / 1000) - 1800;
+		
+		if(queryTimestamp < startTime)
 		{
-			var sortedEvents = data.characters_directive_tier_list.sort(compareBy('-completion_time'));
-			for(var i=0; i<sortedEvents.length; i++)
-			{
-				var event = sortedEvents[i];
-				var message = 
-				{
-					'payload':
-					{
-						"event_name": "DirectiveCompleted",
-						character_id: event.character_id,
-						timestamp: event.completion_time,
-						directive_tier_id: event.directive_tier_id,
-						directive_tree_id: event.directive_tree_id,
-						world_id: event.characters_world.world_id
-					},
-					'service': 'local',
-					'type':'serviceMessage'
-				}
-				
-				processMessage(JSON.stringify(message));
-			}
+			queryTimestamp = startTime;
 		}
-	});
+		
+		var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/characters_directive_tier?completion_time=>" + queryTimestamp + "&c:limit=5000&c:join=characters_world^on:character_id^to:character_id^show:world_id^inject_at:characters_world";
+		GetCensusData(url, true, function(success, data)
+		{
+			if(success)
+			{
+				var sortedEvents = data.characters_directive_tier_list.sort(compareBy('-completion_time'));
+				for(var i=0; i<sortedEvents.length; i++)
+				{
+					var event = sortedEvents[i];
+					var message = 
+					{
+						'payload':
+						{
+							"event_name": "DirectiveCompleted",
+							character_id: event.character_id,
+							timestamp: event.completion_time,
+							directive_tier_id: event.directive_tier_id,
+							directive_tree_id: event.directive_tree_id,
+							world_id: event.characters_world.world_id
+						},
+						'service': 'local',
+						'type':'serviceMessage'
+					}
+					
+					processMessage(JSON.stringify(message));
+				}
+			}
+		});
+	}
 }
 setInterval(CensusEvents, 30000);
+
+//Events that are quickly populated on the REST API can be polled more often.
+//TODO: SOE Databases are currently being hammered at the moment due to server merges. Will decrease polling period after performance improves.
+var lastEventTimestamp = startTime;
+function ActiveCensusEvents()
+{
+	if(online)
+	{
+		var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/event?after=>" + lastEventTimestamp + "&type=ACHIEVEMENT&c:limit=5000";
+		GetCensusData(url, true, function(success, data)
+		{
+			if(success)
+			{
+				var sortedEvents = data.event_list.sort(compareBy('-timestamp'));
+				for(var i=0; i<sortedEvents.length; i++)
+				{
+					var event = sortedEvents[i];
+					var message = 
+					{
+						'payload':
+						{
+							"event_name": "AchievementEarned",
+							character_id: event.character_id,
+							timestamp: event.timestamp,
+							achievement_id: event.achievement_id,
+							zone_id: event.zone_id,
+							world_id: event.world_id
+						},
+						'service': 'local',
+						'type':'serviceMessage'
+					}
+					
+					lastEventTimestamp = event.timestamp;
+					processMessage(JSON.stringify(message));
+				}
+			}
+		});
+	}
+}
+setInterval(ActiveCensusEvents, 15000);
 
 /************************
     Client Functions    *
@@ -1512,20 +1633,17 @@ var getActiveAlerts = function()
 	
 	for(var alert in alerts)
 	{
-		if(alert in alerts)
-		{
-			activeAlerts['alerts'][alert] = alerts[alert];
-			
-			var worldID = alerts[alert].world_id;
-			var alert_type_id = alerts[alert].alert_type_id;
-			
-			var zoneID = alertTypes[alert_type_id].zone;
-			var facilityTypeID = alertTypes[alert_type_id].facility;
-			
-			var alertRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
-			
-			activeAlerts['alerts'][alert]['regions'] = alertRegions;
-		}
+		activeAlerts['alerts'][alert] = alerts[alert];
+		
+		var worldID = alerts[alert].world_id;
+		var alert_type_id = alerts[alert].alert_type_id;
+		
+		var zoneID = alerts[alert].zone_id;
+		var facilityTypeID = alerts[alert].facility_type_id;
+		
+		var alertRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
+		
+		activeAlerts['alerts'][alert]['regions'] = alertRegions;
 	}
 	
 	return activeAlerts;
@@ -1563,9 +1681,11 @@ function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
 		alerts[uID] =
 		{
 			alert_id: alertID,
-			world_id: worldID,
+			alert_type_id: alertTypeID,
 			start_time: "0",
-			alert_type_id: alertTypeID
+			zone_id: alertTypes[alertTypeID].zone,
+			facility_type_id: alertTypes[alertTypeID].facility,
+			world_id: worldID,
 		}
 		
 		var zoneID = alertTypes[alertTypeID].zone;
@@ -1584,7 +1704,7 @@ function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
 }
 
 //A Utility function. Will poll the census API until the requested data is received.
-function GetCensusData(url, callback)
+function GetCensusData(url, allowNoData, callback)
 {
 	http.get(url, function(res)
 	{
@@ -1603,17 +1723,17 @@ function GetCensusData(url, callback)
 			}
 			catch(error)
 			{
+				console.log("WARNING: [Census Connection Error] - JSON Parse Error (Failed Attempt " + failureCount + ")");
+				console.log("Caused by Census Query: " + url);
 				if(failureCount >= maxFailures)
 				{
 					console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Dropping event.");
-					console.log("Caused by Census Query: " + url);
 					callback(false, null);
 				}
 				else
 				{
-					console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
 					failureCount++;
-					GetCensusData(url, callback);
+					GetCensusData(url, allowNoData, callback);
 				}
 			}
 			
@@ -1624,23 +1744,40 @@ function GetCensusData(url, callback)
 			
 			else if(data != null && data.returned != undefined && data.returned != null && data.returned == "0")
 			{
-				console.log("WARNING: [Census Connection Error] - Query returned no data: " + url);
-				callback(true, data);
+				if(!allowNoData)
+				{
+					console.log("WARNING: [Census Connection Error] - Expected data was not returned by the query (Failed Attempt " + failureCount + ")");
+					console.log("Caused by Census Query: " + url);
+					if(failureCount >= maxFailures)
+					{
+						console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Dropping event.");
+						callback(false, null);
+					}
+					else
+					{
+						failureCount++;
+						GetCensusData(url, allowNoData, callback);
+					}
+				}
+				else
+				{
+					callback(true, data);
+				}
 			}
 			
 			else
 			{
+				console.log("WARNING: [Census Connection Error] - An invalid data format was returned (Failure Count " + failureCount + ")");
+				console.log("Caused by Census Query: " + url);
 				if(failureCount >= maxFailures)
 				{
 					console.log("SEVERE: [Census Connection Error] - Connection Attempt Limit Reached. Dropping event.");
-					console.log("Caused by Census Query: " + url);
 					callback(false, null);
 				}
 				else
 				{
-					console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
 					failureCount++;
-					GetCensusData(url, callback);
+					GetCensusData(url, allowNoData, callback);
 				}
 			}
 		});
@@ -1655,8 +1792,9 @@ function GetCensusData(url, callback)
 		else
 		{
 			console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
+			console.log("Caused by Census Query: " + url);
 			failureCount++;
-			GetCensusData(url, callback);
+			GetCensusData(url, allowNoData, callback);
 		}
 	});
 }
