@@ -28,7 +28,7 @@ var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
 //Version
-var version = "0.9.5";
+var version = "0.9.6";
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
@@ -182,7 +182,7 @@ wsServer.on('connection', function(clientConnection)
 						clientConnection.send(JSON.stringify(zones));
 					}
 					
-					if(eventType in clientConnection.subscriptions)
+					else if(eventType in clientConnection.subscriptions)
 					{
 						var subscriptionData = clientConnection.subscriptions[eventType];
 						if(decodedMessage.action == "subscribe")
@@ -236,6 +236,11 @@ wsServer.on('connection', function(clientConnection)
 					else if(decodedMessage.action == "unsubscribeAll")
 					{
 						clientConnection.subscriptions = getBlankSubscription();
+					}
+					
+					else
+					{
+						clientConnection.send('{"error": "unknownAction", "message": "There is no Action or Event Type by that name. Please check your syntax, and try again."}');
 					}
 					
 					if(decodedMessage.action == "subscribe" || decodedMessage.action == "unsubscribe" || decodedMessage.action == "unsubscribeAll")
