@@ -135,10 +135,52 @@ wsServer.on('connection', function(clientConnection)
 			//Events
 			clientConnection.on('message', function(message)
 			{
+				var decodedMessage;
+				
 				try
 				{
-					var decodedMessage = JSON.parse(message);
+					decodedMessage = JSON.parse(message);
+				}
+				catch(exception)
+				{
+					clientConnection.send('{"error": "BADJSON", "message": "You have supplied an invalid JSON string. Please check your syntax."}');
+					decodedMessage = undefined;
+				}
+				
+				if(decodedMessage != undefined)
+				{
 					var eventType = decodedMessage.event;
+					var action = decodedMessage.action;
+					
+					if(action == "activeAlerts")
+					{
+						var alerts;
+						if(decodedMessage.worlds != undefined)
+						{
+							alerts = eventTracker.getActiveAlerts(decodedMessage.worlds);
+						}
+						else
+						{
+							alerts = eventTracker.getActiveAlerts(null);
+						}
+						
+						clientConnection.send(JSON.stringify(alerts));
+					}
+					
+					else if(action == "zoneStatus")
+					{
+						var zones;
+						if(decodedMessage.worlds != undefined)
+						{
+							zones = eventTracker.getZoneLockStatus(decodedMessage.worlds);
+						}
+						else
+						{
+							zones = eventTracker.getZoneLockStatus(null);
+						}
+						
+						clientConnection.send(JSON.stringify(zones));
+					}
 					
 					if(eventType in clientConnection.subscriptions)
 					{
@@ -154,7 +196,14 @@ wsServer.on('connection', function(clientConnection)
 							{
 								if(property in subscriptionData && property != "all")
 								{
-									subscriptionData[property] = subscriptionData[property].concat(decodedMessage[property]);
+									for(var i=0; i<decodedMessage[property].length; i++)
+									{
+										if(subscriptionData[property].indexOf(decodedMessage[property][i]) == -1)
+										{
+											subscriptionData[property].push(decodedMessage[property][i]);
+										}
+									}
+	
 								}
 							}
 						}
@@ -181,11 +230,6 @@ wsServer.on('connection', function(clientConnection)
 							}
 							
 							subscriptionData["all"] = "false";
-						}
-						
-						else if(eventType == "Alert" && decodedMessage.action == "activeAlerts")
-						{
-							clientConnection.send(JSON.stringify(eventTracker.getActiveAlerts()));
 						}
 					}
 					
@@ -215,10 +259,6 @@ wsServer.on('connection', function(clientConnection)
 						
 						clientConnection.send(JSON.stringify(returnObject));
 					}
-				}
-				catch(exception)
-				{
-					clientConnection.send('{"error": "BADJSON", "message": "You have supplied an invalid JSON string. Please check your syntax."}');
 				}
 			});
 			

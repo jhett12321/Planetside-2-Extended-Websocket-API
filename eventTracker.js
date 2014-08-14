@@ -1642,7 +1642,7 @@ function calculateTerritoryControl(selectedRegions)
 }
 
 //Gets Regions for a selected alert.
-var getActiveAlerts = function()
+var getActiveAlerts = function(worlds)
 {
 	var activeAlerts =
 	{
@@ -1651,22 +1651,53 @@ var getActiveAlerts = function()
 	
 	for(var alert in alerts)
 	{
-		activeAlerts['alerts'][alert] = alerts[alert];
-		
 		var worldID = alerts[alert].world_id;
-		var alert_type_id = alerts[alert].alert_type_id;
 		
-		var zoneID = alerts[alert].zone_id;
-		var facilityTypeID = alerts[alert].facility_type_id;
-		
-		var alertRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
-		
-		activeAlerts['alerts'][alert]['regions'] = alertRegions;
+		if(worlds == null || worlds.indexOf(worldID) > -1)
+		{
+			activeAlerts['alerts'][alert] = alerts[alert];
+			
+			var alert_type_id = alerts[alert].alert_type_id;
+			
+			var zoneID = alerts[alert].zone_id;
+			var facilityTypeID = alerts[alert].facility_type_id;
+			
+			var alertRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
+			
+			activeAlerts['alerts'][alert]['regions'] = alertRegions;
+		}
 	}
 	
 	return activeAlerts;
 };
 exports.getActiveAlerts = getActiveAlerts;
+
+//Gets the lock status of all continents
+var getZoneLockStatus = function(filterWorlds)
+{
+	var zoneInfo =
+	{
+		'zoneStatus': {}
+	};
+	
+	for(var world in regions)
+	{
+		if(filterWorlds == null || filterWorlds.indexOf(world) > -1)
+		{
+			zoneInfo['zoneStatus'][world] = {};
+			for(var zone in regions[world])
+			{
+				zoneInfo['zoneStatus'][world][zone] =
+				{
+					locked: regions[world][zone].locked
+				};
+			}
+		}
+	}
+	
+	return zoneInfo;
+};
+exports.getZoneLockStatus = getZoneLockStatus;
 
 //Returns a list of regions based on their world, zone and facility type. Use 0 for facility id if you want to select all non-warpgate regions.
 function getSelectedRegions(worldID, zoneID, facilityTypeID)
