@@ -75,7 +75,6 @@ var startTime = Math.round(Date.now() / 1000);
 //Cache and Query Queue System
 var characters = {};
 var queriesToProcess = [];
-var failureCount = 0;
 var maxFailures = 10;
 
 //Used to track active alerts
@@ -90,9 +89,6 @@ var wsClient = new persistentClient();
 
 function init(callback)
 {
-	//Reset Failure Count
-	failureCount = 0;
-	
 	//Region Data
 	var worldsProcessed = 0;
 	for(var i=0; i<worlds.length; i++)
@@ -187,7 +183,8 @@ function initRegionData(world, callback)
 				regions[world][zoneID] =
 				{
 					regions: {},
-					locked: 'false'
+					locked: 'false',
+					locked_by: '0'
 				}
 				
 				for(var k = 0; k < zoneData.Regions.Row.length; k++)
@@ -209,6 +206,7 @@ function initRegionData(world, callback)
 				if(regionInfo.controlVS == 100 || regionInfo.controlNC == 100 || regionInfo.controlTR == 100)
 				{
 					regions[world][zoneID].locked = 'true';
+					regions[world][zoneID].locked_by = regionInfo.majorityController;
 				}
 			}
 			
@@ -794,11 +792,14 @@ function processMessage(messageData)
 						if((controlVS == 100 || controlNC == 100 || controlTR == 100) && regions[worldID][zoneID].locked == 'false')
 						{
 							regions[worldID][zoneID].locked = 'true';
+							regions[worldID][zoneID].locked_by = majorityController;
+							
 							var lockPost =
 							{
 								zone_id: payload.zone_id,
 								world_id: payload.world_id,
 								timestamp: payload.timestamp,
+								type: '1',
 								locked_by: majorityController,
 							};
 							
@@ -824,6 +825,8 @@ function processMessage(messageData)
 								zone_id: payload.zone_id,
 								world_id: payload.world_id,
 								timestamp: payload.timestamp,
+								type: '1',
+								type_name: 'locked',
 								locked_by: majorityController,
 							}
 							
@@ -832,6 +835,7 @@ function processMessage(messageData)
 								zones: [payload.zone_id],
 								worlds: [payload.world_id],
 								factions: [majorityController],
+								types: ['1']
 							}
 							
 							var lockEventData =
@@ -846,6 +850,60 @@ function processMessage(messageData)
 						else if((controlVS != 100 && controlNC != 100 && controlTR != 100) && regions[worldID][zoneID].locked == 'true')
 						{
 							regions[worldID][zoneID].locked = 'false';
+							regions[worldID][zoneID].locked_by = '0';
+							
+							var lockPost =
+							{
+								zone_id: payload.zone_id,
+								world_id: payload.world_id,
+								timestamp: payload.timestamp,
+								type: '0',
+								locked_by: '0',
+							};
+							
+							pool.getConnection(function(err, dbConnection)
+							{
+								if(dbConnection != undefined)
+								{
+									dbConnection.query('INSERT IGNORE INTO ContinentLockEvents SET ?', lockPost, function(err, result)
+									{
+										if (err)
+										{
+											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
+										}
+										
+										dbConnection.release();
+									});
+								}
+							});
+							
+							var lockMessageData =
+							{
+								zone_id: payload.zone_id,
+								world_id: payload.world_id,
+								timestamp: payload.timestamp,
+								type: '0',
+								type_name: 'unlocked',
+								locked_by: '0',
+							}
+							
+							var lockFilterData = 
+							{
+								zones: [payload.zone_id],
+								worlds: [payload.world_id],
+								factions: [majorityController],
+								types: ['0']
+							}
+							
+							var lockEventData =
+							{
+								eventType: "ContinentLock",
+								messageData: lockMessageData,
+								filterData: lockFilterData
+							};
+						
+							eventServer.broadcastEvent(lockEventData);
 						}
 					}
 				}
@@ -1689,7 +1747,8 @@ var getZoneLockStatus = function(filterWorlds)
 			{
 				zoneInfo['zoneStatus'][world][zone] =
 				{
-					locked: regions[world][zone].locked
+					locked: regions[world][zone].locked,
+					locked_by: regions[world][zone].locked_by
 				};
 			}
 		}
@@ -1753,8 +1812,12 @@ function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
 }
 
 //A Utility function. Will poll the census API until the requested data is received.
-function GetCensusData(url, allowNoData, callback)
+function GetCensusData(url, allowNoData, callback, failureCount)
 {
+	if(failureCount == undefined)
+	{
+		failureCount = 0;
+	}
 	http.get(url, function(res)
 	{
 		var body = '';
@@ -1782,7 +1845,7 @@ function GetCensusData(url, allowNoData, callback)
 				else
 				{
 					failureCount++;
-					GetCensusData(url, allowNoData, callback);
+					GetCensusData(url, allowNoData, callback, failureCount);
 				}
 			}
 			
@@ -1805,7 +1868,7 @@ function GetCensusData(url, allowNoData, callback)
 					else
 					{
 						failureCount++;
-						GetCensusData(url, allowNoData, callback);
+						GetCensusData(url, allowNoData, callback, failureCount);
 					}
 				}
 				else
@@ -1826,7 +1889,7 @@ function GetCensusData(url, allowNoData, callback)
 				else
 				{
 					failureCount++;
-					GetCensusData(url, allowNoData, callback);
+					GetCensusData(url, allowNoData, callback, failureCount);
 				}
 			}
 		});
@@ -1843,7 +1906,7 @@ function GetCensusData(url, allowNoData, callback)
 			console.log("WARNING: [Census Connection Error] - Failed Attempt " + failureCount);
 			console.log("Caused by Census Query: " + url);
 			failureCount++;
-			GetCensusData(url, allowNoData, callback);
+			GetCensusData(url, allowNoData, callback, failureCount);
 		}
 	});
 }
