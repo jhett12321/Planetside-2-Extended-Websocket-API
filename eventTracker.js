@@ -183,7 +183,7 @@ function initRegionData(world, callback)
 				regions[world][zoneID] =
 				{
 					regions: {},
-					locked: 'false',
+					locked: '0',
 					locked_by: '0'
 				}
 				
@@ -205,7 +205,7 @@ function initRegionData(world, callback)
 				var regionInfo = calculateTerritoryControl(getSelectedRegions(world, zoneID, 0));
 				if(regionInfo.controlVS == 100 || regionInfo.controlNC == 100 || regionInfo.controlTR == 100)
 				{
-					regions[world][zoneID].locked = 'true';
+					regions[world][zoneID].locked = '1';
 					regions[world][zoneID].locked_by = regionInfo.majorityController;
 				}
 			}
@@ -789,9 +789,9 @@ function processMessage(messageData)
 						eventServer.broadcastEvent(eventData);
 						
 						//Check if continent is locked.
-						if((controlVS == 100 || controlNC == 100 || controlTR == 100) && regions[worldID][zoneID].locked == 'false')
+						if((controlVS == 100 || controlNC == 100 || controlTR == 100) && regions[worldID][zoneID].locked == '0')
 						{
-							regions[worldID][zoneID].locked = 'true';
+							regions[worldID][zoneID].locked = '1';
 							regions[worldID][zoneID].locked_by = majorityController;
 							
 							var lockPost =
@@ -847,7 +847,7 @@ function processMessage(messageData)
 						
 							eventServer.broadcastEvent(lockEventData);
 						}
-						else if((controlVS != 100 && controlNC != 100 && controlTR != 100) && regions[worldID][zoneID].locked == 'true')
+						else if((controlVS != 100 && controlNC != 100 && controlTR != 100) && regions[worldID][zoneID].locked == '1')
 						{
 							regions[worldID][zoneID].locked = 'false';
 							regions[worldID][zoneID].locked_by = '0';
