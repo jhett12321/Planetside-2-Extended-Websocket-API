@@ -849,7 +849,7 @@ function processMessage(messageData)
 						}
 						else if((controlVS != 100 && controlNC != 100 && controlTR != 100) && regions[worldID][zoneID].locked == '1')
 						{
-							regions[worldID][zoneID].locked = 'false';
+							regions[worldID][zoneID].locked = '0';
 							regions[worldID][zoneID].locked_by = '0';
 							
 							var lockPost =
@@ -913,11 +913,36 @@ function processMessage(messageData)
 				{
 					if(payload.metagame_event_state == "135" || payload.metagame_event_state == "136")
 					{
-						retrieveAlertInfo(payload.instance_id, payload.metagame_event_id, payload.world_id, function(uID, controlVS, controlNC, controlTR, majorityController)
+						//Create Tracked Alert
+						var worldID = payload.world_id;
+						var alertID = payload.instance_id;
+						var alertTypeID = payload.metagame_event_id;
+						
+						if(alertTypes[alertTypeID] != undefined && worldID != undefined)
 						{
-							alerts[uID].start_time = payload.timestamp;
+							var uID = worldID + "_" + alertID;
+							alerts[uID] =
+							{
+								alert_id: alertID,
+								alert_type_id: alertTypeID,
+								start_time: payload.timestamp,
+								zone_id: alertTypes[alertTypeID].zone,
+								facility_type_id: alertTypes[alertTypeID].facility,
+								world_id: worldID,
+							}
 							
-							var worldID = payload.world_id;
+							//Alert Info for database, and websocket event
+							var zoneID = alertTypes[alertTypeID].zone;
+							var facilityTypeID = alertTypes[alertTypeID].facility;
+							var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
+							
+							var controlInfo = calculateTerritoryControl(selectedRegions);
+							
+							var controlVS = controlInfo.controlVS;
+							var controlNC = controlInfo.controlNC;
+							var controlTR = controlInfo.controlTR;
+							var majorityController = controlInfo.majorityController;
+							
 							var zoneID = alerts[uID].zone_id;
 							var facilityTypeID = alerts[uID].facility_type_id;
 							
@@ -998,7 +1023,11 @@ function processMessage(messageData)
 							{
 								eventServer.broadcastEvent(eventData);
 							}
-						});
+						}
+						else
+						{
+							console.log("SEVERE: [MetagameEvent ID Resolve Error] - Could not retrieve alert information for Metagame Event ID " + payload.metagame_event_id + ". Are your game data definitions out of date?");
+						}
 					}
 					
 					else if(payload.metagame_event_state == "137" || payload.metagame_event_state == "138")
@@ -1778,37 +1807,6 @@ function getSelectedRegions(worldID, zoneID, facilityTypeID)
 	}
 	
 	return selectedRegions;
-}
-
-//Processes the Alert Census Request. The callback is called once the alert's facilities, and the facility owners have been resolved.
-function retrieveAlertInfo(alertID, alertTypeID, worldID, callback)
-{
-	if(alertTypes[alertTypeID] != undefined && worldID != undefined)
-	{
-		var uID = worldID + "_" + alertID;
-		alerts[uID] =
-		{
-			alert_id: alertID,
-			alert_type_id: alertTypeID,
-			start_time: "0",
-			zone_id: alertTypes[alertTypeID].zone,
-			facility_type_id: alertTypes[alertTypeID].facility,
-			world_id: worldID,
-		}
-		
-		var zoneID = alertTypes[alertTypeID].zone;
-		var facilityTypeID = alertTypes[alertTypeID].facility;
-		var selectedRegions = getSelectedRegions(worldID, zoneID, facilityTypeID);
-		
-		var controlInfo = calculateTerritoryControl(selectedRegions);
-		
-		var controlVS = controlInfo.controlVS;
-		var controlNC = controlInfo.controlNC;
-		var controlTR = controlInfo.controlTR;
-		var majorityController = controlInfo.majorityController;
-		
-		callback(uID, controlVS, controlNC, controlTR, majorityController);
-	}
 }
 
 //A Utility function. Will poll the census API until the requested data is received.
