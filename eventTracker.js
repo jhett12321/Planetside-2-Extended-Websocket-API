@@ -1764,17 +1764,24 @@ var getZoneLockStatus = function(filterWorlds)
 {
 	var zoneInfo =
 	{
-		'zoneStatus': {}
+		'zoneStatus':
+		{
+			'worlds': {}
+		}
 	};
 	
 	for(var world in regions)
 	{
 		if(filterWorlds == null || filterWorlds.indexOf(world) > -1)
 		{
-			zoneInfo['zoneStatus'][world] = {};
+			zoneInfo['zoneStatus']['worlds'][world] =
+			{
+				'zones': {}
+			};
+			
 			for(var zone in regions[world])
 			{
-				zoneInfo['zoneStatus'][world][zone] =
+				zoneInfo['zoneStatus']['worlds'][world]['zones'][zone] =
 				{
 					locked: regions[world][zone].locked,
 					locked_by: regions[world][zone].locked_by
