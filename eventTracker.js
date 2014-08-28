@@ -84,6 +84,9 @@ exports.alerts = alerts;
 //Regions - Used for Territory Control calculations, and Continent locks.
 var regions = {};
 
+//Worlds - Used for async world load
+var loadedWorlds = [];
+
 //Websocket Client. Connects to SOE's Census REST API.
 var wsClient = new persistentClient();
 
@@ -210,13 +213,21 @@ function initRegionData(world, callback)
 				}
 			}
 			
-			callback();
+			loadedWorlds.push(world);
+			console.log("Successfully Loaded Region Data for world " + world);
+			
+			if(callback != null)
+			{
+				callback();
+			}
 		}
 		else
 		{
-			worlds.splice(worlds.indexOf(world), 1);
 			console.log("SEVERE: [World Resolve Error] - Could not retrieve region data for world " + world + ". Is the game server offline, or are your game data definitions out of date?");
-			callback();
+			if(callback != null)
+			{
+				callback();
+			}
 		}
 	});
 }
@@ -278,6 +289,19 @@ function persistentClient()
 	});
 }
 
+//World Manager. Re-initalises worlds if they are not connected
+function WorldManager()
+{
+	for(var i=0; i<worlds.length; i++)
+	{
+		if(loadedWorlds.indexOf(worlds[i]) == -1)
+		{
+			initRegionData(worlds[i], null);
+		}
+	}
+}
+setInterval(WorldManager, 60000);
+
 function GoOnline()
 {
 	if(!online)
@@ -291,12 +315,12 @@ function GoOnline()
 					"service": "event",
 					"action": "subscribe",
 					"characters": ["all"],
-					"worlds": worlds,
-					"eventNames": ["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy", "BattleRankUp"]
+					"worlds": ["all"],
+					"eventNames": ["Death","FacilityControl","MetagameEvent","PlayerLogin","PlayerLogout","VehicleDestroy","BattleRankUp","AchievementEarned"]
 				});
 				
 				wsClient.GetClient().send(messageToSend);
-				
+				console.log("Sent Message to Census: " + messageToSend); 
 				online = true;
 			});
 		}
@@ -311,6 +335,7 @@ function GoOffline()
 		if(wsClient.GetClient() != undefined)
 		{
 			var messageToSend = '{"action":"clearSubscribe","all":"true","service":"event"}';
+			console.log("Sent Message to Census: " + messageToSend); 
 			wsClient.GetClient().send(messageToSend);
 		}
 	}
@@ -402,77 +427,6 @@ function processMessage(messageData)
 				});
 			}
 		}
-		
-		else if(eventType == "AchievementEarned")
-		{
-			var character = payload.character_id;
-			
-			if(isValidCharacter(character))
-			{
-				retrieveCharacterInfo([character], function(success)
-				{
-					if(success)
-					{
-						var characterOutfitID = characters[character].outfit_id;
-						var characterFactionID = characters[character].faction_id;
-						
-						var post =
-						{
-							character_id: character,
-							outfit_id: characterOutfitID,
-							faction_id: characterFactionID,
-							achievement_id: payload.achievement_id,
-							timestamp: payload.timestamp,
-							zone_id: payload.zone_id,
-							world_id: payload.world_id
-						};
-					
-						pool.getConnection(function(err, dbConnection)
-						{
-							if(dbConnection != undefined)
-							{
-								dbConnection.query('INSERT INTO AchievementEvents SET ?', post, function(err, result)
-								{
-									if (!err) //TODO Very hacky way of preventing duplicates.
-									{
-										var messageData =
-										{
-											character_id: character,
-											outfit_id: characterOutfitID,
-											faction_id: characterFactionID,
-											achievement_id: payload.achievement_id,
-											timestamp: payload.timestamp,
-											zone_id: payload.zone_id,
-											world_id: payload.world_id
-										}
-										
-										var filterData = 
-										{
-											characters: [character],
-											outfits: [characterOutfitID],
-											factions: [characterFactionID],
-											achievements: [payload.achievement_id],
-											zones: [payload.zone_id],
-											worlds: [payload.world_id]
-										}
-										
-										var eventData =
-										{
-											eventType: "AchievementEarned",
-											messageData: messageData,
-											filterData: filterData
-										};
-										
-										eventServer.broadcastEvent(eventData);
-									}
-									dbConnection.release();
-								});
-							}
-						});
-					}
-				});
-			}
-		}
 	}
 	
 	else
@@ -483,20 +437,98 @@ function processMessage(messageData)
 			if(message.online == "true")
 			{
 				GoOnline();
+				console.log("Received Census message that Event Server 1 is now online. Initializing data.");
 			}
-			else if(message.online == "false")
+			else if(message.online == "false" && message.detail == "EventServerEndpoint_1")
 			{
 				GoOffline();
+				console.log("[Warning] Received Census message that Event Server 1 is offline. Are game servers down for maintenance?");
 			}
 		}
 		
-		if(message.service == "event" && message.type == "serviceMessage" && message.payload != undefined)
+		if(message.service == "event" && message.type == "serviceMessage" && message.payload != undefined && loadedWorlds.indexOf(message.payload.world_id) >= 0)
 		{
 			var payload = message.payload;
 			var eventType = payload.event_name;
 			
+			//Achievements
+			if(eventType == "AchievementEarned")
+			{
+				var character = payload.character_id;
+				
+				if(isValidCharacter(character))
+				{
+					retrieveCharacterInfo([character], function(success)
+					{
+						if(success)
+						{
+							var characterOutfitID = characters[character].outfit_id;
+							var characterFactionID = characters[character].faction_id;
+							
+							var post =
+							{
+								character_id: character,
+								outfit_id: characterOutfitID,
+								faction_id: characterFactionID,
+								achievement_id: payload.achievement_id,
+								timestamp: payload.timestamp,
+								zone_id: payload.zone_id,
+								world_id: payload.world_id
+							};
+						
+							pool.getConnection(function(err, dbConnection)
+							{
+								if(dbConnection != undefined)
+								{
+									dbConnection.query('INSERT IGNORE INTO AchievementEvents SET ?', post, function(err, result)
+									{
+										if (err)
+										{
+											console.log("SEVERE: [MySQL Database Error] - Database Query Failed");
+											console.log(err);
+										}
+										
+										dbConnection.release();
+									});
+								}
+							});
+			
+							var messageData =
+							{
+								character_id: character,
+								outfit_id: characterOutfitID,
+								faction_id: characterFactionID,
+								achievement_id: payload.achievement_id,
+								timestamp: payload.timestamp,
+								zone_id: payload.zone_id,
+								world_id: payload.world_id
+							}
+							
+							var filterData = 
+							{
+								characters: [character],
+								outfits: [characterOutfitID],
+								factions: [characterFactionID],
+								achievements: [payload.achievement_id],
+								zones: [payload.zone_id],
+								worlds: [payload.world_id]
+							}
+							
+							var eventData =
+							{
+								eventType: "AchievementEarned",
+								messageData: messageData,
+								filterData: filterData
+							};
+							
+							eventServer.broadcastEvent(eventData);
+						}
+					});
+				}
+			}
+			
 			//Combat and Vehicle Combat
-			if(eventType == "Death" || eventType == "VehicleDestroy")
+			else if(eventType == "Death" || eventType == "VehicleDestroy")
 			{
 				if(isValidZone(payload.zone_id))
 				{
@@ -1533,68 +1565,32 @@ function CensusEvents()
 				for(var i=0; i<sortedEvents.length; i++)
 				{
 					var event = sortedEvents[i];
-					var message = 
-					{
-						'payload':
-						{
-							"event_name": "DirectiveCompleted",
-							character_id: event.character_id,
-							timestamp: event.completion_time,
-							directive_tier_id: event.directive_tier_id,
-							directive_tree_id: event.directive_tree_id,
-							world_id: event.characters_world.world_id
-						},
-						'service': 'local',
-						'type':'serviceMessage'
-					}
 					
-					processMessage(JSON.stringify(message));
+					if(event.characters_world != undefined)
+					{
+						var message = 
+						{
+							'payload':
+							{
+								"event_name": "DirectiveCompleted",
+								character_id: event.character_id,
+								timestamp: event.completion_time,
+								directive_tier_id: event.directive_tier_id,
+								directive_tree_id: event.directive_tree_id,
+								world_id: event.characters_world.world_id
+							},
+							'service': 'local',
+							'type':'serviceMessage'
+						}
+						
+						processMessage(JSON.stringify(message));
+					}
 				}
 			}
 		});
 	}
 }
 setInterval(CensusEvents, 30000);
-
-//Events that are quickly populated on the REST API can be polled more often.
-//TODO: SOE Databases are currently being hammered at the moment due to server merges. Will decrease polling period after performance improves.
-var lastEventTimestamp = startTime;
-function ActiveCensusEvents()
-{
-	if(online)
-	{
-		var url = "http://census.soe.com/s:" + serviceID + "/get/ps2:v2/event?after=>" + lastEventTimestamp + "&type=ACHIEVEMENT&c:limit=5000";
-		GetCensusData(url, true, function(success, data)
-		{
-			if(success)
-			{
-				var sortedEvents = data.event_list.sort(compareBy('-timestamp'));
-				for(var i=0; i<sortedEvents.length; i++)
-				{
-					var event = sortedEvents[i];
-					var message = 
-					{
-						'payload':
-						{
-							"event_name": "AchievementEarned",
-							character_id: event.character_id,
-							timestamp: event.timestamp,
-							achievement_id: event.achievement_id,
-							zone_id: event.zone_id,
-							world_id: event.world_id
-						},
-						'service': 'local',
-						'type':'serviceMessage'
-					}
-					
-					lastEventTimestamp = event.timestamp;
-					processMessage(JSON.stringify(message));
-				}
-			}
-		});
-	}
-}
-setInterval(ActiveCensusEvents, 15000);
 
 /************************
     Client Functions    *
