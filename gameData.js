@@ -32,10 +32,15 @@ data.loadoutsTR = ["8","10","11","12","13","14"];
 //Used to resolve Continent and Facility ID's for Alert Events.
 data.alertTypes =
 {
-	"31":{zone:"2", facility:"0"}, //Indar Lock
-	"32":{zone:"8", facility:"0"}, //Esamir Lock
-	"33":{zone:"6", facility:"0"}, //Amerish Lock
-	"34":{zone:"4", facility:"0"}, //Hossin Lock
+	"1":{zone:"2", facility:"0"}, //Indar Territory
+	"2":{zone:"8", facility:"0"}, //Esamir Territory
+	"3":{zone:"6", facility:"0"}, //Amerish Territory
+	"4":{zone:"4", facility:"0"}, //Hossin Territory
+	//Halloween
+	"51":{zone:"2", facility:"0"}, //Pumpkin Hunt 2014 Indar
+	"52":{zone:"8", facility:"0"}, //Pumpkin Hunt 2014 Esamir
+	"53":{zone:"6", facility:"0"}, //Pumpkin Hunt 2014 Amerish
+	"54":{zone:"4", facility:"0"}, //Pumpkin Hunt 2014 Hossin
 };
 
 //World IDs

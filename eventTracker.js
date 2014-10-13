@@ -84,6 +84,9 @@ exports.alerts = alerts;
 //Regions - Used for Territory Control calculations, and Continent locks.
 var regions = {};
 
+//Last event timestamp - Used for PlanetsideTime event.
+var PSTime = 0;
+
 //Worlds - Used for async world load
 var loadedWorlds = [];
 
@@ -450,6 +453,32 @@ function processMessage(messageData)
 		{
 			var payload = message.payload;
 			var eventType = payload.event_name;
+			var timestamp = payload.timestamp;
+			
+			if(timestamp > PSTime && online)
+			{
+				//New PlanetsideTime event
+				var timeDiff = timestamp - PSTime;
+				
+				var messageData =
+				{
+					old_time: PSTime.toString(),
+					new_time: timestamp.toString(),
+					diff: timeDiff.toString()
+				}
+				
+				var filterData = {}
+				
+				var eventData =
+				{
+					eventType: "PlanetsideTime",
+					messageData: messageData,
+					filterData: filterData
+				};
+				
+				eventServer.broadcastEvent(eventData);
+				PSTime = timestamp;
+			}
 			
 			//Achievements
 			if(eventType == "AchievementEarned")
@@ -555,7 +584,7 @@ function processMessage(messageData)
 								if(success)
 								{
 									var characterOutfitID = characters[characterID].outfit_id;
-									var characterFactionID = characters[characterID].faction_id;
+									var characterFactionID;
 									var characterName = characters[characterID].character_name;
 								
 									var attackerOutfitID = characters[attackerCharacterID].outfit_id;
@@ -642,6 +671,8 @@ function processMessage(messageData)
 									}
 									else if(eventType == "VehicleDestroy")
 									{
+										characterFactionID = payload.faction_id;
+										
 										type = "VehicleCombat";
 										post =
 										{
@@ -655,6 +686,7 @@ function processMessage(messageData)
 											victim_vehicle_id: payload.vehicle_id,
 											timestamp: payload.timestamp,
 											weapon_id: payload.attacker_weapon_id,
+											facility_id: payload.facility_id,
 											zone_id: payload.zone_id,
 											world_id: payload.world_id
 										};
@@ -673,6 +705,7 @@ function processMessage(messageData)
 											victim_vehicle_id: payload.vehicle_id,
 											timestamp: payload.timestamp,
 											weapon_id: payload.attacker_weapon_id,
+											facility_id: payload.facility_id,
 											zone_id: payload.zone_id,
 											world_id: payload.world_id
 										};	
@@ -685,6 +718,7 @@ function processMessage(messageData)
 											loadouts: [payload.attacker_loadout_id],
 											vehicles: [payload.attacker_vehicle_id,payload.vehicle_id],
 											weapons: [payload.attacker_weapon_id],
+											facilities: [payload.facility_id],
 											zones: [payload.zone_id],
 											worlds: [payload.world_id]
 										}
@@ -1756,7 +1790,7 @@ var getActiveAlerts = function(worlds)
 exports.getActiveAlerts = getActiveAlerts;
 
 //Gets the lock status of all continents
-var getZoneLockStatus = function(filterWorlds)
+var getZoneStatus = function(filterWorlds)
 {
 	var zoneInfo =
 	{
@@ -1777,10 +1811,14 @@ var getZoneLockStatus = function(filterWorlds)
 			
 			for(var zone in regions[world])
 			{
+				var controlInfo = calculateTerritoryControl(getSelectedRegions(world, zone, 0));
 				zoneInfo['zoneStatus']['worlds'][world]['zones'][zone] =
 				{
 					locked: regions[world][zone].locked,
-					locked_by: regions[world][zone].locked_by
+					locked_by: regions[world][zone].locked_by,
+					control_vs: controlInfo.controlVS,
+					control_nc: controlInfo.controlNC,
+					control_tr: controlInfo.controlTR
 				};
 			}
 		}
@@ -1788,10 +1826,10 @@ var getZoneLockStatus = function(filterWorlds)
 	
 	return zoneInfo;
 };
-exports.getZoneLockStatus = getZoneLockStatus;
+exports.getZoneStatus = getZoneStatus;
 
 //Returns a list of regions based on their world, zone and facility type. Use 0 for facility id if you want to select all non-warpgate regions.
-function getSelectedRegions(worldID, zoneID, facilityTypeID)
+var getSelectedRegions = function(worldID, zoneID, facilityTypeID)
 {
 	var selectedRegions = {};
 	
@@ -1810,7 +1848,8 @@ function getSelectedRegions(worldID, zoneID, facilityTypeID)
 	}
 	
 	return selectedRegions;
-}
+};
+exports.getSelectedRegions = getSelectedRegions;
 
 //A Utility function. Will poll the census API until the requested data is received.
 function GetCensusData(url, allowNoData, callback, failureCount)

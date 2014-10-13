@@ -28,7 +28,7 @@ var eventTracker = require('./eventTracker.js');
 var config = require('./config.js');
 
 //Version
-var version = "0.9.6";
+var version = "0.9.8";
 
 //SOE Census Service ID
 var serviceID = config.soeServiceID;
@@ -172,14 +172,40 @@ wsServer.on('connection', function(clientConnection)
 						var zones;
 						if(decodedMessage.worlds != undefined)
 						{
-							zones = eventTracker.getZoneLockStatus(decodedMessage.worlds);
+							zones = eventTracker.getZoneStatus(decodedMessage.worlds);
 						}
 						else
 						{
-							zones = eventTracker.getZoneLockStatus(null);
+							zones = eventTracker.getZoneStatus(null);
 						}
 						
 						clientConnection.send(JSON.stringify(zones));
+					}
+					
+					else if(action == "facilityStatus")
+					{
+						if(decodedMessage.worlds != undefined && decodedMessage.worlds.length > 0 && decodedMessage.zones != undefined && decodedMessage.zones.length > 0)
+						{
+							var facilityStatus =
+							{
+								"facilityStatus": {}
+							};
+							
+							for(var i=0; i<decodedMessage.worlds.length; i++)
+							{
+								facilityStatus["facilityStatus"][decodedMessage.worlds[i]] =
+								{
+									"zones": {}
+								};
+								
+								for(var j=0; j<decodedMessage.zones.length; j++)
+								{
+									facilityStatus["facilityStatus"][decodedMessage.worlds[i]]["zones"][decodedMessage.zones[j]] = eventTracker.getSelectedRegions(decodedMessage.worlds[i], decodedMessage.zones[j], "0");
+								}
+							}
+							
+							clientConnection.send(JSON.stringify(facilityStatus));
+						}
 					}
 					
 					else if(eventType in clientConnection.subscriptions)
@@ -187,23 +213,51 @@ wsServer.on('connection', function(clientConnection)
 						var subscriptionData = clientConnection.subscriptions[eventType];
 						if(decodedMessage.action == "subscribe")
 						{
-							if(decodedMessage["all"] == "true")
-							{
-								subscriptionData["all"] = "true";
-							}
-							
 							for(var property in decodedMessage)
 							{
-								if(property in subscriptionData && property != "all")
+								if(property in subscriptionData)
 								{
-									for(var i=0; i<decodedMessage[property].length; i++)
+									if(property == "all")
 									{
-										if(subscriptionData[property].indexOf(decodedMessage[property][i]) == -1)
+										if(decodedMessage[property] == "true")
 										{
-											subscriptionData[property].push(decodedMessage[property][i]);
+											subscriptionData["all"] = "true";
 										}
 									}
-	
+									else if(property != "worlds" && property != "zones" || (decodedMessage["worlds"] == undefined && property == "zones"))
+									{
+										for(var i=0; i<decodedMessage[property].length; i++)
+										{
+											if(subscriptionData[property].indexOf(decodedMessage[property][i]) == -1)
+											{
+												subscriptionData[property].push(decodedMessage[property][i]);
+											}
+										}
+									}
+									else if(property == "worlds")
+									{
+										for(var i=0; i<decodedMessage[property].length; i++)
+										{
+											if(!(decodedMessage[property][i] in subscriptionData[property]))
+											{
+												subscriptionData[property][decodedMessage[property][i]] =
+												{
+													"zones": []
+												}
+											}
+											
+											if(decodedMessage["zones"] != undefined && decodedMessage["zones"].length > 0)
+											{
+												for(var j=0; j<decodedMessage["zones"].length; j++)
+												{
+													if(subscriptionData[property][decodedMessage[property][i]].zones.indexOf(decodedMessage["zones"][j]) == -1)
+													{
+														subscriptionData[property][decodedMessage[property][i]].zones.push(decodedMessage["zones"][j]);
+													}
+												}
+											}
+										}
+									}
 								}
 							}
 						}
@@ -216,9 +270,26 @@ wsServer.on('connection', function(clientConnection)
 							
 							for(var property in decodedMessage)
 							{
-								if(property in subscriptionData && property != "all")
+								if(property in subscriptionData && property != "all" && property != "worlds")
 								{
 									subscriptionData[property] = subscriptionData[property].filter(function(x) { return decodedMessage[property].indexOf(x) < 0 });
+								}
+								else if(property in subscriptionData && property == "worlds")
+								{
+									for(var i=0; i<decodedMessage[property].length; i++)
+									{
+										if(subscriptionData[property][decodedMessage[property][i]] != undefined)
+										{
+											if(decodedMessage["zones"] == undefined)
+											{
+												delete subscriptionData[property][decodedMessage[property][i]];
+											}
+											else
+											{
+												subscriptionData[property][decodedMessage[property][i]].zones = subscriptionData[property][decodedMessage[property][i]].zones.filter(function(x) { return decodedMessage["zones"].indexOf(x) < 0 });
+											}
+										}
+									}
 								}
 							}
 						}
@@ -254,7 +325,7 @@ wsServer.on('connection', function(clientConnection)
 						{
 							for(var property in clientConnection.subscriptions[subscription])
 							{
-								if((clientConnection.subscriptions[subscription][property].length > 0 && property != "all") || (property == "all" && clientConnection.subscriptions[subscription][property] == 'true'))
+								if((clientConnection.subscriptions[subscription][property].length > 0 && property != "all" && property != "worlds") || (property == "all" && clientConnection.subscriptions[subscription][property] == 'true') || (property == "worlds" && Object.keys(clientConnection.subscriptions[subscription][property]).length > 0))
 								{
 									returnObject['subscriptions'][subscription] = clientConnection.subscriptions[subscription];
 									break;
@@ -338,6 +409,7 @@ exports.broadcastEvent = function(rawData)
 						messageToSend.payload[field] = rawData.messageData[field];
 					}
 				}
+				
 				for(var field in messageToSend.payload)
 				{
 					if(subscriptionProperties["hide"].indexOf(field) >= 0)
@@ -351,6 +423,7 @@ exports.broadcastEvent = function(rawData)
 			{
 				clientConnection.send(JSON.stringify(messageToSend));
 			}
+			
 			else
 			{
 				var sendMessage;
@@ -361,34 +434,59 @@ exports.broadcastEvent = function(rawData)
 					{
 						var filterData = rawData.filterData[property];
 						
-						if(subscriptionProperties["useAND"].indexOf(property) >= 0)
+						if(property == "worlds")
 						{
-							for(var i=0;i<filterData.length; i++)
+							if(subscriptionProperties[property][filterData] != undefined)
 							{
-								if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+								var zoneData = rawData.filterData["zones"];
+								
+								if(subscriptionProperties[property][filterData].zones.indexOf(zoneData[0]) >= 0)
 								{
 									sendMessage = true;
 								}
-								else if(subscriptionProperties[property].length > 0)
+								else if(subscriptionProperties[property][filterData].zones.length > 0)
 								{
 									sendMessage = false;
-									break;
 								}
+								else
+								{
+									sendMessage = true;
+								}
+								
 							}
 						}
 						
 						else
 						{
-							for(var i=0;i<filterData.length; i++)
+							if(subscriptionProperties["useAND"].indexOf(property) >= 0)
 							{
-								if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+								for(var i=0;i<filterData.length; i++)
 								{
-									sendMessage = true;
-									break;
+									if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+									{
+										sendMessage = true;
+									}
+									else if(subscriptionProperties[property].length > 0)
+									{
+										sendMessage = false;
+										break;
+									}
 								}
-								else if(subscriptionProperties[property].length > 0)
+							}
+							
+							else
+							{
+								for(var i=0;i<filterData.length; i++)
 								{
-									sendMessage = false;
+									if(subscriptionProperties[property].indexOf(filterData[i]) >= 0)
+									{
+										sendMessage = true;
+										break;
+									}
+									else if(subscriptionProperties[property].length > 0)
+									{
+										sendMessage = false;
+									}
 								}
 							}
 						}
@@ -421,6 +519,7 @@ function getBlankSubscription()
 		'Combat': 
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -431,12 +530,12 @@ function getBlankSubscription()
 			vehicles: [],
 			weapons: [],
 			headshots: [],
-			zones: [],
-			worlds: []
+			zones: []
 		},
 		'VehicleCombat':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -446,12 +545,13 @@ function getBlankSubscription()
 			loadouts: [],
 			vehicles: [],
 			weapons: [],
-			zones: [],
-			worlds: []
+			facilities: [],
+			zones: []
 		},
 		'Alert':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -461,11 +561,11 @@ function getBlankSubscription()
 			dominations: [],
 			zones: [],
 			facility_types: [],
-			worlds: []
 		},
 		'FacilityControl':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -473,22 +573,22 @@ function getBlankSubscription()
 			facility_types: [],
 			factions: [],
 			captures: [],
-			zones: [],
-			worlds: []
+			zones: []
 		},
 		'ContinentLock':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
 			factions: [],
-			zones: [],
-			worlds: [],
+			zones: []
 		},
 		'BattleRank':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -496,24 +596,24 @@ function getBlankSubscription()
 			outfits: [],
 			factions: [],
 			battle_ranks: [],
-			zones: [],
-			worlds: []
+			zones: []
 		},
 		'Login':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
 			characters: [],
 			outfits: [],
 			factions: [],
-			login_types: [],
-			worlds: []
+			login_types: []
 		},
 		'DirectiveCompleted':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -521,12 +621,12 @@ function getBlankSubscription()
 			outfits: [],
 			factions: [],
 			directive_tiers: [],
-			directive_trees: [],
-			worlds: []
+			directive_trees: []
 		},
 		'AchievementEarned':
 		{
 			all: "false",
+			worlds: {},
 			useAND: [],
 			show: [],
 			hide: [],
@@ -534,8 +634,14 @@ function getBlankSubscription()
 			outfits: [],
 			factions: [],
 			achievements: [],
-			zones: [],
-			worlds: []
+			zones: []
+		},
+		'PlanetsideTime':
+		{
+			all: "false",
+			useAND: [],
+			show: [],
+			hide: []
 		}
 	};
 	
