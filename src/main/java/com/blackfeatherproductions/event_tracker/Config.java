@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.EventTracker;
+package com.blackfeatherproductions.event_tracker;
 
 import java.io.FileInputStream;
 import java.io.IOException;

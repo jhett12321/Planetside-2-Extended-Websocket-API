@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.EventTracker;
+package com.blackfeatherproductions.event_tracker;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -6,17 +6,17 @@ import java.util.Map.Entry;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.EventTracker.events.AchievementEarnedEvent;
-import com.blackfeatherproductions.EventTracker.events.BattleRankEvent;
-import com.blackfeatherproductions.EventTracker.events.CombatEvent;
-import com.blackfeatherproductions.EventTracker.events.ContinentLockEvent;
-import com.blackfeatherproductions.EventTracker.events.DirectiveCompletedEvent;
-import com.blackfeatherproductions.EventTracker.events.Event;
-import com.blackfeatherproductions.EventTracker.events.EventInfo;
-import com.blackfeatherproductions.EventTracker.events.FacilityControlEvent;
-import com.blackfeatherproductions.EventTracker.events.LoginEvent;
-import com.blackfeatherproductions.EventTracker.events.MetagameEvent;
-import com.blackfeatherproductions.EventTracker.events.VehicleDestroyEvent;
+import com.blackfeatherproductions.event_tracker.events.AchievementEarnedEvent;
+import com.blackfeatherproductions.event_tracker.events.BattleRankEvent;
+import com.blackfeatherproductions.event_tracker.events.CombatEvent;
+import com.blackfeatherproductions.event_tracker.events.ContinentLockEvent;
+import com.blackfeatherproductions.event_tracker.events.DirectiveCompletedEvent;
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.FacilityControlEvent;
+import com.blackfeatherproductions.event_tracker.events.LoginEvent;
+import com.blackfeatherproductions.event_tracker.events.MetagameEvent;
+import com.blackfeatherproductions.event_tracker.events.VehicleDestroyEvent;
 
 public class EventHandler
 {
@@ -42,10 +42,13 @@ public class EventHandler
         Event event = getEvent(eventName);
         if(event == null)
         {
+            EventTracker.instance.getLogger().warn("Unhandled Payload! Has Census added a new event?");
+            EventTracker.instance.getLogger().warn("Payload data:");
+            EventTracker.instance.getLogger().warn(payload.encodePrettily());
             return false; //Event Processor does not exist for this type of event.
         }
         
-        event.processEvent(payload);
+        event.preProcessEvent(payload);
         return true;
     }
     

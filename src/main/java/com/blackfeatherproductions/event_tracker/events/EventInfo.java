@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.EventTracker.events;
+package com.blackfeatherproductions.event_tracker.events;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;

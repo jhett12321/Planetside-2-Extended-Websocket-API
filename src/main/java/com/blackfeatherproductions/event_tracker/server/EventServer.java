@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.EventTracker.server;
+package com.blackfeatherproductions.event_tracker.server;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -9,8 +9,9 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.json.JsonObject;
-import com.blackfeatherproductions.EventTracker.Config;
-import com.blackfeatherproductions.EventTracker.EventTracker;
+
+import com.blackfeatherproductions.event_tracker.Config;
+import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class EventServer
 {
@@ -18,7 +19,7 @@ public class EventServer
     
     public EventServer()
     {
-        EventTracker eventTracker = EventTracker.inst;
+        EventTracker eventTracker = EventTracker.instance;
         Config config = eventTracker.getConfig();
         Vertx vertx = eventTracker.getVertx();
         

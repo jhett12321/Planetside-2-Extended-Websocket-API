@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.EventTracker.server;
+package com.blackfeatherproductions.event_tracker.server;
 
 public class Subscriptions
 {

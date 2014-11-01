@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.EventTracker;
+package com.blackfeatherproductions.event_tracker;
 
 public class Utils
 {
