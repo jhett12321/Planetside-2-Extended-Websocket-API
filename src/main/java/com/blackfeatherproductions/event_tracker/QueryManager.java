@@ -8,9 +8,10 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 
 public class QueryManager
 {
-	private Map<String,JsonObject> characterData = new HashMap<String,JsonObject>();
+	private Map<String, JsonObject> characterData = new HashMap<String,JsonObject>();
+	private Map<String[], Event> callbacks;
 	
-	public void getCharacterData(String characterID, Event callbackEvent)
+	public void getCharacterData(String[] characterID, Event callbackEvent)
 	{
 		if(characterData.containsKey(characterID))
 		{

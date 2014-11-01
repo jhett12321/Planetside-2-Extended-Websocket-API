@@ -14,10 +14,15 @@ public class Config
     private Integer serverPort;
     
     //Database Properties
+    @Deprecated
     private Integer dbConnectionLimit;
+    @Deprecated
     private String dbHost;
+    @Deprecated
     private String dbUser;
+    @Deprecated
     private String dbPassword;
+    @Deprecated
     private String dbName;
     
     //API Database Properties
@@ -91,26 +96,31 @@ public class Config
         return soeServiceID;
     }
 
+    @Deprecated
     public Integer getDbConnectionLimit()
     {
         return dbConnectionLimit;
     }
 
+    @Deprecated
     public String getDbHost()
     {
         return dbHost;
     }
 
+    @Deprecated
     public String getDbUser()
     {
         return dbUser;
     }
 
+    @Deprecated
     public String getDbPassword()
     {
         return dbPassword;
     }
 
+    @Deprecated
     public String getDbName()
     {
         return dbName;

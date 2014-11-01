@@ -22,7 +22,7 @@ public class Census
 	private boolean websocketConnected;
 	
 	//Event Info
-	private int lastEvent;
+	private long lastEvent;
 	
     public Census()
     {
@@ -45,12 +45,12 @@ public class Census
             }
         });
         
-        //Sends a heartbeat message, and checks the service is still sending messages.
+        //Checks the service is still sending messages.
         vertx.setPeriodic(10000, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
-            	if(!websocketConnected)
+            	if(websocketConnected)
             	{
             		//websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"echo\",\"payload\": {\"heartbeat\":\"true\"}}");
             		long time = System.currentTimeMillis() / 1000l;
@@ -77,6 +77,7 @@ public class Census
                     public void handle(Buffer data)
                     {
                         JsonObject message = new JsonObject(data.toString());
+                        lastEvent = System.currentTimeMillis() / 1000l;
                         if(message != null)
                         {
                             String serviceType = message.getString("type");
@@ -124,8 +125,8 @@ public class Census
 					@Override
 					public void handle(Throwable arg0)
 					{
-						arg0.printStackTrace();
 						websocketConnected = false;
+						arg0.printStackTrace();
 					}
                 });
                 

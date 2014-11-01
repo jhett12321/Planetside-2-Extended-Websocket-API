@@ -3,6 +3,8 @@ package com.blackfeatherproductions.event_tracker;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
+import com.blackfeatherproductions.event_tracker.feeds.Census;
+import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.game_data.GameData;
  
 public class EventTracker extends Verticle
@@ -13,10 +15,12 @@ public class EventTracker extends Verticle
     //Vertx
     private Logger logger;
     
-    //Event Tracker Data
+    //Data
     private Config config;
-    private EventHandler eventHandler;
     private GameData gameData;
+    
+    //Managers and Handlers
+    private EventHandler eventHandler;
     private QueryManager queryManager;
     private Utils utils;
     
@@ -28,12 +32,18 @@ public class EventTracker extends Verticle
         //Vertx
         logger = container.logger();
         
-        //Event Tracker Data
+        //Data
         config = new Config();
-        eventHandler = new EventHandler();
         gameData = new GameData();
+        
+        //Managers and Handlers
+        eventHandler = new EventHandler();
         queryManager = new QueryManager();
         utils = new Utils();
+        
+        //Feeds
+        new Census();
+        new CensusRest();
     }
     
     public QueryManager getQueryManager()
