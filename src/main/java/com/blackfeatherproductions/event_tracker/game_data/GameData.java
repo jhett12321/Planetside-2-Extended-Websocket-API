@@ -1,23 +1,23 @@
 package com.blackfeatherproductions.event_tracker.game_data;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class GameData
-{
-	String[] loadoutsVS = {"15","17","18","19","20","21"};
-	String[] loadoutsNC = {"1","3","4","5","6","7"};
-	String[] loadoutsTR = {"8","10","11","12","13","14"};
-	
-	private Map<String, Zone> zones = new HashMap<String, Zone>();
+{	
 	private Map<String, World> worlds = new HashMap<String, World>();
+	private Map<String, Zone> zones = new HashMap<String, Zone>();
+	
+	private Map<String, Faction> factions = new HashMap<String, Faction>();
 	//private Map<String, Item> items = new HashMap<String, Item>();
+	
 	private Map<String, MetagameEventType> metagameEventTypes = new HashMap<String, MetagameEventType>();
     
     public void UpdateGameData()
     {
         //TODO Query Census for all required static data
-    	//TODO Items
     	
     	//Worlds
     	worlds.put("1", new World("1", "Connery"));
@@ -34,24 +34,72 @@ public class GameData
     	zones.put("8", new Zone("8", "Esamir", "Esamir's expanses of frigid tundra and craggy mountains provide little cover from airborne threats."));
     	
     	//Factions
+    	List<String> loadoutsVS = new ArrayList<String>();
+    	loadoutsVS.add("15");
+    	loadoutsVS.add("17");
+    	loadoutsVS.add("18");
+    	loadoutsVS.add("19");
+    	loadoutsVS.add("20");
+    	loadoutsVS.add("21");
+    	
+    	List<String> loadoutsNC = new ArrayList<String>();
+    	loadoutsNC.add("1");
+    	loadoutsNC.add("3");
+    	loadoutsNC.add("4");
+    	loadoutsNC.add("5");
+    	loadoutsNC.add("6");
+    	loadoutsNC.add("7");
+    	
+    	List<String> loadoutsTR = new ArrayList<String>();
+    	loadoutsTR.add("8");
+    	loadoutsTR.add("10");
+    	loadoutsTR.add("11");
+    	loadoutsTR.add("12");
+    	loadoutsTR.add("13");
+    	loadoutsTR.add("14");
+    	
+    	factions.put("1", new Faction("1", loadoutsVS, "Vanu Sovereignty", "VS"));
+    	factions.put("2", new Faction("2", loadoutsNC, "New Conglomerate", "NC"));
+    	factions.put("3", new Faction("3", loadoutsTR, "Terran Republic", "TR"));
     	
     	//Metagame Event Types
-    	//metagameEventTypes.put("1", new MetagameEventType());
-    	//metagameEventTypes.put("2", new MetagameEventType());
-    	//metagameEventTypes.put("3", new MetagameEventType());
-    	//metagameEventTypes.put("4", new MetagameEventType());
-    	//metagameEventTypes.put("51", new MetagameEventType());
-    	//metagameEventTypes.put("52", new MetagameEventType());
-    	//metagameEventTypes.put("53", new MetagameEventType());
-    	//metagameEventTypes.put("54", new MetagameEventType());
+    	metagameEventTypes.put("1", new MetagameEventType("1", "Feeling the Heat", "Capture Indar within the time limit", "2", "0", "1"));
+    	metagameEventTypes.put("2", new MetagameEventType("2", "Cold War", "Capture Esamir within the time limit", "8", "0", "1"));
+    	metagameEventTypes.put("3", new MetagameEventType("3", "Seeing Green", "Capture Amerish within the time limit", "6", "0", "1"));
+    	metagameEventTypes.put("4", new MetagameEventType("4", "Marsh Madness", "Capture Hossin within the time limit", "4", "0", "1"));
+    	metagameEventTypes.put("4", new MetagameEventType("51", "Indar Pumpkin Hunt", "Seek and destroy pumpkins on Indar", "2", "0", "5"));
+    	metagameEventTypes.put("4", new MetagameEventType("52", "Esamir Pumpkin Hunt", "Seek and destroy pumpkins on Esamir", "8", "0", "5"));
+    	metagameEventTypes.put("4", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", "6", "0", "5"));
+    	metagameEventTypes.put("4", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", "4", "0", "5"));
     }
     
-    public Zone GetZoneByID(String id)
+    
+    //Worlds
+    public World getWorldByID(String id)
+    {
+    	return worlds.get(id);
+    }
+    
+    public World getWorldByName(String name)
+    {
+    	for(World world : worlds.values())
+    	{
+    		if(world.getName().equalsIgnoreCase(name))
+    		{
+    			return world;
+    		}
+    	}
+    	
+    	return null;
+    }
+    
+    //Zones
+    public Zone getZoneByID(String id)
     {
     	return zones.get(id);
     }
     
-    public Zone GetZoneByName(String name)
+    public Zone getZoneByName(String name)
     {
     	for(Zone zone : zones.values())
     	{
@@ -64,21 +112,27 @@ public class GameData
     	return null;
     }
     
-    public World GetWorldByID(String id)
+    //Factions
+    public Faction getFactionByID(String id)
     {
-    	return worlds.get(id);
+    	return factions.get(id);
     }
     
-    public World GetWorldByName(String name)
+    public Faction getFactionByLoadoutID(String loadoutID)
     {
-    	for(World world : worlds.values())
+    	for(Faction faction : factions.values())
     	{
-    		if(world.getName().equalsIgnoreCase(name))
+    		if(faction.getLoadoutIDs().contains(loadoutID))
     		{
-    			return world;
+    			return faction;
     		}
     	}
-    	
     	return null;
+    }
+    
+    //MetagameEvent Types
+    public MetagameEventType getMetagameEventTypeByID(String id)
+    {
+    	return metagameEventTypes.get(id);
     }
 }

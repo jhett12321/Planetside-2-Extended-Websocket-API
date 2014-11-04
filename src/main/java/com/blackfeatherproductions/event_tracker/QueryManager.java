@@ -4,7 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.vertx.java.core.json.JsonObject;
+
 import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.feeds.Census;
 
 public class QueryManager
 {
@@ -13,14 +15,20 @@ public class QueryManager
 	
 	public void getCharacterData(String[] characterID, Event callbackEvent)
 	{
-		if(characterData.containsKey(characterID))
+		//TODO
+		
+		for(String character : characterID)
 		{
-			callbackEvent.queryCallback(characterData.get(characterID));
-			return;
+			if(characterData.containsKey(character))
+			{
+				callbackEvent.queryCallback(characterData.get(character));
+				return;
+			}
 		}
-		else
-		{
-			
-		}
+	}
+	
+	public void getWorldData(String[] worldIDs, Census callbackWebsocket)
+	{
+		
 	}
 }

@@ -1,5 +1,8 @@
 package com.blackfeatherproductions.event_tracker.feeds;
 
+import java.util.Map;
+import java.util.Map.Entry;
+
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
@@ -9,6 +12,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.Utils;
 
 public class Census
 {
@@ -21,8 +25,9 @@ public class Census
 	private WebSocket websocket;
 	private boolean websocketConnected;
 	
-	//Event Info
-	private long lastEvent;
+	//Feed Statuses
+	private long lastHeartbeat;
+	private Map<String, Boolean> endpointStatuses;
 	
     public Census()
     {
@@ -44,23 +49,6 @@ public class Census
             	}
             }
         });
-        
-        //Checks the service is still sending messages.
-        vertx.setPeriodic(10000, new Handler<Long>()
-        {
-            public void handle(Long timerID)
-            {
-            	if(websocketConnected)
-            	{
-            		//websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"echo\",\"payload\": {\"heartbeat\":\"true\"}}");
-            		long time = System.currentTimeMillis() / 1000l;
-            		if(time - 300 > lastEvent)
-            		{
-            			websocketConnected = false;
-            		}
-            	}
-            }
-        });
     }
     
     public void connectWebsocket()
@@ -77,7 +65,6 @@ public class Census
                     public void handle(Buffer data)
                     {
                         JsonObject message = new JsonObject(data.toString());
-                        lastEvent = System.currentTimeMillis() / 1000l;
                         if(message != null)
                         {
                             String serviceType = message.getString("type");
@@ -89,6 +76,23 @@ public class Census
                                 {
                                 	websocketConnected = true;
                                 }
+                            }
+                            
+                            else if(serviceType == "heartbeat")
+                            {
+                            	JsonObject onlineList = message.getObject("online");
+                            	for(Entry<String, Object> endpoint : onlineList.toMap().entrySet())
+                            	{
+                            		if(endpoint.equals("true"))
+                            		{
+                            			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), true);
+                            		}
+                            		
+                            		else
+                            		{
+                            			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), false);
+                            		}
+                            	}
                             }
                             
                             else if(serviceType != null && serviceType == "serviceMessage")
@@ -134,5 +138,15 @@ public class Census
                 websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
             }
         });
+    }
+    
+    private void updateEndpointStatus(String worldID, Boolean newValue)
+    {
+    	if(endpointStatuses.get(worldID) != true && newValue == true)
+    	{
+    		//TODO Update all data for world.
+    	}
+    	
+    	endpointStatuses.put(worldID, newValue);
     }
 }
