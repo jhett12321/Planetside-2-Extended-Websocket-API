@@ -13,6 +13,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class Census
 {
@@ -31,7 +32,7 @@ public class Census
 	
     public Census()
     {
-        eventTracker = EventTracker.instance;
+        eventTracker = EventTracker.getInstance();
         config = eventTracker.getConfig();
         vertx = eventTracker.getVertx();
         
@@ -83,7 +84,7 @@ public class Census
                             	JsonObject onlineList = message.getObject("online");
                             	for(Entry<String, Object> endpoint : onlineList.toMap().entrySet())
                             	{
-                            		if(endpoint.equals("true"))
+                            		if(endpoint.getValue().equals("true"))
                             		{
                             			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), true);
                             		}
@@ -144,6 +145,7 @@ public class Census
     {
     	if(endpointStatuses.get(worldID) != true && newValue == true)
     	{
+    		new WorldQuery(worldID);
     		//TODO Update all data for world.
     	}
     	

@@ -10,7 +10,7 @@ import com.blackfeatherproductions.event_tracker.game_data.GameData;
 public class EventTracker extends Verticle
 {
     //Singleton
-    public static EventTracker instance;
+    private static EventTracker instance;
     
     //Vertx
     private Logger logger;
@@ -19,8 +19,9 @@ public class EventTracker extends Verticle
     private Config config;
     private GameData gameData;
     
-    //Managers and Handlers
-    private EventHandler eventHandler;
+    //Managers
+    private EventManager eventManager;
+    private DataManager dataManager;
     private QueryManager queryManager;
     private Utils utils;
     
@@ -37,8 +38,9 @@ public class EventTracker extends Verticle
         gameData = new GameData();
         
         //Managers and Handlers
-        eventHandler = new EventHandler();
+        eventManager = new EventManager();
         queryManager = new QueryManager();
+        dataManager = new DataManager();
         utils = new Utils();
         
         //Feeds
@@ -46,9 +48,18 @@ public class EventTracker extends Verticle
         new CensusRest();
     }
     
-    public QueryManager getQueryManager()
+    public static EventTracker getInstance()
+    {
+		return instance;
+	}
+
+	public QueryManager getQueryManager()
     {
 		return queryManager;
+	}
+
+	public DataManager getDataManager() {
+		return dataManager;
 	}
 
 	public Utils getUtils()
@@ -71,8 +82,8 @@ public class EventTracker extends Verticle
         return config;
     }
     
-    public EventHandler getEventHandler()
+    public EventManager getEventHandler()
     {
-        return eventHandler;
+        return eventManager;
     }
 }

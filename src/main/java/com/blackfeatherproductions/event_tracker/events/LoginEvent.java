@@ -12,13 +12,7 @@ public class LoginEvent implements Event
 	}
 
 	@Override
-	public void processEvent(JsonObject payload)
-	{
-		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void queryCallback(JsonObject queriedData)
+	public void processEvent()
 	{
 		// TODO Auto-generated method stub
 	}

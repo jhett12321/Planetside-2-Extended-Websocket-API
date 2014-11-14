@@ -10,18 +10,10 @@ public class CombatEvent implements Event
 	public void preProcessEvent(JsonObject payload)
 	{
 		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
-	public void processEvent(JsonObject payload)
-	{
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void queryCallback(JsonObject queriedData)
+	public void processEvent()
 	{
 		// TODO Auto-generated method stub
 	}

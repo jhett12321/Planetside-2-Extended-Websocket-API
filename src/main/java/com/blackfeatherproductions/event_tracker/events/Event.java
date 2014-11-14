@@ -11,15 +11,8 @@ public interface Event
 	public void preProcessEvent(JsonObject payload);
 	
 	/**
-	 * This is where information retrieved by the query manager is sent to the event for merging with existing data.
-	 * @param queriedData - The data retrieved from the query manager.
+	 * This is where final processing of the event should be done. All required data should exist in the data manager. 
+	 * The message to the websocket server should be sent to be handled by the subscription system.
 	 */
-	public void queryCallback(JsonObject queriedData);
-	
-	/**
-	 * This is where the completed event payload should be sent. This function updates stored character attributes, 
-	 * and sends the message to the websocket server to be handled by the subscription system.
-	 * @param payload - The completed event payload.
-	 */
-    void processEvent(JsonObject payload);
+    void processEvent();
 }

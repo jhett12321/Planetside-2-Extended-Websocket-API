@@ -12,15 +12,8 @@ public class FacilityControlEvent implements Event
 	}
 
 	@Override
-	public void processEvent(JsonObject payload)
+	public void processEvent()
 	{
 		// TODO Auto-generated method stub
-	}
-
-	@Override
-	public void queryCallback(JsonObject queriedData)
-	{
-		// TODO Auto-generated method stub
-		
 	}
 }

@@ -18,11 +18,11 @@ import com.blackfeatherproductions.event_tracker.events.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.MetagameEvent;
 import com.blackfeatherproductions.event_tracker.events.VehicleDestroyEvent;
 
-public class EventHandler
+public class EventManager
 {
     private Map<String, Event> events;
     
-    public EventHandler()
+    public EventManager()
     {
         events = new LinkedHashMap<String, Event>();
         
@@ -42,9 +42,9 @@ public class EventHandler
         Event event = getEvent(eventName);
         if(event == null)
         {
-            EventTracker.instance.getLogger().warn("Unhandled Payload! Has Census added a new event?");
-            EventTracker.instance.getLogger().warn("Payload data:");
-            EventTracker.instance.getLogger().warn(payload.encodePrettily());
+            EventTracker.getInstance().getLogger().warn("Unhandled Payload! Has Census added a new event?");
+            EventTracker.getInstance().getLogger().warn("Payload data:");
+            EventTracker.getInstance().getLogger().warn(payload.encodePrettily());
             return false; //Event Processor does not exist for this type of event.
         }
         

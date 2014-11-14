@@ -19,7 +19,7 @@ public class EventServer
     
     public EventServer()
     {
-        EventTracker eventTracker = EventTracker.instance;
+        EventTracker eventTracker = EventTracker.getInstance();
         Config config = eventTracker.getConfig();
         Vertx vertx = eventTracker.getVertx();
         
