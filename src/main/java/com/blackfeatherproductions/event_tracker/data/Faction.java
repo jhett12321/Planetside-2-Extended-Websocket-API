@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.event_tracker.game_data;
+package com.blackfeatherproductions.event_tracker.data;
 
 import java.util.List;
 

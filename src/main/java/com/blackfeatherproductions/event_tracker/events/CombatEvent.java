@@ -4,10 +4,10 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.data.Character;
-import com.blackfeatherproductions.event_tracker.game_data.Faction;
-import com.blackfeatherproductions.event_tracker.game_data.World;
-import com.blackfeatherproductions.event_tracker.game_data.Zone;
+import com.blackfeatherproductions.event_tracker.data.Faction;
+import com.blackfeatherproductions.event_tracker.data.World;
+import com.blackfeatherproductions.event_tracker.data.Zone;
+import com.blackfeatherproductions.event_tracker.data.dynamic.Character;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 
@@ -59,8 +59,8 @@ public class CombatEvent implements Event
 		String timestamp = payload.getString("timestamp");
 		
 		//Location Data
-		Zone zone = EventTracker.getInstance().getGameData().getZoneByID(payload.getString("zone_id"));
-		World world = EventTracker.getInstance().getGameData().getWorldByID(payload.getString("world_id"));
+		Zone zone = EventTracker.getInstance().getDataManager().getZoneByID(payload.getString("zone_id"));
+		World world = EventTracker.getInstance().getDataManager().getWorldByID(payload.getString("world_id"));
 		
 		//Attacker Character Data
 		Character attacker_character = dataManager.getCharacterData().get(attackerCharacterID);

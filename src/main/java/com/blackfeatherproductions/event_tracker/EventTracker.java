@@ -5,7 +5,7 @@ import org.vertx.java.platform.Verticle;
 
 import com.blackfeatherproductions.event_tracker.feeds.Census;
 import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
-import com.blackfeatherproductions.event_tracker.game_data.GameData;
+import com.blackfeatherproductions.event_tracker.server.EventServer;
  
 public class EventTracker extends Verticle
 {
@@ -17,13 +17,14 @@ public class EventTracker extends Verticle
     
     //Data
     private Config config;
-    private GameData gameData;
     
     //Managers
     private EventManager eventManager;
     private DataManager dataManager;
     private QueryManager queryManager;
     private Utils utils;
+
+	private EventServer eventServer;
     
     @Override
     public void start()
@@ -35,7 +36,6 @@ public class EventTracker extends Verticle
         
         //Data
         config = new Config();
-        gameData = new GameData();
         
         //Managers and Handlers
         eventManager = new EventManager();
@@ -46,6 +46,9 @@ public class EventTracker extends Verticle
         //Feeds
         new Census();
         new CensusRest();
+        
+        //Event Server
+        eventServer = new EventServer();
     }
     
     public static EventTracker getInstance()
@@ -58,21 +61,22 @@ public class EventTracker extends Verticle
 		return queryManager;
 	}
 
-	public DataManager getDataManager() {
-		return dataManager;
-	}
-
 	public Utils getUtils()
     {
         return utils;
     }
 
-    public GameData getGameData()
+    public DataManager getDataManager()
     {
-        return gameData;
+        return dataManager;
     }
 
-    public Logger getLogger()
+    public EventServer getEventServer()
+    {
+		return eventServer;
+	}
+
+	public Logger getLogger()
     {
         return logger;
     }

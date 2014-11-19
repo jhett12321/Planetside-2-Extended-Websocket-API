@@ -146,7 +146,6 @@ public class Census
     	if(endpointStatuses.get(worldID) != true && newValue == true)
     	{
     		new WorldQuery(worldID);
-    		//TODO Update all data for world.
     	}
     	
     	endpointStatuses.put(worldID, newValue);

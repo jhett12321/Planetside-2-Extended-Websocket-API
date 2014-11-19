@@ -51,8 +51,8 @@ public class EventServer
     {
         JsonObject messageToSend = new JsonObject();
         
-        messageToSend.putObject("payload", rawData.getObject("messageData"));
-        messageToSend.putObject("event_type", rawData.getObject("eventType"));
+        messageToSend.putObject("payload", rawData.getObject("event_data"));
+        messageToSend.putObject("event_type", rawData.getObject("event_type"));
         
         for(Entry<ServerWebSocket, Subscriptions> connection : clientConnections.entrySet())
         {

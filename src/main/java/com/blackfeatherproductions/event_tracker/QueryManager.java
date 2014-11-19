@@ -14,11 +14,24 @@ import com.blackfeatherproductions.event_tracker.queries.Query;
 
 public class QueryManager
 {
-	protected void getCensusData(final String query, boolean allowNoData, final int failureCount, final Query callback)
-	{
+	private Integer failureCount = 0;
+	
+	protected void getCensusData(String rawQuery, final boolean allowNoData, final Query callback)
+	{	
 		Vertx vertx = EventTracker.getInstance().getVertx();
 		final Logger logger = EventTracker.getInstance().getLogger();
-		HttpClient client = vertx.createHttpClient().setHost("foo.com");
+		
+		if(failureCount >= EventTracker.getInstance().getConfig().getMaxFailures())
+		{
+			logger.error("[Census Connection Error] Census Failure Limit Reached. Dropping event.");
+			callback.ReceiveData(null);
+			failureCount = 0;
+			return;
+		}
+		
+		HttpClient client = vertx.createHttpClient().setHost("census.soe.com");
+		
+		final String query = "/s:" + EventTracker.getInstance().getConfig().getSoeServiceID() + rawQuery;
 
 		client.getNow(query, new Handler<HttpClientResponse>()
 		{
@@ -35,14 +48,19 @@ public class QueryManager
 		            		if(data != null && data.getInteger("returned") != null && data.getInteger("returned") != 0)
 		            		{
 		            			callback.ReceiveData(data);
+		            			failureCount = 0;
+		            			return;
 		            		}
 		            	}
 		            	catch(DecodeException e)
 		            	{
 		            		//No Valid JSON was returned
 		            		logger.warn("[Census Connection Error] - A census request returned invalid JSON. Retrying request...");
+		            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
 		            		logger.debug("Request: " + query);
 		            		logger.debug(e.getMessage());
+		            		
+		            		getCensusData(query, allowNoData, callback);
 		            	}
 		            }
 		        });
@@ -50,9 +68,14 @@ public class QueryManager
 		        resp.exceptionHandler(new Handler<Throwable>()
 		        {
 					@Override
-					public void handle(Throwable arg0)
+					public void handle(Throwable e)
 					{
-						
+	            		logger.warn("[Census Connection Error] - A census request returned invalid JSON. Retrying request...");
+	            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+	            		logger.debug("Request: " + query);
+	            		logger.debug(e.getMessage());
+	            		
+	            		getCensusData(query, allowNoData, callback);
 					}
 		        });
 		    }

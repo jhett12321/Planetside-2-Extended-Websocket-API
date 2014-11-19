@@ -1,7 +1,7 @@
-package com.blackfeatherproductions.event_tracker.data;
+package com.blackfeatherproductions.event_tracker.data.dynamic;
 
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.game_data.Faction;
+import com.blackfeatherproductions.event_tracker.data.Faction;
 
 public class Character
 {
@@ -27,7 +27,7 @@ public class Character
 	public Character(String characterID, String factionID, String outfitID)
 	{
 		this.characterID = characterID;
-		this.faction = EventTracker.getInstance().getGameData().getFactionByID(factionID);
+		this.faction = EventTracker.getInstance().getDataManager().getFactionByID(factionID);
 		this.outfitID = outfitID;
 	}
 }

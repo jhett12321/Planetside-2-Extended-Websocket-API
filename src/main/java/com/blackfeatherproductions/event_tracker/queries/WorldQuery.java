@@ -4,6 +4,8 @@ import org.vertx.java.core.json.JsonObject;
 
 public class WorldQuery implements Query
 {
+	//TODO Update all data for world.
+	
 	public WorldQuery(String worldID)
 	{
 		

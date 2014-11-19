@@ -13,6 +13,8 @@ public class Config
     //Server Listen Port
     private Integer serverPort;
     
+    private Integer maxFailures;
+    
     //Database Properties
     @Deprecated
     private Integer dbConnectionLimit;
@@ -48,6 +50,8 @@ public class Config
             
             //Server Listen Port
             serverPort = Integer.valueOf(prop.getProperty("serverPort", "8080"));
+            
+            maxFailures = Integer.valueOf(prop.getProperty("maxFailures", "20"));
             
             //Database Properties
             dbConnectionLimit = Integer.valueOf(prop.getProperty("dbConnectionLimit", "100"));
@@ -126,7 +130,12 @@ public class Config
         return dbName;
     }
 
-    public Integer getApiDbConnectionLimit()
+    public Integer getMaxFailures()
+    {
+		return maxFailures;
+	}
+
+	public Integer getApiDbConnectionLimit()
     {
         return apiDbConnectionLimit;
     }
