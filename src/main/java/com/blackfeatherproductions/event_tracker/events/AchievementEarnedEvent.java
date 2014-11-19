@@ -13,48 +13,48 @@ import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 @EventInfo(eventNames = "AchievementEarned")
 public class AchievementEarnedEvent implements Event
 {
-	DataManager dataManager = EventTracker.getInstance().getDataManager();
+	private DataManager dataManager = EventTracker.getInstance().getDataManager();
 	
-	private Character character;
+	private JsonObject payload;
 	
-	private Faction faction;
-	private Zone zone;
-	private World world;
-	
-	private String outfit_id;
-	private String achievement_id;
-	private String timestamp;
+	private String characterID;
 	
 	@Override
 	public void preProcessEvent(JsonObject payload)
 	{
-		String characterID = payload.getString("character_id");
-		
-		this.achievement_id = payload.getString("achievement_id");
-		this.timestamp = payload.getString("timestamp");
-		
-		this.zone = EventTracker.getInstance().getGameData().getZoneByID(payload.getString("zone_id"));
-		this.world = EventTracker.getInstance().getGameData().getWorldByID(payload.getString("world_id"));
-		
-		if(dataManager.getCharacterData().containsKey(characterID))
+		this.payload = payload;
+		if(payload != null)
 		{
-			this.character = dataManager.getCharacterData().get(characterID);
+			characterID = payload.getString("character_id");
 			
-			faction = character.getFaction();
-			outfit_id = character.getOutfitID();
+			if(dataManager.getCharacterData().containsKey(characterID))
+			{	
+				processEvent();
+			}
 			
-			processEvent();
-		}
-		
-		else
-		{
-			new CharacterQuery(characterID, this);
+			else
+			{
+				new CharacterQuery(characterID, this);
+			}
 		}
 	}
 
 	@Override
 	public void processEvent()
 	{
-		// TODO Auto-generated method stub
+		//Event Specific Data
+		String achievement_id = payload.getString("achievement_id");
+		
+		//Timestamp
+		String timestamp = payload.getString("timestamp");
+		
+		//Location Data
+		Zone zone = EventTracker.getInstance().getGameData().getZoneByID(payload.getString("zone_id"));
+		World world = EventTracker.getInstance().getGameData().getWorldByID(payload.getString("world_id"));
+		
+		//Character Data
+		Character character = dataManager.getCharacterData().get(characterID);
+		Faction faction = character.getFaction();
+		String outfit_id = character.getOutfitID();
 	}
 }
