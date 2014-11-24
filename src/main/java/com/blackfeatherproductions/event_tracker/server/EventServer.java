@@ -15,7 +15,7 @@ import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class EventServer
 {
-    public Map<ServerWebSocket,Subscriptions> clientConnections;
+    public Map<ServerWebSocket,String> clientConnections;
     
     public EventServer()
     {
@@ -23,7 +23,7 @@ public class EventServer
         Config config = eventTracker.getConfig();
         Vertx vertx = eventTracker.getVertx();
         
-        clientConnections = new HashMap<ServerWebSocket,Subscriptions>();
+        clientConnections = new HashMap<ServerWebSocket,String>();
         
         vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>()
         {
@@ -35,6 +35,7 @@ public class EventServer
                     {
                         public void handle(Buffer data)
                         {
+                        	clientConnections.put(ws, null);
                             //TODO Initialize client subscriptions, send connection success message.
                         }
                     });
@@ -54,7 +55,7 @@ public class EventServer
         messageToSend.putObject("payload", rawData.getObject("event_data"));
         messageToSend.putObject("event_type", rawData.getObject("event_type"));
         
-        for(Entry<ServerWebSocket, Subscriptions> connection : clientConnections.entrySet())
+        for(Entry<ServerWebSocket, String> connection : clientConnections.entrySet())
         {
             //TODO Filter events
             connection.getKey().writeTextFrame(messageToSend.encode());

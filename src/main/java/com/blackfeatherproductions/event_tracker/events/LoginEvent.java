@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.events;
 
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DataManager;
@@ -42,29 +43,48 @@ public class LoginEvent implements Event
 	@Override
 	public void processEvent()
 	{
-		//Event Specific Data
 		String event_name = payload.getString("event_name");
-		String is_login;
 		
+		//Data
+		Character character = dataManager.getCharacterData().get(characterID);
+		String outfit_id = character.getOutfitID();
+		Faction faction = character.getFaction();
+		
+		String is_login = "0";
 		if(event_name == "PlayerLogin")
 		{
 			is_login = "1";
 		}
-		else if(event_name == "PlayerLogout")
-		{
-			is_login = "0";
-		}
 		
-		//Timestamp
 		String timestamp = payload.getString("timestamp");
+		World world = dataManager.getWorldByID(payload.getString("world_id"));
 		
-		//Location Data
-		Zone zone = EventTracker.getInstance().getDataManager().getZoneByID(payload.getString("zone_id"));
-		World world = EventTracker.getInstance().getDataManager().getWorldByID(payload.getString("world_id"));
+		//Messages
+		JsonObject eventData = new JsonObject();
 		
-		//Character Data
-		Character character = dataManager.getCharacterData().get(characterID);
-		Faction faction = character.getFaction();
-		String outfit_id = character.getOutfitID();
+		eventData.putString("character_id", character.getCharacterID());
+		eventData.putString("outfit_id", outfit_id);
+		eventData.putString("faction_id", faction.getId());
+		eventData.putString("is_login", is_login);
+		eventData.putString("timestamp", timestamp);
+		eventData.putString("world_id", world.getID());
+		
+		//Filters
+		JsonObject filterData = new JsonObject();
+		
+		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
+		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
+		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
+		filterData.putArray("login_types", new JsonArray().addString(is_login));
+		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
+		
+		//Broadcast Event Data
+		JsonObject message = new JsonObject();
+		
+		message.putObject("event_data", eventData);
+		message.putObject("filter_data", filterData);
+		message.putString("event_type", "DirectiveCompleted");
+		
+		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
 	}
 }

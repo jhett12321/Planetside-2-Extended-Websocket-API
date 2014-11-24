@@ -39,32 +39,26 @@ public class EventManager
     
     public boolean handleEvent(String eventName, JsonObject payload)
     {
-        Event event = getEvent(eventName);
-        if(event == null)
-        {
-            EventTracker.getInstance().getLogger().warn("Unhandled Payload! Has Census added a new event?");
-            EventTracker.getInstance().getLogger().warn("Payload data:");
-            EventTracker.getInstance().getLogger().warn(payload.encodePrettily());
-            return false; //Event Processor does not exist for this type of event.
-        }
-        
-        event.preProcessEvent(payload);
-        return true;
-    }
-    
-    public Event getEvent(String eventName)
-    {
-        Event event = null;
+        boolean eventHandled = false;
         
         for(Entry<String, Event> entry : events.entrySet())
         {
             if(eventName.matches(entry.getKey()))
             {
-                event = entry.getValue();
+                entry.getValue().preProcessEvent(payload);
+                eventHandled = true;
             }
         }
         
-        return event;
+        if(!eventHandled)
+        {
+            EventTracker.getInstance().getLogger().warn("Unhandled Payload! Has Census added a new event?");
+            EventTracker.getInstance().getLogger().warn("Payload data:");
+            EventTracker.getInstance().getLogger().warn(payload.encodePrettily());
+            return false;
+        }
+        
+        return true;
     }
     
     private void registerEvent(Class<? extends Event> event)
