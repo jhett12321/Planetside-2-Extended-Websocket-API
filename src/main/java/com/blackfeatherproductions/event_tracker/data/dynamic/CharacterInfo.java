@@ -5,7 +5,7 @@ import java.util.Date;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data.Faction;
 
-public class Character
+public class CharacterInfo
 {
 	private String characterID;
 	private String outfitID;
@@ -28,10 +28,10 @@ public class Character
 		return characterID;
 	}
 
-	public Character(String characterID, String factionID, String outfitID)
+	public CharacterInfo(String characterID, String factionID, String outfitID)
 	{
 		this.characterID = characterID;
-		this.faction = EventTracker.getInstance().getDataManager().getFactionByID(factionID);
+		this.faction = EventTracker.getInstance().getStaticDataManager().getFactionByID(factionID);
 		this.outfitID = outfitID;
 		
 		this.creationTime = new Date();

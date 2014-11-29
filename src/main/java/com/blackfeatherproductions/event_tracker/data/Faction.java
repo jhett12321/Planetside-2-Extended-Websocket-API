@@ -4,6 +4,10 @@ import java.util.List;
 
 public class Faction
 {
+	public static Faction VS;
+	public static Faction NC;
+	public static Faction TR;
+	
 	private String id;
 	private List<String> loadoutIDs;
 	private String name;

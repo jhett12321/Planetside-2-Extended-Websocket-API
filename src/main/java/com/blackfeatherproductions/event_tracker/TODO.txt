@@ -1,0 +1,8 @@
+Event Metrics
+	- Total Events for x period
+		- Last 5 Minutes
+		- Last Hour
+		- Last Day
+		- Since startup
+		
+Translated Data

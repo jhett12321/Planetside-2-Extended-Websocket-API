@@ -6,15 +6,17 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.data.Faction;
 import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
-import com.blackfeatherproductions.event_tracker.data.dynamic.Character;
-import com.blackfeatherproductions.event_tracker.DataManager;
+import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
+import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.StaticDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 @EventInfo(eventNames = "AchievementEarned")
 public class AchievementEarnedEvent implements Event
 {
-	private DataManager dataManager = EventTracker.getInstance().getDataManager();
+	private StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
+	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
 	
@@ -28,7 +30,7 @@ public class AchievementEarnedEvent implements Event
 		{
 			characterID = payload.getString("character_id");
 			
-			if(dataManager.getCharacterData().containsKey(characterID))
+			if(dynamicDataManager.characterDataExists(characterID))
 			{	
 				processEvent();
 			}
@@ -44,15 +46,15 @@ public class AchievementEarnedEvent implements Event
 	public void processEvent()
 	{
 		//Data
-		Character character = dataManager.getCharacterData().get(characterID);
+		CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
 		String outfit_id = character.getOutfitID();
 		Faction faction = character.getFaction();
 		String achievement_id = payload.getString("achievement_id");
 		String timestamp = payload.getString("timestamp");
-		Zone zone = dataManager.getZoneByID(payload.getString("zone_id"));
-		World world = dataManager.getWorldByID(payload.getString("world_id"));
+		Zone zone = staticDataManager.getZoneByID(payload.getString("zone_id"));
+		World world = staticDataManager.getWorldByID(payload.getString("world_id"));
 		
-		//Messages
+		//Payload
 		JsonObject eventData = new JsonObject();
 		
 		eventData.putString("character_id", character.getCharacterID());
@@ -73,7 +75,7 @@ public class AchievementEarnedEvent implements Event
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 		
-		//Broadcast Event Data
+		//Broadcast Event
 		JsonObject message = new JsonObject();
 		
 		message.putObject("event_data", eventData);

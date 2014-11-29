@@ -1,7 +1,17 @@
 package com.blackfeatherproductions.event_tracker;
 
+import org.vertx.java.core.json.JsonObject;
+
+import com.blackfeatherproductions.event_tracker.data.Faction;
+import com.blackfeatherproductions.event_tracker.data.World;
+import com.blackfeatherproductions.event_tracker.data.Zone;
+import com.blackfeatherproductions.event_tracker.data.dynamic.FacilityInfo;
+
 public class Utils
 {
+	private static StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
+	private static DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	
     //TODO Data verification
 	public static String getWorldIDFromEndpointString(String endPointString)
 	{
@@ -28,5 +38,75 @@ public class Utils
 		}
 		
 		return false;
+	}
+	
+	//Calculates Territory Control for the given zone
+	public static JsonObject calculateTerritoryControl(World world, Zone zone)
+	{
+		float totalRegions = 0;
+		float facilitiesVS = 0;
+		float facilitiesNC = 0;
+		float facilitiesTR = 0;
+		
+		for(FacilityInfo facility : dynamicDataManager.getWorldData(world).getZoneInfo(zone).getFacilities().values())
+		{
+			totalRegions++;
+			
+			if(facility.getOwner() == Faction.VS)
+			{
+				facilitiesVS++;
+			}
+			else if(facility.getOwner() == Faction.NC)
+			{
+				facilitiesNC++;
+			}
+			else if(facility.getOwner() == Faction.TR)
+			{
+				facilitiesTR++;
+			}
+		}
+		
+		Float controlVS = 0f;
+		Float controlNC = 0f;
+		Float controlTR = 0f;
+		
+		if(totalRegions > 0)
+		{
+			controlVS = (float) Math.floor(facilitiesVS / totalRegions * 100);
+			controlNC = (float) Math.floor(facilitiesNC / totalRegions * 100);
+			controlTR = (float) Math.floor(facilitiesTR / totalRegions * 100);
+		}
+		
+		float majorityControl = controlVS;
+		Faction majorityController = Faction.VS;
+		
+		if(controlNC > majorityControl)
+		{
+			majorityControl = controlNC;
+			majorityController = Faction.NC;
+		}
+		else if(controlNC == majorityControl)
+		{
+			majorityController = null;
+		}
+		
+		if(controlTR > majorityControl)
+		{
+			majorityControl = controlTR;
+			majorityController = Faction.TR;
+		}
+		else if(controlTR == majorityControl)
+		{
+			majorityController = null;
+		}
+		
+		JsonObject controlInfo = new JsonObject();
+		
+		controlInfo.putString("control_vs", controlVS.toString());
+		controlInfo.putString("control_nc", controlNC.toString());
+		controlInfo.putString("control_tr", controlTR.toString());
+		controlInfo.putString("majority_controller", majorityController.getId());
+		
+		return controlInfo;
 	}
 }

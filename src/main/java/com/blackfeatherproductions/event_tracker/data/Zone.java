@@ -2,6 +2,11 @@ package com.blackfeatherproductions.event_tracker.data;
 
 public class Zone
 {
+	public static Zone INDAR;
+	public static Zone ESAMIR;
+	public static Zone AMERISH;
+	public static Zone HOSSIN;
+	
 	private String id;
 	private String name;
 	private String desc;

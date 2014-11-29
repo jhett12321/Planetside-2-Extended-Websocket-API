@@ -2,13 +2,15 @@ package com.blackfeatherproductions.event_tracker.events;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.DataManager;
+import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.StaticDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 
 @EventInfo(eventNames = "MetagameEvent|FacilityControl")
 public class MetagameEvent implements Event
 {
-	private DataManager dataManager = EventTracker.getInstance().getDataManager();
+	private StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
+	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
 

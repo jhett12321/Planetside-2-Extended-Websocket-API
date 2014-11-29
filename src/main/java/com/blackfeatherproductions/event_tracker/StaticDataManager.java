@@ -4,22 +4,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
-
 import com.blackfeatherproductions.event_tracker.data.Faction;
 import com.blackfeatherproductions.event_tracker.data.MetagameEventType;
 import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
-import com.blackfeatherproductions.event_tracker.data.dynamic.Character;
 
-public class DataManager
+public class StaticDataManager
 {
-	//Dynamic Data
-	private Map<String, Character> characterData = new ConcurrentHashMap<String,Character>();
-	
 	//Static Data
 	private Map<String, World> worlds;
 	private Map<String, Zone> zones;
@@ -29,33 +20,10 @@ public class DataManager
 	
 	private Map<String, MetagameEventType> metagameEventTypes;
 	
-	public DataManager()
-	{
-        EventTracker eventTracker = EventTracker.getInstance();
-        Vertx vertx = eventTracker.getVertx();
-        
+	public StaticDataManager()
+	{   
         //Initialises Static Game Data
-        updateStaticGameData();
-        
-        //Clears the character cache periodically
-        vertx.setPeriodic(60000, new Handler<Long>()
-        {
-            public void handle(Long timerID)
-            {
-            	characterData.clear();
-            }
-        });
-	}
-	
-	public Map<String, Character> getCharacterData()
-	{
-		return characterData;
-	}
-
-	
-	//Static Game Data
-    public void updateStaticGameData()
-    {
+		
         //TODO Query Census for all required static data
 		//TODO Each Data Object needs to have a "GetFormattedMessage" function
 		//TODO All Data Types need to eventually have their own class.
@@ -68,18 +36,30 @@ public class DataManager
     	metagameEventTypes = new HashMap<String, MetagameEventType>();
     	
     	//Worlds
-    	worlds.put("1", new World("1", "Connery"));
-    	worlds.put("10", new World("10", "Miller"));
-    	worlds.put("13", new World("13", "Cobalt"));
-    	worlds.put("17", new World("17", "Emerald"));
-    	worlds.put("19", new World("19", "Jaeger"));
-    	worlds.put("25", new World("25", "Briggs"));
+    	World.CONNERY = new World("1", "Connery");
+    	World.MILLER = new World("10", "Miller");
+    	World.COBALT = new World("13", "Cobalt");
+    	World.EMERALD = new World("17", "Emerald");
+    	World.JAEGAR = new World("19", "Jaeger");
+    	World.BRIGGS = new World("25", "Briggs");
+    	
+    	worlds.put("1", World.CONNERY);
+    	worlds.put("10", World.MILLER);
+    	worlds.put("13", World.COBALT);
+    	worlds.put("17", World.EMERALD);
+    	worlds.put("19", World.JAEGAR);
+    	worlds.put("25", World.BRIGGS);
     	
     	//Zones
-    	zones.put("2", new Zone("2", "Indar", "The arid continent of Indar is home to an assortment of biomes. Grassy savannas, rocky canyons, and the open plains of the seabed provide unique challenges to soldiers."));
-    	zones.put("4", new Zone("4", "Hossin", "Hossin's dense mangrove and willow forests provide air cover along its many swamps and highlands."));
-    	zones.put("6", new Zone("6", "Amerish", "Amerish's lush groves and rocky outcroppings provide ample cover between its rolling plains and mountain passes."));
-    	zones.put("8", new Zone("8", "Esamir", "Esamir's expanses of frigid tundra and craggy mountains provide little cover from airborne threats."));
+    	Zone.INDAR = new Zone("2", "Indar", "The arid continent of Indar is home to an assortment of biomes. Grassy savannas, rocky canyons, and the open plains of the seabed provide unique challenges to soldiers.");
+    	Zone.HOSSIN = new Zone("4", "Hossin", "Hossin's dense mangrove and willow forests provide air cover along its many swamps and highlands.");
+    	Zone.AMERISH = new Zone("6", "Amerish", "Amerish's lush groves and rocky outcroppings provide ample cover between its rolling plains and mountain passes.");
+    	Zone.ESAMIR = new Zone("8", "Esamir", "Esamir's expanses of frigid tundra and craggy mountains provide little cover from airborne threats.");
+    	
+    	zones.put("2", Zone.INDAR );
+    	zones.put("4", Zone.HOSSIN);
+    	zones.put("6", Zone.AMERISH);
+    	zones.put("8", Zone.ESAMIR);
     	
     	//Factions
     	List<String> loadoutsVS = new ArrayList<String>();
@@ -106,9 +86,13 @@ public class DataManager
     	loadoutsTR.add("13");
     	loadoutsTR.add("14");
     	
-    	factions.put("1", new Faction("1", loadoutsVS, "Vanu Sovereignty", "VS"));
-    	factions.put("2", new Faction("2", loadoutsNC, "New Conglomerate", "NC"));
-    	factions.put("3", new Faction("3", loadoutsTR, "Terran Republic", "TR"));
+    	Faction.VS = new Faction("1", loadoutsVS, "Vanu Sovereignty", "VS");
+    	Faction.NC = new Faction("2", loadoutsNC, "New Conglomerate", "NC");
+    	Faction.TR = new Faction("3", loadoutsTR, "Terran Republic", "TR");
+    	
+    	factions.put("1", Faction.VS);
+    	factions.put("2", Faction.NC);
+    	factions.put("3", Faction.TR);
     	
     	//Metagame Event Types
     	metagameEventTypes.put("1", new MetagameEventType("1", "Feeling the Heat", "Capture Indar within the time limit", "2", "0", "1"));
@@ -119,8 +103,7 @@ public class DataManager
     	metagameEventTypes.put("4", new MetagameEventType("52", "Esamir Pumpkin Hunt", "Seek and destroy pumpkins on Esamir", "8", "0", "5"));
     	metagameEventTypes.put("4", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", "6", "0", "5"));
     	metagameEventTypes.put("4", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", "4", "0", "5"));
-    }
-    
+	}
     
     //Worlds
     public World getWorldByID(String id)
