@@ -8,14 +8,12 @@ import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
 import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.StaticDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 @EventInfo(eventNames = "AchievementEarned")
 public class AchievementEarnedEvent implements Event
 {
-	private StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
@@ -51,8 +49,8 @@ public class AchievementEarnedEvent implements Event
 		Faction faction = character.getFaction();
 		String achievement_id = payload.getString("achievement_id");
 		String timestamp = payload.getString("timestamp");
-		Zone zone = staticDataManager.getZoneByID(payload.getString("zone_id"));
-		World world = staticDataManager.getWorldByID(payload.getString("world_id"));
+		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
+		World world = World.getWorldByID(payload.getString("world_id"));
 		
 		//Payload
 		JsonObject eventData = new JsonObject();

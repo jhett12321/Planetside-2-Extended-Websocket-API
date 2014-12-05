@@ -16,6 +16,8 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.FacilityControlEvent;
 import com.blackfeatherproductions.event_tracker.events.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.MetagameEvent;
+import com.blackfeatherproductions.event_tracker.events.PlanetsideTimeEvent;
+import com.blackfeatherproductions.event_tracker.events.PopulationChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.VehicleDestroyEvent;
 
 public class EventManager
@@ -34,6 +36,8 @@ public class EventManager
         registerEvent(FacilityControlEvent.class);
         registerEvent(LoginEvent.class);
         registerEvent(MetagameEvent.class);
+        registerEvent(PlanetsideTimeEvent.class);
+        registerEvent(PopulationChangeEvent.class);
         registerEvent(VehicleDestroyEvent.class);
     }
     

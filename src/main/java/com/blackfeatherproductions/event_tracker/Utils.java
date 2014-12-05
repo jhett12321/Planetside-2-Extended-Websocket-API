@@ -9,7 +9,6 @@ import com.blackfeatherproductions.event_tracker.data.dynamic.FacilityInfo;
 
 public class Utils
 {
-	private static StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
 	private static DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
     //TODO Data verification

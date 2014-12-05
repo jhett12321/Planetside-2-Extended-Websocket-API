@@ -2,7 +2,6 @@ package com.blackfeatherproductions.event_tracker.data.dynamic;
 
 import java.util.Date;
 
-import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data.Faction;
 
 public class CharacterInfo
@@ -31,7 +30,7 @@ public class CharacterInfo
 	public CharacterInfo(String characterID, String factionID, String outfitID)
 	{
 		this.characterID = characterID;
-		this.faction = EventTracker.getInstance().getStaticDataManager().getFactionByID(factionID);
+		this.faction = Faction.getFactionByID(factionID);
 		this.outfitID = outfitID;
 		
 		this.creationTime = new Date();

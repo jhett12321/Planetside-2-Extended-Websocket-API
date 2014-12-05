@@ -20,7 +20,6 @@ public class EventTracker extends Verticle
     
     //Managers
     private EventManager eventManager;
-    private StaticDataManager staticDataManager;
 	private DynamicDataManager dynamicDataManager;
     private QueryManager queryManager;
     private Utils utils;
@@ -33,25 +32,26 @@ public class EventTracker extends Verticle
     {
         instance = this; //Singleton
         
-        //Vertx
         logger = container.logger();
         
-        //Data
+        //Config
         config = new Config();
+        
+        //Static Data
+        new StaticDataManager();
         
         //Managers and Handlers
         eventManager = new EventManager();
         queryManager = new QueryManager();
-        staticDataManager = new StaticDataManager();
         dynamicDataManager = new DynamicDataManager();
         utils = new Utils();
+        
+        //Event Server
+        eventServer = new EventServer();
         
         //Feeds
         new Census();
         new CensusRest();
-        
-        //Event Server
-        eventServer = new EventServer();
     }
     
     public static EventTracker getInstance()
@@ -67,11 +67,6 @@ public class EventTracker extends Verticle
 	public Utils getUtils()
     {
         return utils;
-    }
-
-    public StaticDataManager getStaticDataManager()
-    {
-        return staticDataManager;
     }
     
     public DynamicDataManager getDynamicDataManager()

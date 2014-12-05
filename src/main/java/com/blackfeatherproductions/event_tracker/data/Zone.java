@@ -1,7 +1,12 @@
 package com.blackfeatherproductions.event_tracker.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class Zone
 {
+	public static Map<String, Zone> zones = new HashMap<String, Zone>();
+	
 	public static Zone INDAR;
 	public static Zone ESAMIR;
 	public static Zone AMERISH;
@@ -33,4 +38,22 @@ public class Zone
 		return desc;
 	}
 
+    public static Zone getZoneByID(String id)
+    {
+    	return zones.get(id);
+    }
+    
+    public static Zone getZoneByName(String name)
+    {
+    	for(Zone zone : zones.values())
+    	{
+    		if(zone.getName().equalsIgnoreCase(name))
+    		{
+    			return zone;
+    		}
+    	}
+    	
+    	return null;
+    }
+	
 }

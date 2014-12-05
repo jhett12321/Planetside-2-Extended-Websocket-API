@@ -16,7 +16,7 @@ public class QueryManager
 {
 	private Integer failureCount = 0;
 	
-	protected void getCensusData(String rawQuery, final boolean allowNoData, final Query callback)
+	public void getCensusData(String rawQuery, final boolean allowNoData, final Query callback)
 	{	
 		Vertx vertx = EventTracker.getInstance().getVertx();
 		final Logger logger = EventTracker.getInstance().getLogger();

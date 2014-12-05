@@ -1,7 +1,12 @@
 package com.blackfeatherproductions.event_tracker.data;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class MetagameEventType
 {
+	public static Map<String, MetagameEventType> metagameEventTypes = new HashMap<String, MetagameEventType>();
+	
 	private String id;
 	private String name;
 	private String desc;
@@ -48,4 +53,9 @@ public class MetagameEventType
 	{
 		return type;
 	}
+
+    public static MetagameEventType getMetagameEventTypeByID(String id)
+    {
+    	return metagameEventTypes.get(id);
+    }
 }

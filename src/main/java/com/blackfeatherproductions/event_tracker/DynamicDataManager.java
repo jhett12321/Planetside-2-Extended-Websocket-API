@@ -20,6 +20,11 @@ public class DynamicDataManager
 	{
         Vertx vertx = EventTracker.getInstance().getVertx();
         
+        for(World world : World.worlds.values())
+        {
+        	worldData.put(world, new WorldInfo());
+        }
+        
         //Clears the character cache periodically
         vertx.setPeriodic(60000, new Handler<Long>()
         {
@@ -34,7 +39,7 @@ public class DynamicDataManager
         {
             public void handle(Long timerID)
             {
-            	characterData.clear();
+            	//characterData.clear();
             }
         });
 	}

@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.feeds;
 
+import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -24,10 +25,11 @@ public class Census
 	
 	//Connection Stuff
 	private WebSocket websocket;
-	private boolean websocketConnected;
+	private boolean websocketConnected = false;
+	
+	private long lastHeartbeat;
 	
 	//Feed Statuses
-	private long lastHeartbeat;
 	private Map<String, Boolean> endpointStatuses;
 	
     public Census()
@@ -39,7 +41,7 @@ public class Census
         client = vertx.createHttpClient();
         connectWebsocket();
         
-        //Reconnects the websocket if it is not 'online'
+        //Reconnects the websocket if it is not online, or is not responding.
         vertx.setPeriodic(10000, new Handler<Long>()
         {
             public void handle(Long timerID)
@@ -47,6 +49,12 @@ public class Census
             	if(!websocketConnected)
             	{
             		connectWebsocket();
+            	}
+            	
+            	//If we have not received a heartbeat in the last 2 minutes, restart the connection
+            	if((new Date().getTime()) - lastHeartbeat > 120000)
+            	{
+            		websocket.close();
             	}
             }
         });
@@ -143,11 +151,16 @@ public class Census
     
     private void updateEndpointStatus(String worldID, Boolean newValue)
     {
-    	if(endpointStatuses.get(worldID) != true && newValue == true)
-    	{
-    		new WorldQuery(worldID);
-    	}
+    	Boolean currentServerStatus = endpointStatuses.get(worldID);
     	
-    	endpointStatuses.put(worldID, newValue);
+    	if(currentServerStatus != newValue)
+    	{
+	    	if(newValue == true)
+	    	{
+	    		new WorldQuery(worldID);
+	    	}
+	    	
+	    	endpointStatuses.put(worldID, newValue);
+    	}
     }
 }

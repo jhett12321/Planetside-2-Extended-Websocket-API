@@ -15,11 +15,6 @@ public class WorldInfo
 	//This is the main class for world-centric data.
 	//The DynamicDataManager allows the system to get the world instance.
 	
-	public WorldInfo()
-	{
-		
-	}
-	
 	public ZoneInfo getZoneInfo(Zone zone)
 	{
 		return zones.get(zone);

@@ -1,9 +1,13 @@
 package com.blackfeatherproductions.event_tracker.data;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Faction
 {
+	public static Map<String, Faction> factions = new HashMap<String, Faction>();
+	
 	public static Faction VS;
 	public static Faction NC;
 	public static Faction TR;
@@ -35,4 +39,26 @@ public class Faction
 	{
 		return name;
 	}
+
+	public String getTag()
+	{
+		return tag;
+	}
+
+    public static Faction getFactionByID(String id)
+    {
+    	return factions.get(id);
+    }
+    
+    public static Faction getFactionByLoadoutID(String loadoutID)
+    {
+    	for(Faction faction : factions.values())
+    	{
+    		if(faction.getLoadoutIDs().contains(loadoutID))
+    		{
+    			return faction;
+    		}
+    	}
+    	return null;
+    }
 }

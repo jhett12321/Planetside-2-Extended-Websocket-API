@@ -6,6 +6,11 @@ public class FacilityInfo
 {
 	private Faction owner;
 	
+	public FacilityInfo(Faction owner)
+	{
+		this.owner = owner;
+	}
+	
 	public Faction getOwner()
 	{
 		return owner;

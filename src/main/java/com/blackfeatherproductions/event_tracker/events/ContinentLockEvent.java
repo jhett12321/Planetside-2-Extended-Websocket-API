@@ -4,17 +4,14 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.StaticDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.MetagameEventType;
 import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
 
 @EventInfo(eventNames = "ContinentLock")
 public class ContinentLockEvent implements Event
 {
-	private StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
@@ -37,13 +34,12 @@ public class ContinentLockEvent implements Event
 		String nc_population = payload.getString("nc_population");
 		String tr_population = payload.getString("tr_population");
 		
-		Faction locked_by = staticDataManager.getFactionByID(payload.getString("triggering_faction"));
-		MetagameEventType metagame_event = staticDataManager.getMetagameEventTypeByID(payload.getString("metagame_event_id"));
+		Faction locked_by = Faction.getFactionByID(payload.getString("triggering_faction"));
 		String metagame_event_id = payload.getString("metagame_event_id");
 		
 		String timestamp = payload.getString("timestamp");
-		Zone zone = staticDataManager.getZoneByID(payload.getString("zone_id"));
-		World world = staticDataManager.getWorldByID(payload.getString("world_id"));
+		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
+		World world = World.getWorldByID(payload.getString("world_id"));
 		
 		//Payload
 		JsonObject eventData = new JsonObject();

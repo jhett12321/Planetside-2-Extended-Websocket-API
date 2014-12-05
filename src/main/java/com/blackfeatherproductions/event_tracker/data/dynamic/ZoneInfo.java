@@ -3,6 +3,7 @@ package com.blackfeatherproductions.event_tracker.data.dynamic;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.blackfeatherproductions.event_tracker.data.Facility;
 import com.blackfeatherproductions.event_tracker.data.Faction;
 
 public class ZoneInfo
@@ -10,26 +11,50 @@ public class ZoneInfo
 	private Boolean locked;
 	private Faction locking_faction;
 	
-	//TODO 1.1/1.2 Implement Facility Class to replace String Facility ID lookup
-	private Map<String, FacilityInfo> facilities = new HashMap<String, FacilityInfo>();
-	
-	public FacilityInfo getFacility(String facility_id)
+	private Map<Facility, FacilityInfo> facilities = new HashMap<Facility, FacilityInfo>();
+
+	/**
+	 * @return the locking faction of this zone, otherwise null if the zone is not locked.
+	 */
+	public Faction getLockingFaction()
 	{
-		return facilities.get(facility_id);
-	}
-	
-	public Map<String, FacilityInfo> getFacilities()
-	{
-		return facilities;
+		return locking_faction;
 	}
 
+	/**
+	 * @param locking_faction the locking faction of this zone, otherwise null if the zone is not locked.
+	 */
+	public void setLockingFaction(Faction locking_faction)
+	{
+		this.locking_faction = locking_faction;
+	}
+
+	/**
+	 * @return locked true if the zone is locked, false if the zone is not locked.
+	 */
+	public Boolean isLocked()
+	{
+		return locked;
+	}
+	
+	/**
+	 * @param locked true if the zone is locked, false if the zone is not locked.
+	 */
 	public void setLocked(Boolean locked)
 	{
 		this.locked = locked;
 	}
-	
-	public void setLockingFaction(Faction locking_faction)
+
+	/**
+	 * @return the FacilityInfo object representing the facility_id, otherwise null if it does not exist.
+	 */
+	public FacilityInfo getFacility(Facility facility)
 	{
-		this.locking_faction = locking_faction;
+		return facilities.get(facility);
+	}
+	
+	public Map<Facility, FacilityInfo> getFacilities()
+	{
+		return facilities;
 	}
 }

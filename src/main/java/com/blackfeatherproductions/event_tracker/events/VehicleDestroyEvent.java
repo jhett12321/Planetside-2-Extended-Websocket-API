@@ -4,7 +4,6 @@ import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.StaticDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data.Faction;
 import com.blackfeatherproductions.event_tracker.data.World;
@@ -15,7 +14,6 @@ import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 @EventInfo(eventNames = "VehicleDestroy")
 public class VehicleDestroyEvent implements Event
 {
-	private StaticDataManager staticDataManager = EventTracker.getInstance().getStaticDataManager();
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
@@ -53,20 +51,20 @@ public class VehicleDestroyEvent implements Event
 		CharacterInfo attacker_character = dynamicDataManager.getCharacterData(attackerCharacterID);
 		String attacker_outfit_id = attacker_character.getOutfitID();
 		String attacker_loadout_id = payload.getString("attacker_loadout_id");
-		Faction attacker_faction = staticDataManager.getFactionByLoadoutID(attacker_loadout_id);
+		Faction attacker_faction = Faction.getFactionByLoadoutID(attacker_loadout_id);
 		String attacker_vehicle_id = payload.getString("attacker_vehicle_id");
 		
 		CharacterInfo victim_character = dynamicDataManager.getCharacterData(victimCharacterID);
 		String victim_outfit_id = victim_character.getOutfitID();
-		Faction victim_faction = staticDataManager.getFactionByID(payload.getString("faction_id"));
+		Faction victim_faction = Faction.getFactionByID(payload.getString("faction_id"));
 		String victim_vehicle_id = payload.getString("vehicle_id");
 		
 		String weapon_id = payload.getString("attacker_weapon_id");
 		
 		String timestamp = payload.getString("timestamp");
 		String facility_id = payload.getString("facility_id");
-		Zone zone = staticDataManager.getZoneByID(payload.getString("zone_id"));
-		World world = staticDataManager.getWorldByID(payload.getString("world_id"));
+		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
+		World world = World.getWorldByID(payload.getString("world_id"));
 		
 		//Payload
 		JsonObject eventData = new JsonObject();
