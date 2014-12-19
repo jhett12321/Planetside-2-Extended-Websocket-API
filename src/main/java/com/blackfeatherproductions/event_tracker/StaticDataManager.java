@@ -77,13 +77,13 @@ public class StaticDataManager
     	Faction.factions.put("3", Faction.TR);
     	
     	//Metagame Event Types
-    	MetagameEventType.metagameEventTypes.put("1", new MetagameEventType("1", "Feeling the Heat", "Capture Indar within the time limit", "2", "0", "1"));
-    	MetagameEventType.metagameEventTypes.put("2", new MetagameEventType("2", "Cold War", "Capture Esamir within the time limit", "8", "0", "1"));
-    	MetagameEventType.metagameEventTypes.put("3", new MetagameEventType("3", "Seeing Green", "Capture Amerish within the time limit", "6", "0", "1"));
-    	MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("4", "Marsh Madness", "Capture Hossin within the time limit", "4", "0", "1"));
-    	MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("51", "Indar Pumpkin Hunt", "Seek and destroy pumpkins on Indar", "2", "0", "5"));
-    	MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("52", "Esamir Pumpkin Hunt", "Seek and destroy pumpkins on Esamir", "8", "0", "5"));
-    	MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", "6", "0", "5"));
-    	MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", "4", "0", "5"));
+    	MetagameEventType.metagameEventTypes.put("1", new MetagameEventType("1", "Feeling the Heat", "Capture Indar within the time limit", Zone.INDAR, "0", "1"));
+    	MetagameEventType.metagameEventTypes.put("2", new MetagameEventType("2", "Cold War", "Capture Esamir within the time limit", Zone.ESAMIR, "0", "1"));
+    	MetagameEventType.metagameEventTypes.put("3", new MetagameEventType("3", "Seeing Green", "Capture Amerish within the time limit", Zone.AMERISH, "0", "1"));
+    	MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("4", "Marsh Madness", "Capture Hossin within the time limit", Zone.HOSSIN, "0", "1"));
+    	MetagameEventType.metagameEventTypes.put("51", new MetagameEventType("51", "Indar Pumpkin Hunt", "Seek and destroy pumpkins on Indar", Zone.INDAR, "0", "5"));
+    	MetagameEventType.metagameEventTypes.put("52", new MetagameEventType("52", "Esamir Pumpkin Hunt", "Seek and destroy pumpkins on Esamir", Zone.ESAMIR, "0", "5"));
+    	MetagameEventType.metagameEventTypes.put("53", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", Zone.AMERISH, "0", "5"));
+    	MetagameEventType.metagameEventTypes.put("54", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", Zone.HOSSIN, "0", "5"));
 	}
 }

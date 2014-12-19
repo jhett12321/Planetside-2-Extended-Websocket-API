@@ -41,6 +41,8 @@ public class EventManager
         registerEvent(VehicleDestroyEvent.class);
     }
     
+    //TODO Prioritised Event Handling.
+    //We need to make sure that facility events are called after alert ends, but before continent locks.
     public boolean handleEvent(String eventName, JsonObject payload)
     {
         boolean eventHandled = false;
