@@ -7,4 +7,5 @@ import java.lang.annotation.RetentionPolicy;
 public @interface EventInfo
 {
     public String eventNames();
+    public EventPriority priority();
 }

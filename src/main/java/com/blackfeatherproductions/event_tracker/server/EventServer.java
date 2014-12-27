@@ -29,8 +29,8 @@ public class EventServer
         {
             public void handle(final ServerWebSocket ws)
             {
-                if (ws.path().equals("/apikey")) //TODO Verify API key
-                {
+                //if (ws.path().equals("/apikey")) //TODO Verify API key
+                //{
                     ws.dataHandler(new Handler<Buffer>()
                     {
                         public void handle(Buffer data)
@@ -39,11 +39,11 @@ public class EventServer
                             //TODO Initialize client subscriptions, send connection success message.
                         }
                     });
-                }
-                else
-                {
-                    ws.reject();
-                }
+                //}
+                //else
+                //{
+                //    ws.reject();
+                //}
             }
         }).listen(config.getServerPort());
     }

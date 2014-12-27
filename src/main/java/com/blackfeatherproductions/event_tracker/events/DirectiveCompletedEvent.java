@@ -11,7 +11,7 @@ import com.blackfeatherproductions.event_tracker.data.Zone;
 import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "DirectiveCompleted")
+@EventInfo(eventNames = "DirectiveCompleted", priority = EventPriority.NORMAL)
 public class DirectiveCompletedEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();

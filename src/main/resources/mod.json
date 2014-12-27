@@ -1,3 +1,7 @@
 {
-	"main": "com.blackfeatherproductions.event_tracker.EventTracker"
+	"main": "com.blackfeatherproductions.event_tracker.EventTracker",
+	"description": "The Event Tracker receives, filters and relays all event data sent by the SOE Census API. <http://census.soe.com/>",
+	"licenses": ["The MIT License"],
+	"author": "Jhett Black",
+	"homepage": "https://bitbucket.org/jhett12321/ps2_events"
 }

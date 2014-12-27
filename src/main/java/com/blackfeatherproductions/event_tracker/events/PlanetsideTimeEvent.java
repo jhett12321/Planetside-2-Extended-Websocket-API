@@ -4,7 +4,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.EventTracker;
 
-@EventInfo(eventNames = "PlanetsideTime")
+@EventInfo(eventNames = "PlanetsideTime", priority = EventPriority.NORMAL)
 public class PlanetsideTimeEvent implements Event
 {
 	private JsonObject payload;

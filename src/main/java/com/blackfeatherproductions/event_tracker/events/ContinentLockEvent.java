@@ -9,7 +9,7 @@ import com.blackfeatherproductions.event_tracker.data.Faction;
 import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
 
-@EventInfo(eventNames = "ContinentLock")
+@EventInfo(eventNames = "ContinentLock", priority = EventPriority.LOWEST)
 public class ContinentLockEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();

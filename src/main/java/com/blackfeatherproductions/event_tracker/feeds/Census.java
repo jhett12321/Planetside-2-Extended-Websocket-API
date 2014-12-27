@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.feeds;
 
+import java.net.URI;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,6 +10,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.WebSocket;
+import org.vertx.java.core.http.WebSocketVersion;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
@@ -18,7 +20,7 @@ import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class Census
 {
-	private HttpClient client;
+	//private HttpClient client;
 	private EventTracker eventTracker;
 	private Config config;
 	private Vertx vertx;
@@ -27,7 +29,7 @@ public class Census
 	private WebSocket websocket;
 	private boolean websocketConnected = false;
 	
-	private long lastHeartbeat;
+	private long lastHeartbeat = 0;
 	
 	//Feed Statuses
 	private Map<String, Boolean> endpointStatuses;
@@ -38,31 +40,15 @@ public class Census
         config = eventTracker.getConfig();
         vertx = eventTracker.getVertx();
         
-        client = vertx.createHttpClient();
-        connectWebsocket();
+        HttpClient client = vertx.createHttpClient();
         
-        //Reconnects the websocket if it is not online, or is not responding.
-        vertx.setPeriodic(10000, new Handler<Long>()
-        {
-            public void handle(Long timerID)
-            {
-            	if(!websocketConnected)
-            	{
-            		connectWebsocket();
-            	}
-            	
-            	//If we have not received a heartbeat in the last 2 minutes, restart the connection
-            	if((new Date().getTime()) - lastHeartbeat > 120000)
-            	{
-            		websocket.close();
-            	}
-            }
-        });
-    }
-    
-    public void connectWebsocket()
-    {
-    	client.connectWebsocket("wss://push.planetside2.com/streaming?service-id=s:" + config.getSoeServiceID(), new Handler<WebSocket>()
+        client.setHost("push.planetside2.com");
+        client.setPort(443);
+        client.setKeepAlive(false);
+        
+        
+        
+    	client.connectWebsocket("/streaming?service-id=s:" + config.getSoeServiceID(), WebSocketVersion.HYBI_08, new Handler<WebSocket>()
         {
             @Override
             public void handle(WebSocket ws)
@@ -73,6 +59,8 @@ public class Census
                     @Override
                     public void handle(Buffer data)
                     {
+                    	System.out.println(data.toString());
+                    	
                         JsonObject message = new JsonObject(data.toString());
                         if(message != null)
                         {
@@ -144,9 +132,31 @@ public class Census
                 });
                 
                 //Send subscription message
-                websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+                //websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
             }
         });
+        
+        //Reconnects the websocket if it is not online, or is not responding.
+        vertx.setPeriodic(10000, new Handler<Long>()
+        {
+            public void handle(Long timerID)
+            {
+            	if(!websocketConnected)
+            	{
+            		//connectWebsocket();
+            	}
+            	
+            	//If we have not received a heartbeat in the last 2 minutes, restart the connection
+            	if(lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 120000)
+            	{
+            		//websocket.close();
+            	}
+            }
+        });
+    }
+    
+    public void connectWebsocket()
+    {
     }
     
     private void updateEndpointStatus(String worldID, Boolean newValue)

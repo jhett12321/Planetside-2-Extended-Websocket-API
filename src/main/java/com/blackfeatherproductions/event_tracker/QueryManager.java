@@ -1,5 +1,14 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
+
+import org.apache.commons.lang.StringUtils;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
@@ -10,13 +19,65 @@ import org.vertx.java.core.json.JsonObject;
 import org.vertx.java.core.json.impl.Json;
 import org.vertx.java.core.logging.Logger;
 
+import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
+import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 import com.blackfeatherproductions.event_tracker.queries.Query;
 
 public class QueryManager
 {
 	private Integer failureCount = 0;
 	
-	public void getCensusData(String rawQuery, final boolean allowNoData, final Query callback)
+	private Queue<CharacterQuery> queuedCharacterQueries = new ConcurrentLinkedQueue<CharacterQuery>();
+	
+	public QueryManager()
+	{
+		//Character Queue Processor
+        EventTracker.getInstance().getVertx().setPeriodic(1000, new Handler<Long>()
+        {
+            public void handle(Long timerID)
+            {
+            	Map <String, List<CharacterQuery>> characterLists = new HashMap<String, List<CharacterQuery>>();
+            	
+            	List<String> characters = new ArrayList<String>();
+            	List<CharacterQuery> callbacks = new ArrayList<CharacterQuery>();
+            	
+            	for(CharacterQuery characterQuery : queuedCharacterQueries)
+            	{
+            		characters.addAll(characterQuery.getCharacterIDs());
+            		callbacks.add(characterQuery);
+            		
+            		queuedCharacterQueries.remove(characterQuery);
+            		
+            		if(characters.size() >= 150)
+            		{
+            			characterLists.put(StringUtils.join(characters, ","), callbacks);
+            			characters.clear();
+            			callbacks.clear();
+            		}
+            	}
+            	
+            	if(!characters.isEmpty())
+            	{
+            		characterLists.put(StringUtils.join(characters, ","), callbacks);
+        			characters.clear();
+        			callbacks.clear();
+            	}
+            	
+            	for(Entry<String, List<CharacterQuery>> characterList : characterLists.entrySet())
+            	{
+            		List<Query> queryCallbacks = new ArrayList<Query>();
+            		
+            		queryCallbacks.add(new CharacterListQuery()); //Makes the Character Info Objects
+            		queryCallbacks.addAll(characterList.getValue()); //Triggers the waiting events for processing.
+            		
+            		getCensusData("/get/ps2:v2/character?character_id=" + characterList.getKey() + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit",
+            				false, queryCallbacks.toArray(new CharacterQuery[]{}));
+            	}
+            }
+        });
+	}
+	
+	public void getCensusData(String rawQuery, final boolean allowNoData, final Query... callbacks)
 	{	
 		Vertx vertx = EventTracker.getInstance().getVertx();
 		final Logger logger = EventTracker.getInstance().getLogger();
@@ -24,7 +85,12 @@ public class QueryManager
 		if(failureCount >= EventTracker.getInstance().getConfig().getMaxFailures())
 		{
 			logger.error("[Census Connection Error] Census Failure Limit Reached. Dropping event.");
-			callback.ReceiveData(null);
+			
+			for(Query callback : callbacks)
+			{
+				callback.ReceiveData(null);
+			}
+			
 			failureCount = 0;
 			return;
 		}
@@ -47,7 +113,11 @@ public class QueryManager
 		            		
 		            		if(data != null && data.getInteger("returned") != null && data.getInteger("returned") != 0)
 		            		{
-		            			callback.ReceiveData(data);
+		            			for(Query callback : callbacks)
+		            			{
+		            				callback.ReceiveData(data);
+		            			}
+		            			
 		            			failureCount = 0;
 		            			return;
 		            		}
@@ -60,7 +130,7 @@ public class QueryManager
 		            		logger.debug("Request: " + query);
 		            		logger.debug(e.getMessage());
 		            		
-		            		getCensusData(query, allowNoData, callback);
+		            		getCensusData(query, allowNoData, callbacks);
 		            	}
 		            }
 		        });
@@ -75,10 +145,15 @@ public class QueryManager
 	            		logger.debug("Request: " + query);
 	            		logger.debug(e.getMessage());
 	            		
-	            		getCensusData(query, allowNoData, callback);
+	            		getCensusData(query, allowNoData, callbacks);
 					}
 		        });
 		    }
 		});
+	}
+	
+	public void addCharacterQuery(CharacterQuery query)
+	{
+		this.queuedCharacterQueries.add(query);
 	}
 }

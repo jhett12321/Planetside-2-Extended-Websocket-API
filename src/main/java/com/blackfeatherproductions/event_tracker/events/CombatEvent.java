@@ -1,17 +1,21 @@
 package com.blackfeatherproductions.event_tracker.events;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data.Faction;
 import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
 import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "Death")
+@EventInfo(eventNames = "Death", priority = EventPriority.NORMAL)
 public class CombatEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -29,7 +33,17 @@ public class CombatEvent implements Event
 		if(payload != null)
 		{
 			attackerCharacterID = payload.getString("attacker_character_id");
-			victimCharacterID = payload.getString("victim_character_id");
+			victimCharacterID = payload.getString("character_id");
+			
+			if(!Utils.isValidCharacter(victimCharacterID))
+			{
+				victimCharacterID = attackerCharacterID;
+			}
+			
+			if(!Utils.isValidCharacter(attackerCharacterID))
+			{
+				attackerCharacterID = victimCharacterID;
+			}
 			
 			if(dynamicDataManager.characterDataExists(attackerCharacterID) && dynamicDataManager.characterDataExists(victimCharacterID))
 			{
@@ -38,7 +52,10 @@ public class CombatEvent implements Event
 			
 			else
 			{
-				String[] characterIDs = {attackerCharacterID, victimCharacterID};
+				List<String> characterIDs = new ArrayList<String>();
+				characterIDs.add(attackerCharacterID);
+				characterIDs.add(victimCharacterID);
+				
 				new CharacterQuery(characterIDs, this);
 			}
 		}

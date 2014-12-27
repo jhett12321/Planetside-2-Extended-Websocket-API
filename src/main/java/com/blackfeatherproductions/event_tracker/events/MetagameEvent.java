@@ -12,7 +12,7 @@ import com.blackfeatherproductions.event_tracker.data.Zone;
 import com.blackfeatherproductions.event_tracker.data.dynamic.MetagameEventInfo;
 import com.blackfeatherproductions.event_tracker.data.dynamic.WorldInfo;
 
-@EventInfo(eventNames = "MetagameEvent|FacilityControl")
+@EventInfo(eventNames = "MetagameEvent|FacilityControl", priority = EventPriority.HIGHEST)
 public class MetagameEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -41,14 +41,14 @@ public class MetagameEvent implements Event
 		WorldInfo worldData = dynamicDataManager.getWorldData(world);
 		
 			//Data to be resolved
-		String instance_id;
-		String type_id;
+		String instance_id = null;
+		String type_id = null;
 		String start_time = "0";
 		String end_time = "0";
 		String status = null;
 		String domination = "0";
 		
-		Zone zone;
+		Zone zone = null;
 		
 			//Facility Control Data
 		if(event_name == "FacilityControl")
@@ -78,7 +78,6 @@ public class MetagameEvent implements Event
 				status = "2";
 				domination = "0";
 			}
-			
 		}
 		
 			//MetagameEventData

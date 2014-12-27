@@ -11,7 +11,7 @@ import com.blackfeatherproductions.event_tracker.data.Faction;
 import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.Zone;
 
-@EventInfo(eventNames = "FacilityControl")
+@EventInfo(eventNames = "FacilityControl", priority = EventPriority.NORMAL)
 public class FacilityControlEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();

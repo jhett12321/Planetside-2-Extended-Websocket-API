@@ -10,7 +10,7 @@ import com.blackfeatherproductions.event_tracker.data.World;
 import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "PlayerLogin|PlayerLogout")
+@EventInfo(eventNames = "PlayerLogin|PlayerLogout", priority = EventPriority.NORMAL)
 public class LoginEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();

@@ -11,7 +11,7 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "AchievementEarned")
+@EventInfo(eventNames = "AchievementEarned", priority = EventPriority.NORMAL)
 public class AchievementEarnedEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
