@@ -34,6 +34,7 @@ public class FacilityControlEvent implements Event
 		//Data
 		String facility_id = payload.getString("facility_id");
 		Facility facility = Facility.getFacilityByID(facility_id);
+		String outfit_id = payload.getString("outfit_id");
 		String duration_held = payload.getString("duration_held");
 		
 		Faction new_faction = Faction.getFactionByID(payload.getString("new_faction_id"));
@@ -60,6 +61,7 @@ public class FacilityControlEvent implements Event
 		
 		eventData.putString("facility_id", facility_id);
 		eventData.putString("facility_type_id", facility.getTypeID());
+		eventData.putString("outfit_id", outfit_id);
 		eventData.putString("duration_held", duration_held);
 		
 		eventData.putString("new_faction_id", new_faction.getId());
@@ -80,6 +82,7 @@ public class FacilityControlEvent implements Event
 		
 		filterData.putArray("facilities", new JsonArray().addString(facility_id));
 		filterData.putArray("facility_types", new JsonArray().addString(facility.getTypeID()));
+		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
 		filterData.putArray("factions", new JsonArray().addString(new_faction.getId()).addString(old_faction.getId()));
 		filterData.putArray("captures", new JsonArray().addString(is_capture));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
