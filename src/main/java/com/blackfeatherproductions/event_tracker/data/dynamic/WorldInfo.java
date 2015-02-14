@@ -1,8 +1,6 @@
 package com.blackfeatherproductions.event_tracker.data.dynamic;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 import com.blackfeatherproductions.event_tracker.data.Zone;

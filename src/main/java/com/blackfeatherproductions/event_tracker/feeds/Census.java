@@ -1,6 +1,5 @@
 package com.blackfeatherproductions.event_tracker.feeds;
 
-import java.net.URI;
 import java.util.Date;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -10,7 +9,6 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.WebSocket;
-import org.vertx.java.core.http.WebSocketVersion;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
