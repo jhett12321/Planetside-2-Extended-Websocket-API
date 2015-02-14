@@ -20,7 +20,7 @@
 
 //Modules
 var WebSocket = require('ws');
-var mysql = require('mysql');
+//var mysql = require('mysql');
 var http = require('http');
 var url = require('url');
 
@@ -33,7 +33,7 @@ var gameData = require('./gameData.js');
 var serviceID = config.soeServiceID; 
 
 //MySQL Database Pool. Utilises 100 connections to store raw event data.
-var pool = mysql.createPool(
+/* var pool = mysql.createPool(
 {
 	connectionLimit : config.dbConnectionLimit,
 	host: config.dbHost,
@@ -42,7 +42,8 @@ var pool = mysql.createPool(
 	database: config.dbName,
 	supportBigNumbers: true,
 	bigNumberStrings: true
-});
+}); */
+
 
 //Planetside 2 Game Data
 //See gameData.js for explanation of values.
@@ -124,7 +125,7 @@ function init(callback)
 							}
 						}
 						
-						pool.getConnection(function(err, dbConnection)
+/* 						pool.getConnection(function(err, dbConnection)
 						{
 							if(dbConnection != undefined)
 							{
@@ -139,7 +140,7 @@ function init(callback)
 									dbConnection.release();
 								});
 							}
-						});
+						}); */
 						
 						for(var i = 0; i < data.world_event_list.length; i++)
 						{
@@ -359,7 +360,7 @@ function processMessage(messageData)
 		var payload = message.payload;
 		var eventType = payload.event_name;
 		
-		if(eventType == "DirectiveCompleted")
+/* 		if(eventType == "DirectiveCompleted")
 		{
 			var character = payload.character_id;
 			
@@ -429,7 +430,7 @@ function processMessage(messageData)
 					}
 				});
 			}
-		}
+		} */
 	}
 	
 	else
@@ -505,7 +506,7 @@ function processMessage(messageData)
 								world_id: payload.world_id
 							};
 						
-							pool.getConnection(function(err, dbConnection)
+/* 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
 								{
@@ -520,7 +521,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});
+							}); */
 			
 							var messageData =
 							{
@@ -652,7 +653,7 @@ function processMessage(messageData)
 											worlds: [payload.world_id]
 										}
 										
-										pool.getConnection(function(err, dbConnection)
+/* 										pool.getConnection(function(err, dbConnection)
 										{
 											if(dbConnection != undefined)
 											{
@@ -667,7 +668,7 @@ function processMessage(messageData)
 													dbConnection.release();
 												});
 											}
-										});
+										}); */
 									}
 									else if(eventType == "VehicleDestroy")
 									{
@@ -723,7 +724,7 @@ function processMessage(messageData)
 											worlds: [payload.world_id]
 										}
 										
-										pool.getConnection(function(err, dbConnection)
+/* 										pool.getConnection(function(err, dbConnection)
 										{
 											if(dbConnection != undefined)
 											{
@@ -738,7 +739,7 @@ function processMessage(messageData)
 													dbConnection.release();
 												});
 											}
-										});
+										}); */
 									}
 									
 									var eventData =
@@ -789,6 +790,7 @@ function processMessage(messageData)
 							facility_id: payload.facility_id,
 							facility_type_id: regions[worldID][zoneID]['regions'][facilityID].facility_type_id,
 							duration_held: payload.duration_held,
+							outfit_id: payload.outfit_id,
 							new_faction_id: payload.new_faction_id,
 							old_faction_id: payload.old_faction_id,
 							is_capture: isCapture,
@@ -801,7 +803,7 @@ function processMessage(messageData)
 							world_id: payload.world_id
 						};
 						
-						pool.getConnection(function(err, dbConnection)
+/* 						pool.getConnection(function(err, dbConnection)
 						{
 							if(dbConnection != undefined)
 							{
@@ -816,13 +818,14 @@ function processMessage(messageData)
 									dbConnection.release();
 								});
 							}
-						});
+						}); */
 						
 						var messageData =
 						{
 							facility_id: payload.facility_id,
 							facility_type_id: payload.facility_type_id,
 							duration_held: payload.duration_held,
+							outfit_id: payload.outfit_id,
 							new_faction_id: payload.new_faction_id,
 							old_faction_id: payload.old_faction_id,
 							is_capture: isCapture,
@@ -839,6 +842,7 @@ function processMessage(messageData)
 						{
 							facilities: [payload.facility_id],
 							facility_types: [payload.facility_type_id],
+							outfits: [payload.outfit_id],
 							factions: [payload.new_faction_id, payload.old_faction_id],
 							captures: [isCapture],
 							zones: [payload.zone_id],
@@ -869,7 +873,7 @@ function processMessage(messageData)
 								locked_by: majorityController,
 							};
 							
-							pool.getConnection(function(err, dbConnection)
+/* 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
 								{
@@ -884,7 +888,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});
+							}); */
 							
 							var lockMessageData =
 							{
@@ -927,7 +931,7 @@ function processMessage(messageData)
 								locked_by: '0',
 							};
 							
-							pool.getConnection(function(err, dbConnection)
+/* 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
 								{
@@ -942,7 +946,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});
+							}); */
 							
 							var lockMessageData =
 							{
@@ -1061,7 +1065,7 @@ function processMessage(messageData)
 								worlds: [worldID]
 							}
 							
-							pool.getConnection(function(err, dbConnection)
+/* 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
 								{
@@ -1076,7 +1080,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});
+							}); */
 							
 							var eventData =
 							{
@@ -1165,7 +1169,7 @@ function processMessage(messageData)
 								worlds: [worldID]
 							}
 							
-							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + worldID;
+/* 							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + worldID;
 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
@@ -1181,7 +1185,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});	
+							});	 */
 							
 							var eventData =
 							{
@@ -1271,7 +1275,7 @@ function processMessage(messageData)
 								worlds: [worldID]
 							}
 							
-							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
+/* 							var sql = 'UPDATE AlertEvents SET ? WHERE alert_id = ' + alertID + ' AND world_id = ' + payload.world_id;
 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
@@ -1287,7 +1291,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});
+							}); */
 							
 							var eventData =
 							{
@@ -1331,7 +1335,7 @@ function processMessage(messageData)
 								world_id: payload.world_id
 							};
 						
-							pool.getConnection(function(err, dbConnection)
+/* 							pool.getConnection(function(err, dbConnection)
 							{
 								if(dbConnection != undefined)
 								{
@@ -1346,7 +1350,7 @@ function processMessage(messageData)
 										dbConnection.release();
 									});
 								}
-							});
+							}); */
 	
 							var messageData =
 							{
@@ -1406,7 +1410,7 @@ function processMessage(messageData)
 									world_id: payload.world_id
 								};
 								
-								pool.getConnection(function(err, dbConnection)
+/* 								pool.getConnection(function(err, dbConnection)
 								{
 									if(dbConnection != undefined)
 									{
@@ -1421,7 +1425,7 @@ function processMessage(messageData)
 											dbConnection.release();
 										});
 									}
-								});
+								}); */
 	
 								var messageData =
 								{

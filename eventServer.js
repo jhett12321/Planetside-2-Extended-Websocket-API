@@ -571,6 +571,7 @@ function getBlankSubscription()
 			hide: [],
 			facilities: [],
 			facility_types: [],
+			outfits: [],
 			factions: [],
 			captures: [],
 			zones: []
