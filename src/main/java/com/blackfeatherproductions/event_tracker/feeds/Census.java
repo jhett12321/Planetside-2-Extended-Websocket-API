@@ -1,7 +1,6 @@
 package com.blackfeatherproductions.event_tracker.feeds;
 
 import java.util.Date;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import org.vertx.java.core.Handler;
@@ -14,6 +13,8 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.queries.MetagameEventQuery;
 import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class Census
@@ -30,7 +31,7 @@ public class Census
 	private long lastHeartbeat = 0;
 	
 	//Feed Statuses
-	private Map<String, Boolean> endpointStatuses;
+	//private Map<String, Boolean> endpointStatuses = new HashMap<String,Boolean>();
 	
     public Census()
     {
@@ -78,45 +79,79 @@ public class Census
                     @Override
                     public void handle(Buffer data)
                     {
-                    	System.out.println(data.toString());
-                    	
                         JsonObject message = new JsonObject(data.toString());
                         if(message != null)
                         {
                             String serviceType = message.getString("type");
-                            if(serviceType != null && serviceType == "serviceStateChanged")
+                            
+                            if(message.getString("connected") != null && message.getString("connected").equals("true"))
                             {
-                                eventTracker.getLogger().info("Received Census Server State Message: " + message.encode());
-                                
-                                if(!websocketConnected)
-                                {
-                                	websocketConnected = true;
-                                }
+                                eventTracker.getLogger().info("[INFO] Websocket Secure Connection established to push.planetside.com" );
+                                eventTracker.getLogger().info("[INFO] Subscribing to all events..." );
+                                //Send subscription message
+                                websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
                             }
                             
-                            else if(serviceType == "heartbeat")
+                            else if(serviceType != null)
                             {
-                            	JsonObject onlineList = message.getObject("online");
-                            	for(Entry<String, Object> endpoint : onlineList.toMap().entrySet())
-                            	{
-                            		if(endpoint.getValue().equals("true"))
-                            		{
-                            			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), true);
-                            		}
-                            		
-                            		else
-                            		{
-                            			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), false);
-                            		}
-                            	}
+	                            if(serviceType.equals("serviceStateChanged"))
+	                            {
+	                                if(!websocketConnected)
+	                                {
+	                                	websocketConnected = true;
+	                                }
+	                                
+	                        		if(message.getString("online").equals("true"))
+	                        		{
+	                        			updateEndpointStatus(Utils.getWorldIDFromEndpointString(message.getString("detail")), true);
+	                        		}
+	                        		
+	                        		else
+	                        		{
+	                        			updateEndpointStatus(Utils.getWorldIDFromEndpointString(message.getString("detail")), false);
+	                        		}
+	                            }
+	                            
+	                            else if(serviceType.equals("heartbeat"))
+	                            {
+	                            	JsonObject onlineList = message.getObject("online");
+	                            	for(Entry<String, Object> endpoint : onlineList.toMap().entrySet())
+	                            	{
+	                            		if(endpoint.getValue().equals("true"))
+	                            		{
+	                            			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), true);
+	                            		}
+	                            		
+	                            		else
+	                            		{
+	                            			updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), false);
+	                            		}
+	                            	}
+	                            }
+	                            
+	                            else if(serviceType.equals("serviceMessage"))
+	                            {
+	                                JsonObject payload = message.getObject("payload");
+	                                String eventName = payload.getString("event_name");
+	                                
+	                                //Check the world status for this event
+	                                if(eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
+	                                {
+	                                    eventTracker.getEventHandler().handleEvent(eventName, payload);
+	                                }
+	                            }
+	                            
+	                            else
+	                            {
+	                            	eventTracker.getLogger().warn("[WARNING] Could not handle message!");
+	                            	eventTracker.getLogger().warn(message.encodePrettily());
+	                            }
                             }
                             
-                            else if(serviceType != null && serviceType == "serviceMessage")
+                            else
                             {
-                                JsonObject payload = message.getObject("payload");
-                                String eventName = payload.getString("event_name");
-                                
-                                eventTracker.getEventHandler().handleEvent(eventName, payload);
+                            	eventTracker.getLogger().warn("[WARNING] Could not handle message!");
+                            	eventTracker.getLogger().warn(message.encodePrettily());
                             }
                         }
                     }
@@ -149,25 +184,41 @@ public class Census
 						arg0.printStackTrace();
 					}
                 });
-                
-                //Send subscription message
-                websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
             }
         });
     }
     
     private void updateEndpointStatus(String worldID, Boolean newValue)
     {
-    	Boolean currentServerStatus = endpointStatuses.get(worldID);
+    	Boolean currentServerStatus = false;
+    	World world = World.getWorldByID(worldID);
+    	
+    	if(eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)) != null)
+    	{
+    		currentServerStatus = eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)).isOnline();
+    	}
     	
     	if(currentServerStatus != newValue)
     	{
-	    	if(newValue == true)
+	    	if(newValue)
 	    	{
+	    		//Data is (now) being received for this world.
+	    		
+	    		//Query Census for World Data.
 	    		new WorldQuery(worldID);
+	    		
+                //Update Metagame Events
+                new MetagameEventQuery(worldID);
+                
+                eventTracker.getLogger().info("[INFO] Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
 	    	}
 	    	
-	    	endpointStatuses.put(worldID, newValue);
+	    	else
+	    	{
+	    		//No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
+	    		eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
+                eventTracker.getLogger().info("[WARNING] Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
+	    	}
     	}
     }
 }

@@ -5,7 +5,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 
 public class CharacterListQuery implements Query
 {
@@ -22,7 +22,17 @@ public class CharacterListQuery implements Query
 			
 			String characterID = characterData.getString("character_id");
 			String factionID = characterData.getString("faction_id");
-			String outfitID = characterData.getObject("outfit").getString("outfit_id");
+			
+			String outfitID;
+			
+			if(characterData.getObject("outfit") != null)
+			{
+				outfitID = characterData.getObject("outfit").getString("outfit_id");
+			}
+			else
+			{
+				outfitID = "0";
+			}
 			
 			CharacterInfo character = new CharacterInfo(characterID, factionID, outfitID);
 			

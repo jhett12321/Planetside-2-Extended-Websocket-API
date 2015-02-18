@@ -16,7 +16,6 @@ import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientResponse;
 import org.vertx.java.core.json.DecodeException;
 import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.json.impl.Json;
 import org.vertx.java.core.logging.Logger;
 
 import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
@@ -71,7 +70,7 @@ public class QueryManager
             		queryCallbacks.addAll(characterList.getValue()); //Triggers the waiting events for processing.
             		
             		getCensusData("/get/ps2:v2/character?character_id=" + characterList.getKey() + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit",
-            				false, queryCallbacks.toArray(new CharacterQuery[]{}));
+            				false, queryCallbacks.toArray(new Query[]{}));
             	}
             }
         });
@@ -84,7 +83,7 @@ public class QueryManager
 		
 		if(failureCount >= EventTracker.getInstance().getConfig().getMaxFailures())
 		{
-			logger.error("[Census Connection Error] Census Failure Limit Reached. Dropping event.");
+			logger.error("[ERROR] [Census REST] Census Failure Limit Reached. Dropping event.");
 			
 			for(Query callback : callbacks)
 			{
@@ -109,7 +108,7 @@ public class QueryManager
 		            {
 		            	try
 		            	{
-		            		JsonObject data = Json.decodeValue(body.toString(), JsonObject.class);
+		            		JsonObject data = new JsonObject(body.toString());
 		            		
 		            		if(data != null && data.getInteger("returned") != null && data.getInteger("returned") != 0)
 		            		{
@@ -125,10 +124,12 @@ public class QueryManager
 		            	catch(DecodeException e)
 		            	{
 		            		//No Valid JSON was returned
-		            		logger.warn("[Census Connection Error] - A census request returned invalid JSON. Retrying request...");
-		            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
-		            		logger.debug("Request: " + query);
-		            		logger.debug(e.getMessage());
+		            		logger.warn("[WARNING] [Census REST] - A census request returned invalid JSON. Retrying request...");
+		            		logger.warn("[WARNING] Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+		            		logger.warn("[WARNING] Request: " + query);
+		            		logger.warn(e.getMessage());
+		            		
+		            		failureCount++;
 		            		
 		            		getCensusData(query, allowNoData, callbacks);
 		            	}
@@ -140,10 +141,12 @@ public class QueryManager
 					@Override
 					public void handle(Throwable e)
 					{
-	            		logger.warn("[Census Connection Error] - A census request returned invalid JSON. Retrying request...");
-	            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
-	            		logger.debug("Request: " + query);
-	            		logger.debug(e.getMessage());
+	            		logger.warn("[WARNING] [Census REST] - A census request returned invalid JSON. Retrying request...");
+	            		logger.warn("[WARNING] Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+	            		logger.warn("[WARNING] Request: " + query);
+	            		logger.warn(e.getMessage());
+	            		
+	            		failureCount++;
 	            		
 	            		getCensusData(query, allowNoData, callbacks);
 					}

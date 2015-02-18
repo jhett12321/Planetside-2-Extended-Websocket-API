@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.event_tracker.events;
+package com.blackfeatherproductions.event_tracker.events.census;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
@@ -6,11 +6,14 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
-import com.blackfeatherproductions.event_tracker.data.MetagameEventType;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.Zone;
-import com.blackfeatherproductions.event_tracker.data.dynamic.MetagameEventInfo;
-import com.blackfeatherproductions.event_tracker.data.dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_static.MetagameEventType;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 @EventInfo(eventNames = "MetagameEvent|FacilityControl", priority = EventPriority.HIGHEST)
 public class MetagameEvent implements Event
@@ -38,7 +41,7 @@ public class MetagameEvent implements Event
 		String timestamp = payload.getString("timestamp");
 		
 		World world = World.getWorldByID(payload.getString("world_id"));
-		WorldInfo worldData = dynamicDataManager.getWorldData(world);
+		WorldInfo worldData = dynamicDataManager.getWorldInfo(world);
 		
 			//Data to be resolved
 		String instance_id = null;
@@ -51,7 +54,7 @@ public class MetagameEvent implements Event
 		Zone zone = null;
 		
 			//Facility Control Data
-		if(event_name == "FacilityControl")
+		if(event_name.equals("FacilityControl"))
 		{
 			zone = Zone.getZoneByID(payload.getString("zone_id"));
 			

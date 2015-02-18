@@ -1,8 +1,8 @@
-package com.blackfeatherproductions.event_tracker.data.dynamic;
+package com.blackfeatherproductions.event_tracker.data_dynamic;
 
 import java.util.Date;
 
-import com.blackfeatherproductions.event_tracker.data.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
 
 public class CharacterInfo
 {

@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.event_tracker.data;
+package com.blackfeatherproductions.event_tracker.data_static;
 
 import java.util.HashMap;
 import java.util.Map;

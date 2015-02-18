@@ -2,11 +2,11 @@ package com.blackfeatherproductions.event_tracker;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.Zone;
-import com.blackfeatherproductions.event_tracker.data.dynamic.FacilityInfo;
-import com.blackfeatherproductions.event_tracker.data.dynamic.ZoneInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class Utils
 {
@@ -14,7 +14,7 @@ public class Utils
 	
 	public static String getWorldIDFromEndpointString(String endPointString)
 	{
-		String worldID = endPointString.substring(27);
+		String worldID = endPointString.replaceAll("(\\D+)", "");
 		
 		return worldID;
 	}
@@ -76,7 +76,7 @@ public class Utils
 		float facilitiesNC = 0;
 		float facilitiesTR = 0;
 		
-		for(FacilityInfo facility : dynamicDataManager.getWorldData(world).getZoneInfo(zone).getFacilities().values())
+		for(FacilityInfo facility : dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().values())
 		{
 			totalRegions++;
 			
@@ -94,15 +94,15 @@ public class Utils
 			}
 		}
 		
-		Float controlVS = 0f;
-		Float controlNC = 0f;
-		Float controlTR = 0f;
+		Integer controlVS = 0;
+		Integer controlNC = 0;
+		Integer controlTR = 0;
 		
 		if(totalRegions > 0)
 		{
-			controlVS = (float) Math.floor(facilitiesVS / totalRegions * 100);
-			controlNC = (float) Math.floor(facilitiesNC / totalRegions * 100);
-			controlTR = (float) Math.floor(facilitiesTR / totalRegions * 100);
+			controlVS = (int) Math.floor(facilitiesVS / totalRegions * 100);
+			controlNC = (int) Math.floor(facilitiesNC / totalRegions * 100);
+			controlTR = (int) Math.floor(facilitiesTR / totalRegions * 100);
 		}
 		
 		float majorityControl = controlVS;
@@ -115,7 +115,7 @@ public class Utils
 		}
 		else if(controlNC == majorityControl)
 		{
-			majorityController = null;
+			majorityController = Faction.NS;
 		}
 		
 		if(controlTR > majorityControl)
@@ -125,7 +125,7 @@ public class Utils
 		}
 		else if(controlTR == majorityControl)
 		{
-			majorityController = null;
+			majorityController = Faction.NS;
 		}
 		
 		JsonObject controlInfo = new JsonObject();
@@ -146,7 +146,7 @@ public class Utils
 		float facilitiesNC = 0;
 		float facilitiesTR = 0;
 		
-		for(ZoneInfo zone : dynamicDataManager.getWorldData(world).getZones().values())
+		for(ZoneInfo zone : dynamicDataManager.getWorldInfo(world).getZones().values())
 		{
 			for(FacilityInfo facility : zone.getFacilities().values())
 			{

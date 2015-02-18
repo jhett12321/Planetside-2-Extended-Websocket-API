@@ -1,17 +1,21 @@
-package com.blackfeatherproductions.event_tracker.events;
+package com.blackfeatherproductions.event_tracker.events.census;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "PlayerLogin|PlayerLogout", priority = EventPriority.NORMAL)
-public class LoginEvent implements Event
+@EventInfo(eventNames = "AchievementEarned", priority = EventPriority.NORMAL)
+public class AchievementEarnedEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
@@ -42,20 +46,13 @@ public class LoginEvent implements Event
 	@Override
 	public void processEvent()
 	{
-		String event_name = payload.getString("event_name");
-		
 		//Data
 		CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
 		String outfit_id = character.getOutfitID();
 		Faction faction = character.getFaction();
-		
-		String is_login = "0";
-		if(event_name == "PlayerLogin")
-		{
-			is_login = "1";
-		}
-		
+		String achievement_id = payload.getString("achievement_id");
 		String timestamp = payload.getString("timestamp");
+		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
 		World world = World.getWorldByID(payload.getString("world_id"));
 		
 		//Payload
@@ -64,8 +61,9 @@ public class LoginEvent implements Event
 		eventData.putString("character_id", character.getCharacterID());
 		eventData.putString("outfit_id", outfit_id);
 		eventData.putString("faction_id", faction.getId());
-		eventData.putString("is_login", is_login);
+		eventData.putString("achievement_id", achievement_id);
 		eventData.putString("timestamp", timestamp);
+		eventData.putString("zone_id", zone.getID());
 		eventData.putString("world_id", world.getID());
 		
 		//Filters
@@ -74,7 +72,8 @@ public class LoginEvent implements Event
 		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
 		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
-		filterData.putArray("login_types", new JsonArray().addString(is_login));
+		filterData.putArray("achievements", new JsonArray().addString(achievement_id));
+		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 		
 		//Broadcast Event
@@ -82,7 +81,7 @@ public class LoginEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "DirectiveCompleted");
+		message.putString("event_type", "AchievementEarned");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
 	}

@@ -1,10 +1,10 @@
-package com.blackfeatherproductions.event_tracker.data.dynamic;
+package com.blackfeatherproductions.event_tracker.data_dynamic;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import com.blackfeatherproductions.event_tracker.data.Facility;
-import com.blackfeatherproductions.event_tracker.data.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.Facility;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
 
 public class ZoneInfo
 {
@@ -19,6 +19,11 @@ public class ZoneInfo
 	public Faction getLockingFaction()
 	{
 		return locking_faction;
+	}
+	
+	public void addFacility(Facility facility, FacilityInfo facilityInfo)
+	{
+		
 	}
 
 	/**
@@ -50,7 +55,17 @@ public class ZoneInfo
 	 */
 	public FacilityInfo getFacility(Facility facility)
 	{
-		return facilities.get(facility);
+		if(facility != null)
+		{
+			if(facilities.get(facility) == null)
+			{
+				facilities.put(facility, new FacilityInfo());
+			}
+			
+			return facilities.get(facility);
+		}
+		
+		return null;
 	}
 	
 	public Map<Facility, FacilityInfo> getFacilities()

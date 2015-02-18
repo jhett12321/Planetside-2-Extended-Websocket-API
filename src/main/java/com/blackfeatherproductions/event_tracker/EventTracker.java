@@ -41,10 +41,10 @@ public class EventTracker extends Verticle
         new StaticDataManager();
         
         //Managers and Handlers
-        eventManager = new EventManager();
-        queryManager = new QueryManager();
         dynamicDataManager = new DynamicDataManager();
+        queryManager = new QueryManager();
         utils = new Utils();
+        eventManager = new EventManager();
         
         //Event Server
         eventServer = new EventServer();

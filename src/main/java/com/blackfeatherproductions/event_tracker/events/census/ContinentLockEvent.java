@@ -1,13 +1,16 @@
-package com.blackfeatherproductions.event_tracker.events;
+package com.blackfeatherproductions.event_tracker.events.census;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.Zone;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 @EventInfo(eventNames = "ContinentLock", priority = EventPriority.LOWEST)
 public class ContinentLockEvent implements Event
@@ -72,7 +75,7 @@ public class ContinentLockEvent implements Event
 		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
 
 		//Update Internal Data
-		dynamicDataManager.getWorldData(world).getZoneInfo(zone).setLocked(true);
-		dynamicDataManager.getWorldData(world).getZoneInfo(zone).setLockingFaction(locked_by);
+		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);
+		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(locked_by);
 	}
 }

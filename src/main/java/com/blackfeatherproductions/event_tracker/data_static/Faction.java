@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.event_tracker.data;
+package com.blackfeatherproductions.event_tracker.data_static;
 
 import java.util.HashMap;
 import java.util.List;
@@ -8,6 +8,7 @@ public class Faction
 {
 	public static Map<String, Faction> factions = new HashMap<String, Faction>();
 	
+	public static Faction NS;
 	public static Faction VS;
 	public static Faction NC;
 	public static Faction TR;

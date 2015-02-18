@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.event_tracker.events;
+package com.blackfeatherproductions.event_tracker.events.census;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
@@ -6,10 +6,13 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
-import com.blackfeatherproductions.event_tracker.data.Facility;
-import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.Zone;
+import com.blackfeatherproductions.event_tracker.data_static.Facility;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 @EventInfo(eventNames = "FacilityControl", priority = EventPriority.NORMAL)
 public class FacilityControlEvent implements Event
@@ -41,7 +44,7 @@ public class FacilityControlEvent implements Event
 		Faction old_faction = Faction.getFactionByID(payload.getString("old_faction_id"));
 		
 		String is_capture = "0";
-		if(new_faction == old_faction)
+		if(new_faction.equals(old_faction))
 		{
 			is_capture = "1";
 		}
@@ -98,9 +101,9 @@ public class FacilityControlEvent implements Event
 		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
 
 		//Update Internal Data
-		if(is_capture == "1")
+		if(is_capture.equals("1"))
 		{
-			dynamicDataManager.getWorldData(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
+			dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
 		}
 	}
 }

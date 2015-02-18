@@ -1,14 +1,17 @@
-package com.blackfeatherproductions.event_tracker.events;
+package com.blackfeatherproductions.event_tracker.events.census;
 
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.Zone;
-import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 @EventInfo(eventNames = "DirectiveCompleted", priority = EventPriority.NORMAL)

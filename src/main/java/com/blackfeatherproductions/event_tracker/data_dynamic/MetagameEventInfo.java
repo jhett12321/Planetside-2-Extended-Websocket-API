@@ -1,6 +1,6 @@
-package com.blackfeatherproductions.event_tracker.data.dynamic;
+package com.blackfeatherproductions.event_tracker.data_dynamic;
 
-import com.blackfeatherproductions.event_tracker.data.MetagameEventType;
+import com.blackfeatherproductions.event_tracker.data_static.MetagameEventType;
 
 public class MetagameEventInfo
 {

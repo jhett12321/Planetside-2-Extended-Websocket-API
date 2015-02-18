@@ -2,10 +2,11 @@ package com.blackfeatherproductions.event_tracker;
 
 import java.util.ArrayList;
 import java.util.List;
-import com.blackfeatherproductions.event_tracker.data.Faction;
-import com.blackfeatherproductions.event_tracker.data.MetagameEventType;
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.Zone;
+
+import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.MetagameEventType;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class StaticDataManager
 {	
@@ -44,6 +45,9 @@ public class StaticDataManager
     	Zone.zones.put("8", Zone.ESAMIR);
     	
     	//Factions
+    	List<String> loadoutsNS = new ArrayList<String>();
+    	loadoutsNS.add("0");
+    	
     	List<String> loadoutsVS = new ArrayList<String>();
     	loadoutsVS.add("15");
     	loadoutsVS.add("17");
@@ -68,10 +72,12 @@ public class StaticDataManager
     	loadoutsTR.add("13");
     	loadoutsTR.add("14");
     	
+    	Faction.NS = new Faction("0", loadoutsNS, "Nanite Systems", "NS");
     	Faction.VS = new Faction("1", loadoutsVS, "Vanu Sovereignty", "VS");
     	Faction.NC = new Faction("2", loadoutsNC, "New Conglomerate", "NC");
     	Faction.TR = new Faction("3", loadoutsTR, "Terran Republic", "TR");
     	
+    	Faction.factions.put("0", Faction.NS);
     	Faction.factions.put("1", Faction.VS);
     	Faction.factions.put("2", Faction.NC);
     	Faction.factions.put("3", Faction.TR);

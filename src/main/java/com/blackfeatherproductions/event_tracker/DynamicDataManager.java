@@ -9,15 +9,15 @@ import java.util.concurrent.ConcurrentHashMap;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 
-import com.blackfeatherproductions.event_tracker.data.World;
-import com.blackfeatherproductions.event_tracker.data.dynamic.CharacterInfo;
-import com.blackfeatherproductions.event_tracker.data.dynamic.MetagameEventInfo;
-import com.blackfeatherproductions.event_tracker.data.dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_static.World;
 
 public class DynamicDataManager
 {
-	private Map<String, CharacterInfo> characterData = new ConcurrentHashMap<String, CharacterInfo>();
-	private Map<World, WorldInfo> worldData = new HashMap<World, WorldInfo>();
+	private Map<String, CharacterInfo> characters = new ConcurrentHashMap<String, CharacterInfo>();
+	private Map<World, WorldInfo> worlds = new HashMap<World, WorldInfo>();
 	
 	public DynamicDataManager()
 	{
@@ -25,7 +25,7 @@ public class DynamicDataManager
         
         for(World world : World.worlds.values())
         {
-        	worldData.put(world, new WorldInfo());
+        	worlds.put(world, new WorldInfo());
         }
         
         //Clears the character cache periodically
@@ -33,7 +33,7 @@ public class DynamicDataManager
         {
             public void handle(Long timerID)
             {
-            	characterData.clear();
+            	characters.clear();
             }
         });
         
@@ -42,7 +42,7 @@ public class DynamicDataManager
         {
             public void handle(Long timerID)
             {
-            	for(Entry<World,WorldInfo> worldInfo : worldData.entrySet())
+            	for(Entry<World,WorldInfo> worldInfo : worlds.entrySet())
             	{
             		for(MetagameEventInfo metagameEvent : worldInfo.getValue().getActiveMetagameEvents().values())
             		{
@@ -51,7 +51,7 @@ public class DynamicDataManager
             			if(new Date().after(endTime))
             			{
             				//TODO 1.1 (If Required) Trigger End Alert Event for overdue alerts.
-            				EventTracker.getInstance().getLogger().warn("Alert ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + " is overdue.");
+            				EventTracker.getInstance().getLogger().warn("[WARNING] Alert ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + " is overdue.");
             			}
             		}
             	}
@@ -62,22 +62,32 @@ public class DynamicDataManager
 	//Character Data
 	public boolean characterDataExists(String characterID)
 	{
-		return characterData.containsKey(characterID);
+		return characters.containsKey(characterID);
 	}
 	
 	public CharacterInfo getCharacterData(String characterID)
 	{
-		return characterData.get(characterID);
+		return characters.get(characterID);
 	}
 	
 	public void addCharacterData(String characterID, CharacterInfo character)
 	{
-		characterData.put(characterID, character);
+		characters.put(characterID, character);
 	}
 	
 	//World Data
-	public WorldInfo getWorldData(World world)
+	public WorldInfo getWorldInfo(World world)
 	{
-		return worldData.get(world);
+		if(world != null)
+		{
+			if(worlds.get(world) == null)
+			{
+				worlds.put(world, new WorldInfo());
+			}
+			
+			return worlds.get(world);
+		}
+		
+		return null;
 	}
 }
