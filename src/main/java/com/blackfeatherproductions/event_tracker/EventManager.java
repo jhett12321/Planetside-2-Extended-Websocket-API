@@ -117,8 +117,8 @@ public class EventManager
 	        
             if(!eventHandled && !unknownEvents.contains(eventName))
             {
-                EventTracker.getInstance().getLogger().warn("[WARNING] Unhandled Payload for event " + eventName + "! Has Census added a new event?");
-                EventTracker.getInstance().getLogger().warn("[WARNING] Payload data:");
+                EventTracker.getInstance().getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
+                EventTracker.getInstance().getLogger().warn("Payload data:");
                 EventTracker.getInstance().getLogger().warn(payload.encodePrettily());
                 
                 unknownEvents.add(eventName);
@@ -126,20 +126,37 @@ public class EventManager
         }
     }
     
-    private void registerEvent(Class<? extends Event> event)
+    /**
+     * This method is used to register an event to be handled by the EventManager.
+     * Event payloads are sent to these event classes based on the event names listed in the class' annotation.
+     * Unlike a listener, an instance is created for each event sent.
+     * 
+     * @param event A class fully implementing the event interface.
+     */
+    public void registerEvent(Class<? extends Event> event)
     {
         EventInfo info = event.getAnnotation(EventInfo.class);
         if(info == null)
         {
+        	EventTracker.getInstance().getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
 
         events.put(info, event);
     }
  
-    private void registerListener(Class<? extends Event> event)
+    /**
+     * This method is used to register a listener to be handled by the EventManager.
+     * Event payloads are sent to these event classes based on the event names listed in the class' annotation.
+     * Unlike an event, only one instance of this class is created. Values stored in the listener will remain persistent across events.
+     * 
+     * It is recommended to use EventPriority.LISTENER as event priority.
+     * 
+     * @param listener A class fully implementing the event interface.
+     */
+    public void registerListener(Class<? extends Event> listener)
     {
-        EventInfo info = event.getAnnotation(EventInfo.class);
+        EventInfo info = listener.getAnnotation(EventInfo.class);
         if(info == null)
         {
             return;
@@ -147,7 +164,7 @@ public class EventManager
 
         try
         {
-			listeners.put(info, event.newInstance());
+			listeners.put(info, listener.newInstance());
 		}
         catch (InstantiationException | IllegalAccessException e)
         {

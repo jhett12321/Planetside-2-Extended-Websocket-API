@@ -18,7 +18,7 @@ public class WorldInfo
 	{
 		if(zone != null)
 		{
-			if(zones.get(zone) == null)
+			if(!zones.containsKey(zone))
 			{
 				zones.put(zone, new ZoneInfo());
 			}
@@ -42,6 +42,16 @@ public class WorldInfo
 	public MetagameEventInfo getActiveMetagameEvent(String instance_id)
 	{
 		return metagameEvents.get(instance_id);
+	}
+	
+	public void addMetagameEvent(String instanceID, MetagameEventInfo metagameEventInfo)
+	{
+		metagameEvents.put(instanceID, metagameEventInfo);
+	}
+	
+	public void removeMetagameEvent(String instanceID)
+	{
+		metagameEvents.remove(instanceID);
 	}
 
 	public boolean isOnline()

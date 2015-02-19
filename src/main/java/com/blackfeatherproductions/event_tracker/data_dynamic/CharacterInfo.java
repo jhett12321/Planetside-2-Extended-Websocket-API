@@ -1,16 +1,22 @@
 package com.blackfeatherproductions.event_tracker.data_dynamic;
 
-import java.util.Date;
-
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class CharacterInfo
 {
 	private String characterID;
 	private String outfitID;
 	private Faction faction;
-	
-	private Date creationTime;
+	private Zone zone;
+
+	public CharacterInfo(String characterID, String factionID, String outfitID, String zoneID)
+	{
+		this.characterID = characterID;
+		this.faction = Faction.getFactionByID(factionID);
+		this.outfitID = outfitID;
+		this.zone = Zone.getZoneByID(zoneID);
+	}
 	
 	public Faction getFaction()
 	{
@@ -27,12 +33,8 @@ public class CharacterInfo
 		return characterID;
 	}
 
-	public CharacterInfo(String characterID, String factionID, String outfitID)
+	public Zone getZone()
 	{
-		this.characterID = characterID;
-		this.faction = Faction.getFactionByID(factionID);
-		this.outfitID = outfitID;
-		
-		this.creationTime = new Date();
+		return zone;
 	}
 }

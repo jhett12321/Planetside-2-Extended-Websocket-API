@@ -24,8 +24,9 @@ public class CharacterListQuery implements Query
 			String factionID = characterData.getString("faction_id");
 			
 			String outfitID;
+			String zoneID;
 			
-			if(characterData.getObject("outfit") != null)
+			if(characterData.containsField("outfit"))
 			{
 				outfitID = characterData.getObject("outfit").getString("outfit_id");
 			}
@@ -34,7 +35,16 @@ public class CharacterListQuery implements Query
 				outfitID = "0";
 			}
 			
-			CharacterInfo character = new CharacterInfo(characterID, factionID, outfitID);
+			if(characterData.containsField("last_event"))
+			{
+				zoneID = characterData.getObject("last_event").getString("zone_id");
+			}
+			else
+			{
+				zoneID = "0";
+			}
+			
+			CharacterInfo character = new CharacterInfo(characterID, factionID, outfitID, zoneID);
 			
 			dynamicDataManager.addCharacterData(characterID, character);
 		}

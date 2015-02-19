@@ -57,7 +57,7 @@ public class ZoneInfo
 	{
 		if(facility != null)
 		{
-			if(facilities.get(facility) == null)
+			if(!facilities.containsKey(facility))
 			{
 				facilities.put(facility, new FacilityInfo());
 			}

@@ -103,7 +103,7 @@ public class MetagameEvent implements Event
 				status = "0";
 				
 				//Remove event from tracking list.
-				worldData.getActiveMetagameEvents().remove(instance_id);
+				worldData.removeMetagameEvent(instance_id);
 			}
 			
 			//Alert Start (135->started, 136->restarted)
@@ -114,7 +114,7 @@ public class MetagameEvent implements Event
 				status = "1";
 				
 				//Create a new Metagame Event
-				worldData.getActiveMetagameEvents().put(instance_id, new MetagameEventInfo(instance_id, metagameEventType, start_time, end_time));
+				worldData.addMetagameEvent(instance_id, new MetagameEventInfo(instance_id, metagameEventType, start_time, end_time));
 			}
 		}
 		

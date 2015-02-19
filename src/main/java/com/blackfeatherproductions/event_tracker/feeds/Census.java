@@ -14,7 +14,6 @@ import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_static.World;
-import com.blackfeatherproductions.event_tracker.queries.MetagameEventQuery;
 import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class Census
@@ -29,9 +28,6 @@ public class Census
 	private boolean websocketConnected = false;
 	
 	private long lastHeartbeat = 0;
-	
-	//Feed Statuses
-	//private Map<String, Boolean> endpointStatuses = new HashMap<String,Boolean>();
 	
     public Census()
     {
@@ -57,9 +53,10 @@ public class Census
             		connectWebsocket();
             	}
             	
-            	//If we have not received a heartbeat in the last 2 minutes, restart the connection
-            	else if(lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 120000)
+            	//If we have not received a heartbeat in the last 5 minutes, restart the connection
+            	else if(lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 300000)
             	{
+            		eventTracker.getLogger().error("No hearbeat message received for > 5 minutes. Restarting websocket connection." );
             		websocket.close();
             	}
             }
@@ -84,12 +81,21 @@ public class Census
                         {
                             String serviceType = message.getString("type");
                             
-                            if(message.getString("connected") != null && message.getString("connected").equals("true"))
+                            if(message.containsField("connected") && message.getString("connected").equals("true"))
                             {
-                                eventTracker.getLogger().info("[INFO] Websocket Secure Connection established to push.planetside.com" );
-                                eventTracker.getLogger().info("[INFO] Subscribing to all events..." );
+                                eventTracker.getLogger().info("Websocket Secure Connection established to push.planetside.com" );
+                                eventTracker.getLogger().info("Subscribing to all events..." );
+                                
                                 //Send subscription message
                                 websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+                                
+                                //TODO RecentCharacterIDs Message.
+                            }
+                            
+                            else if(message.containsField("subscription"))
+                            {
+                            	eventTracker.getLogger().info("Census Confirmed event feed subscription:" );
+                            	eventTracker.getLogger().info(message.encodePrettily());
                             }
                             
                             else if(serviceType != null)
@@ -143,14 +149,14 @@ public class Census
 	                            
 	                            else
 	                            {
-	                            	eventTracker.getLogger().warn("[WARNING] Could not handle message!");
+	                            	eventTracker.getLogger().warn("Could not handle message!");
 	                            	eventTracker.getLogger().warn(message.encodePrettily());
 	                            }
                             }
                             
-                            else
+                            else if(!message.containsField("send this for help"))
                             {
-                            	eventTracker.getLogger().warn("[WARNING] Could not handle message!");
+                            	eventTracker.getLogger().warn("Could not handle message!");
                             	eventTracker.getLogger().warn(message.encodePrettily());
                             }
                         }
@@ -162,7 +168,7 @@ public class Census
 					@Override
 					public void handle(Void arg0)
 					{
-						websocketConnected = false;
+						onWebsocketDisconnected();
 					}
                 });
                 
@@ -171,7 +177,7 @@ public class Census
 					@Override
 					public void handle(Void arg0)
 					{
-						websocketConnected = false;
+						onWebsocketDisconnected();
 					}
                 });
                 
@@ -180,7 +186,7 @@ public class Census
 					@Override
 					public void handle(Throwable arg0)
 					{
-						websocketConnected = false;
+						onWebsocketDisconnected();
 						arg0.printStackTrace();
 					}
                 });
@@ -206,19 +212,25 @@ public class Census
 	    		
 	    		//Query Census for World Data.
 	    		new WorldQuery(worldID);
-	    		
-                //Update Metagame Events
-                new MetagameEventQuery(worldID);
                 
-                eventTracker.getLogger().info("[INFO] Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
+                eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
 	    	}
 	    	
 	    	else
 	    	{
 	    		//No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
 	    		eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
-                eventTracker.getLogger().info("[WARNING] Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
+                eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
 	    	}
+    	}
+    }
+    
+    private void onWebsocketDisconnected()
+    {
+    	websocketConnected = false;
+    	for(World world : World.worlds.values())
+    	{
+    		eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
     	}
     }
 }

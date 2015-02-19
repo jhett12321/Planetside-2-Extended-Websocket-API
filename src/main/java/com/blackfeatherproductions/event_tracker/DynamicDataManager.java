@@ -51,7 +51,7 @@ public class DynamicDataManager
             			if(new Date().after(endTime))
             			{
             				//TODO 1.1 (If Required) Trigger End Alert Event for overdue alerts.
-            				EventTracker.getInstance().getLogger().warn("[WARNING] Alert ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + " is overdue.");
+            				EventTracker.getInstance().getLogger().warn("Alert ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + " is overdue.");
             			}
             		}
             	}
@@ -80,7 +80,7 @@ public class DynamicDataManager
 	{
 		if(world != null)
 		{
-			if(worlds.get(world) == null)
+			if(!worlds.containsKey(world))
 			{
 				worlds.put(world, new WorldInfo());
 			}

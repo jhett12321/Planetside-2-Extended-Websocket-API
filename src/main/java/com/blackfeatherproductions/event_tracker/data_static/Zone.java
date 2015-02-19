@@ -7,6 +7,7 @@ public class Zone
 {
 	public static Map<String, Zone> zones = new HashMap<String, Zone>();
 	
+	public static Zone UNKNOWN;
 	public static Zone INDAR;
 	public static Zone ESAMIR;
 	public static Zone AMERISH;

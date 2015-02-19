@@ -34,11 +34,13 @@ public class StaticDataManager
     	World.worlds.put("25", World.BRIGGS);
     	
     	//Zones
+    	Zone.UNKNOWN = new Zone("0", "Unknown", "INTERNAL: This is an unknown zone.");
     	Zone.INDAR = new Zone("2", "Indar", "The arid continent of Indar is home to an assortment of biomes. Grassy savannas, rocky canyons, and the open plains of the seabed provide unique challenges to soldiers.");
     	Zone.HOSSIN = new Zone("4", "Hossin", "Hossin's dense mangrove and willow forests provide air cover along its many swamps and highlands.");
     	Zone.AMERISH = new Zone("6", "Amerish", "Amerish's lush groves and rocky outcroppings provide ample cover between its rolling plains and mountain passes.");
     	Zone.ESAMIR = new Zone("8", "Esamir", "Esamir's expanses of frigid tundra and craggy mountains provide little cover from airborne threats.");
     	
+    	Zone.zones.put("0", Zone.UNKNOWN );
     	Zone.zones.put("2", Zone.INDAR );
     	Zone.zones.put("4", Zone.HOSSIN);
     	Zone.zones.put("6", Zone.AMERISH);

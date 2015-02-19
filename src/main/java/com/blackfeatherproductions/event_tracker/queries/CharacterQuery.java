@@ -3,10 +3,8 @@ package com.blackfeatherproductions.event_tracker.queries;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.events.Event;

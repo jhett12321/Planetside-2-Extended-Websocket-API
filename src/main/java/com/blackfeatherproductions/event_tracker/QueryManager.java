@@ -69,7 +69,7 @@ public class QueryManager
             		queryCallbacks.add(new CharacterListQuery()); //Makes the Character Info Objects
             		queryCallbacks.addAll(characterList.getValue()); //Triggers the waiting events for processing.
             		
-            		getCensusData("/get/ps2:v2/character?character_id=" + characterList.getKey() + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit",
+            		getCensusData("/get/ps2:v2/character?character_id=" + characterList.getKey() + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
             				false, queryCallbacks.toArray(new Query[]{}));
             	}
             }
@@ -83,7 +83,7 @@ public class QueryManager
 		
 		if(failureCount >= EventTracker.getInstance().getConfig().getMaxFailures())
 		{
-			logger.error("[ERROR] [Census REST] Census Failure Limit Reached. Dropping event.");
+			logger.error("[Census REST] Census Failure Limit Reached. Dropping event.");
 			
 			for(Query callback : callbacks)
 			{
@@ -110,7 +110,7 @@ public class QueryManager
 		            	{
 		            		JsonObject data = new JsonObject(body.toString());
 		            		
-		            		if(data != null && data.getInteger("returned") != null && data.getInteger("returned") != 0)
+		            		if(data != null && data.containsField("returned") && data.getInteger("returned") != 0)
 		            		{
 		            			for(Query callback : callbacks)
 		            			{
@@ -124,9 +124,9 @@ public class QueryManager
 		            	catch(DecodeException e)
 		            	{
 		            		//No Valid JSON was returned
-		            		logger.warn("[WARNING] [Census REST] - A census request returned invalid JSON. Retrying request...");
-		            		logger.warn("[WARNING] Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
-		            		logger.warn("[WARNING] Request: " + query);
+		            		logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
+		            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+		            		logger.warn("Request: " + query);
 		            		logger.warn(e.getMessage());
 		            		
 		            		failureCount++;
@@ -141,9 +141,9 @@ public class QueryManager
 					@Override
 					public void handle(Throwable e)
 					{
-	            		logger.warn("[WARNING] [Census REST] - A census request returned invalid JSON. Retrying request...");
-	            		logger.warn("[WARNING] Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
-	            		logger.warn("[WARNING] Request: " + query);
+	            		logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
+	            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+	            		logger.warn("Request: " + query);
 	            		logger.warn(e.getMessage());
 	            		
 	            		failureCount++;

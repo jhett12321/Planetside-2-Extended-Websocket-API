@@ -7,22 +7,13 @@ import java.util.List;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
-import com.blackfeatherproductions.event_tracker.data_static.World;
 
 public class MetagameEventQuery implements Query
 {
 	private EventTracker eventTracker = EventTracker.getInstance();
-	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
-	
-	private World world;
-
 	public MetagameEventQuery(String worldID)
 	{
-		this.world = World.getWorldByID(worldID);
-		
 		String timestamp = String.valueOf(Math.round(new Date().getTime() / 1000) - 7201);
 		
 		EventTracker.getInstance().getQueryManager().getCensusData("/get/ps2:v2/world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp, false, this);
@@ -31,8 +22,6 @@ public class MetagameEventQuery implements Query
 	@Override
 	public void ReceiveData(JsonObject data)
 	{
-		WorldInfo worldInfo = dynamicDataManager.getWorldInfo(world);
-		
 		JsonArray eventArray = data.getArray("world_event_list");
 		
 		List<String> finishedEvents = new ArrayList<String>();
@@ -70,11 +59,7 @@ public class MetagameEventQuery implements Query
 				
                 String eventName = payload.getString("event_name");
                 
-                //Check the world status for this event
-                if(eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
-                {
-                    eventTracker.getEventHandler().handleEvent(eventName, payload);
-                }
+                eventTracker.getEventHandler().handleEvent(eventName, payload);
 			}
 		}
 	}

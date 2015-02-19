@@ -56,8 +56,12 @@ public class CombatEvent implements Event
 			else
 			{
 				List<String> characterIDs = new ArrayList<String>();
-				characterIDs.add(attackerCharacterID);
 				characterIDs.add(victimCharacterID);
+				
+				if(attackerCharacterID != victimCharacterID)
+				{
+					characterIDs.add(attackerCharacterID);
+				}
 				
 				new CharacterQuery(characterIDs, this);
 			}

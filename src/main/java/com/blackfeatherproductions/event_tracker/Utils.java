@@ -48,9 +48,14 @@ public class Utils
 		return true;
 	}
 	
+	/**
+	 * Checks if the given Zone ID is valid.
+	 * @param zoneID The zone ID whose validity needs to be checked.
+	 * @return true if this Zone ID is valid.
+	 */
 	public static boolean isValidZone(String zoneID)
 	{
-		if(zoneID != null && Integer.valueOf(zoneID) < 90)
+		if(Zone.zones.containsKey(zoneID))
 		{
 			return true;
 		}
@@ -58,6 +63,26 @@ public class Utils
 		return false;
 	}
 	
+	/**
+	 * Checks if the given World ID is valid.
+	 * @param worldID The world ID whose validity needs to be checked.
+	 * @return true if this World ID is valid.
+	 */
+	public static boolean isValidWorld(String worldID)
+	{
+		if(World.worlds.containsKey(worldID))
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	
+	/**
+	 * Checks if the given Character ID is valid.
+	 * @param characterID The character ID whose validity needs to be checked.
+	 * @return true if this character ID is valid.
+	 */
 	public static boolean isValidCharacter(String characterID)
 	{
 		if(characterID != null && characterID.length() == 19)
@@ -68,7 +93,12 @@ public class Utils
 		return false;
 	}
 	
-	//Calculates Territory Control for the given zone
+	/**
+	 * Calculates Territory Control for the given world
+	 * @param world The World to calculate territory control for.
+	 * @param zone The World's zone to calculate territory control for.
+	 * @return A JsonObject containing string values for territory control, and the majority controller (if any).
+	 */
 	public static JsonObject calculateTerritoryControl(World world, Zone zone)
 	{
 		float totalRegions = 0;
@@ -138,7 +168,11 @@ public class Utils
 		return controlInfo;
 	}
 	
-	//Calculates Territory Control for the given world
+	/**
+	 * Calculates Territory Control for the given world
+	 * @param world The world ID to calculate territory control.
+	 * @return A JsonObject containing string values for territory control, and the majority controller (if any).
+	 */
 	public static JsonObject calculateTerritoryControl(World world)
 	{
 		float totalRegions = 0;
@@ -188,7 +222,7 @@ public class Utils
 		}
 		else if(controlNC == majorityControl)
 		{
-			majorityController = null;
+			majorityController = Faction.NS;
 		}
 		
 		if(controlTR > majorityControl)
@@ -198,7 +232,7 @@ public class Utils
 		}
 		else if(controlTR == majorityControl)
 		{
-			majorityController = null;
+			majorityController = Faction.NS;
 		}
 		
 		JsonObject controlInfo = new JsonObject();

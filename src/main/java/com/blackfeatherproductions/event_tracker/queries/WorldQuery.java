@@ -94,6 +94,9 @@ public class WorldQuery implements Query
 			}
 		}
 		
+        //Update Metagame Events
+        new MetagameEventQuery(world.getID());
+		
 		worldInfo.setOnline(true);
 	}
 }
