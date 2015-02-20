@@ -14,7 +14,10 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "AchievementEarned", priority = EventPriority.NORMAL)
+@EventInfo(eventName="AchievementEarned",
+listenedEvents = "AchievementEarned",
+priority = EventPriority.NORMAL,
+filters = { "characters", "outfits", "factions", "achievements", "zones", "worlds" })
 public class AchievementEarnedEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -83,6 +86,6 @@ public class AchievementEarnedEvent implements Event
 		message.putObject("filter_data", filterData);
 		message.putString("event_type", "AchievementEarned");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 }

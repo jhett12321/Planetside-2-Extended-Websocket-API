@@ -13,10 +13,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.QueuedEvent;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.events.Event;
-import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
 import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
@@ -27,7 +24,7 @@ public class EventServer
 {
 	private Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
 	
-    public Map<ServerWebSocket, EventClient> clientConnections = new ConcurrentHashMap<ServerWebSocket,EventClient>();
+    public Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket,EventServerClient>();
     
     public EventServer()
     {
@@ -41,53 +38,62 @@ public class EventServer
         {
             public void handle(final ServerWebSocket clientConnection)
             {
-            	//TODO Verify API Key
-            	
-                clientConnection.closeHandler(new Handler<Void>()
-                {
-					@Override
-					public void handle(final Void event)
-					{
-						clientConnections.remove(clientConnection);
-					}
-                });
-                
-                clientConnection.exceptionHandler(new Handler<Throwable>()
-                {
-					@Override
-					public void handle(Throwable event)
-					{
-						clientConnections.remove(clientConnection);
-					}
-                });
-                
-                clientConnection.dataHandler(new Handler<Buffer>()
-                {
-                    public void handle(Buffer data)
-                    {
-                    	JsonObject message = null;
-                    	
-                    	try
-                    	{
-                    		message = new JsonObject(data.toString());
-                    	}
-                    	catch(Exception e)
-                    	{
-                    		clientConnection.writeTextFrame("{\"error\": \"BADJSON\", \"message\": \"You have supplied an invalid JSON string. Please check your syntax.\"}");
-                    	}
-                    	
-                    	if(message != null)
-                    	{
-                    		//TODO
-                    		//handleClientMessage(clientConnection, message);
-                    	}
+            	String apiKey = clientConnection.query();
+            	eventTracker.getLogger().info(apiKey);
 
-                    }
-                });
-                 
-                //TODO Initialize client subscriptions, send connection success message.
-                eventTracker.getLogger().info("Creating Connection.");
-                clientConnections.put(clientConnection, new EventClient());
+            	//TODO Verify API Key
+            	if (true)
+            	{
+	                clientConnection.closeHandler(new Handler<Void>()
+	                {
+						@Override
+						public void handle(final Void event)
+						{
+							clientConnections.remove(clientConnection);
+						}
+	                });
+	                
+	                clientConnection.exceptionHandler(new Handler<Throwable>()
+	                {
+						@Override
+						public void handle(Throwable event)
+						{
+							clientConnections.remove(clientConnection);
+						}
+	                });
+	                
+	                clientConnection.dataHandler(new Handler<Buffer>()
+	                {
+	                    public void handle(Buffer data)
+	                    {
+	                    	JsonObject message = null;
+	                    	
+	                    	try
+	                    	{
+	                    		message = new JsonObject(data.toString());
+	                    	}
+	                    	catch(Exception e)
+	                    	{
+	                    		clientConnection.writeTextFrame("{\"error\": \"BADJSON\", \"message\": \"You have supplied an invalid JSON string. Please check your syntax.\"}");
+	                    	}
+	                    	
+	                    	if(message != null)
+	                    	{
+	                    		//TODO
+	                    		//handleClientMessage(clientConnection, message);
+	                    	}
+	
+	                    }
+	                });
+	                 
+	                //TODO Initialize client subscriptions, send connection success message.
+	                eventTracker.getLogger().info("Creating Connection.");
+	                clientConnections.put(clientConnection, new EventServerClient("example", "Example User"));
+            	}
+            	else
+            	{
+            		clientConnection.reject();
+            	}
                 
             }
         }).listen(config.getServerPort());
@@ -100,17 +106,21 @@ public class EventServer
     	registerAction(FacilityStatus.class);
     }
     
-    public void BroadcastEvent(JsonObject rawData)
+    public void BroadcastEvent(Class<? extends Event> event, JsonObject rawData)
     {
         JsonObject messageToSend = new JsonObject();
         
         messageToSend.putObject("payload", rawData.getObject("event_data"));
         messageToSend.putString("event_type", rawData.getString("event_type"));
         
-        for(Entry<ServerWebSocket, EventClient> connection : clientConnections.entrySet())
+        for(Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
         {
             //TODO Filter events
-            connection.getKey().writeTextFrame(messageToSend.encode());
+        	connection.getValue();
+        	if((rawData.getString("event_type").equals("EventTrackerMetricsEvent")))
+        	{
+        		connection.getKey().writeTextFrame(messageToSend.encode());
+        	}
         }
     }
     

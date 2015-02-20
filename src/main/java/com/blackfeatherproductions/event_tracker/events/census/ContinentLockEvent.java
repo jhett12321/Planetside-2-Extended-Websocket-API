@@ -12,7 +12,10 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
-@EventInfo(eventNames = "ContinentLock", priority = EventPriority.LOWEST)
+@EventInfo(eventName="ContinentLock",
+listenedEvents = "ContinentLock",
+priority = EventPriority.LOWEST,
+filters = { "factions", "zones", "worlds" })
 public class ContinentLockEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -72,7 +75,7 @@ public class ContinentLockEvent implements Event
 		message.putObject("filter_data", filterData);
 		message.putString("event_type", "ContinentLock");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 
 		//Update Internal Data
 		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);

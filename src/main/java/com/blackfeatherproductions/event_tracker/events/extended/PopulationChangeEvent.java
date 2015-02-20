@@ -8,7 +8,10 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
-@EventInfo(eventNames = "PopulationChange", priority = EventPriority.NORMAL)
+@EventInfo(eventName="PopulationChange",
+listenedEvents = "PopulationChange",
+priority = EventPriority.NORMAL,
+filters = { "outfits", "zones", "worlds" })
 public class PopulationChangeEvent implements Event
 {
 	private JsonObject payload;
@@ -46,9 +49,9 @@ public class PopulationChangeEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "PopulationChangeEvent");
+		message.putString("event_type", "PopulationChange");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 
 }

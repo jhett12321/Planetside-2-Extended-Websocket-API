@@ -13,7 +13,10 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "PlayerLogin|PlayerLogout", priority = EventPriority.NORMAL)
+@EventInfo(eventName="Login",
+listenedEvents = "PlayerLogin|PlayerLogout",
+priority = EventPriority.NORMAL,
+filters = { "characters", "outfits", "factions", "login_types", "worlds" })
 public class LoginEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -85,8 +88,8 @@ public class LoginEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "DirectiveCompleted");
+		message.putString("event_type", "Login");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 }

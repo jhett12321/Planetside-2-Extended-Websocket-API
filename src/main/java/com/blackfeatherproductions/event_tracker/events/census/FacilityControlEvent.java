@@ -14,7 +14,10 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
-@EventInfo(eventNames = "FacilityControl", priority = EventPriority.NORMAL)
+@EventInfo(eventName="FacilityControl",
+listenedEvents = "FacilityControl",
+priority = EventPriority.NORMAL,
+filters = { "facilties", "facility_types", "outfits", "factions", "captures", "zones", "worlds" })
 public class FacilityControlEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -96,9 +99,9 @@ public class FacilityControlEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "ContinentLock");
+		message.putString("event_type", "FacilityControl");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 
 		//Update Internal Data
 		if(is_capture.equals("1"))

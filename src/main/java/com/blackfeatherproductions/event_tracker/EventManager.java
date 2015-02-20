@@ -1,6 +1,7 @@
 package com.blackfeatherproductions.event_tracker;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -14,7 +15,6 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriorityComparator;
-import com.blackfeatherproductions.event_tracker.events.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.census.AchievementEarnedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.BattleRankEvent;
 import com.blackfeatherproductions.event_tracker.events.census.CombatEvent;
@@ -24,6 +24,7 @@ import com.blackfeatherproductions.event_tracker.events.census.FacilityControlEv
 import com.blackfeatherproductions.event_tracker.events.census.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.census.MetagameEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
+import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 
@@ -88,7 +89,7 @@ public class EventManager
             //Listeners
 	        for(Entry<EventInfo, Event> entry : listeners.entrySet())
 	        {
-	            if(eventName.matches(entry.getKey().eventNames()))
+	            if(eventName.matches(entry.getKey().listenedEvents()))
 	            {
 					Event event = entry.getValue();
 					
@@ -99,7 +100,7 @@ public class EventManager
 	        //Events
 	        for(Entry<EventInfo, Class<? extends Event>> entry : events.entrySet())
 	        {
-	            if(eventName.matches(entry.getKey().eventNames()))
+	            if(eventName.matches(entry.getKey().listenedEvents()))
 	            {
 					try
 					{
@@ -171,4 +172,9 @@ public class EventManager
 			e.printStackTrace();
 		}
     }
+
+	public Collection<Class<? extends Event>> getRegisteredEvents()
+	{
+		return events.values();
+	}
 }

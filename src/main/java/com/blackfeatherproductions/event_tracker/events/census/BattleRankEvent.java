@@ -14,7 +14,10 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "BattleRankUp", priority = EventPriority.NORMAL)
+@EventInfo(eventName = "BattleRank",
+listenedEvents = "BattleRankUp",
+priority = EventPriority.NORMAL,
+filters = { "characters", "outfits", "factions", "battle_ranks", "zones", "worlds" })
 public class BattleRankEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -85,6 +88,6 @@ public class BattleRankEvent implements Event
 		message.putObject("filter_data", filterData);
 		message.putString("event_type", "BattleRank");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 }

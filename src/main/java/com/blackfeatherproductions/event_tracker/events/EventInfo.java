@@ -6,6 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EventInfo
 {
-    public String eventNames();
+	public String eventName();
+    public String listenedEvents();
+    public String[] filters();
     public EventPriority priority();
 }

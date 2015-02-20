@@ -11,6 +11,7 @@ public class FacilityStatus implements Action
 	@Override
 	public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
 	{
+		//TODO
 /*		if(actionData.containsField("worlds") && actionData.getArray("worlds").size() > 0 && actionData.containsField("zones") && actionData.getArray("zones").size() > 0)
 		{
 			JsonObject facilityStatus = new JsonObject();

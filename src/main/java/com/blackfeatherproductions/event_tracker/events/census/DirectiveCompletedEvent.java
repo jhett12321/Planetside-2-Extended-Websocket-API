@@ -14,7 +14,10 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "DirectiveCompleted", priority = EventPriority.NORMAL)
+@EventInfo(eventName="DirectiveCompleted",
+listenedEvents = "DirectiveCompleted",
+priority = EventPriority.NORMAL,
+filters = { "characters", "outfits", "factions", "directives", "zones", "worlds" })
 public class DirectiveCompletedEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -85,6 +88,6 @@ public class DirectiveCompletedEvent implements Event
 		message.putObject("filter_data", filterData);
 		message.putString("event_type", "DirectiveCompleted");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 }

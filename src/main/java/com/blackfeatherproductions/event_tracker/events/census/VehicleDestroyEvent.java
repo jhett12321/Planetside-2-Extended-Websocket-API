@@ -18,7 +18,10 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "VehicleDestroy", priority = EventPriority.NORMAL)
+@EventInfo(eventName="VehicleDestroy",
+listenedEvents = "VehicleDestroy",
+priority = EventPriority.NORMAL,
+filters = { "characters", "outfits", "factions", "loadouts", "vehicles", "weapons", "facilities", "zones", "worlds" })
 public class VehicleDestroyEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -131,6 +134,6 @@ public class VehicleDestroyEvent implements Event
 		message.putObject("filter_data", filterData);
 		message.putString("event_type", "VehicleDestroy");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 }

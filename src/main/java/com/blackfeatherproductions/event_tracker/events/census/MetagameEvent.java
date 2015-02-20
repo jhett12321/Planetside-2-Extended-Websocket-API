@@ -15,7 +15,10 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
-@EventInfo(eventNames = "MetagameEvent|FacilityControl", priority = EventPriority.HIGHEST)
+@EventInfo(eventName="MetagameEvent",
+listenedEvents = "MetagameEvent|FacilityControl",
+priority = EventPriority.HIGHEST,
+filters = { "metagames", "metagame_types", "statuses", "dominations", "zones", "worlds" })
 public class MetagameEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
@@ -162,6 +165,6 @@ public class MetagameEvent implements Event
 		message.putObject("filter_data", filterData);
 		message.putString("event_type", "MetagameEvent");
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(message);
+		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 }

@@ -27,7 +27,10 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationStore;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventNames = "AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy", priority = EventPriority.LISTENER)
+@EventInfo(eventName="PopulationEventListener",
+listenedEvents = "AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
+priority = EventPriority.LISTENER,
+filters = { "no_filtering" })
 public class PopulationEventListener implements Event
 {
 	private Map<String, OnlinePlayer> onlinePlayers = new ConcurrentHashMap<String, OnlinePlayer>();

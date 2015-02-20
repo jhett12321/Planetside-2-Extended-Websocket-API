@@ -11,6 +11,7 @@ public class ZoneStatus implements Action
 	@Override
 	public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
 	{
+		//TODO
 /*		JsonObject response = new JsonObject();
 		JsonObject zones;
 		

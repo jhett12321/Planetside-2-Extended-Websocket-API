@@ -26,6 +26,10 @@ public class EventTracker extends Verticle
 
     //Event Server
 	private EventServer eventServer;
+	
+	//Metrics
+	private int eventsReceived = 0;
+	private int eventsProcessed = 0;
     
     @Override
     public void start()
@@ -93,4 +97,30 @@ public class EventTracker extends Verticle
     {
         return eventManager;
     }
+
+	public int getEventsReceived()
+	{
+		int eventsReceived = this.eventsReceived;
+		
+		this.eventsReceived = 0;
+		return eventsReceived;
+	}
+
+	public int getEventsProcessed()
+	{
+		int eventsProcessed = this.eventsProcessed;
+		
+		this.eventsProcessed = 0;
+		return eventsProcessed;
+	}
+
+	public void countReceivedEvent()
+	{
+		this.eventsReceived++;
+	}
+	
+	public void countProcessedEvent()
+	{
+		this.eventsProcessed++;
+	}
 }

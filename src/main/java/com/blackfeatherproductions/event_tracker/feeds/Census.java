@@ -61,6 +61,20 @@ public class Census
             	}
             }
         });
+        
+        //Generates event metric messages
+        vertx.setPeriodic(1000, new Handler<Long>()
+        {
+            public void handle(Long timerID)
+            {
+            	JsonObject payload = new JsonObject();
+            	payload.putString("eventsReceived", String.valueOf(eventTracker.getEventsReceived()));
+            	payload.putString("eventsProcessed", String.valueOf(eventTracker.getEventsProcessed()));
+            	payload.putString("timestamp", String.valueOf(new Date().getTime() / 1000));
+            	
+            	eventTracker.getEventHandler().handleEvent("EventTrackerMetrics", payload);
+            }
+        });
     }
     
     public void connectWebsocket()
@@ -139,6 +153,8 @@ public class Census
 	                            {
 	                                JsonObject payload = message.getObject("payload");
 	                                String eventName = payload.getString("event_name");
+	                                
+	                                EventTracker.getInstance().countReceivedEvent();
 	                                
 	                                //Check the world status for this event
 	                                if(eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
