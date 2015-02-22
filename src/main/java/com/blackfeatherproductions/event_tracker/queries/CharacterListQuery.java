@@ -60,6 +60,17 @@ public class CharacterListQuery implements Query
 		
 		for(CharacterQuery event : callbacks)
 		{
+			for(String characterID : event.getCharacterIDs())
+			{
+				//Census does not always have data for all characters.
+				//Since the above iterator loops over returned data, and not the requested ids, it does not create these blank entries.
+				//In this case, we create a blank character.
+				if(!EventTracker.getInstance().getDynamicDataManager().characterDataExists(characterID))
+				{
+					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", ""));
+				}
+			}
+			
 			event.ReceiveData(null); //Triggers the waiting events for processing.
 		}
 	}

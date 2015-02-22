@@ -2,15 +2,7 @@ package com.blackfeatherproductions.event_tracker.events.listeners;
 
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
@@ -24,52 +16,23 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
-import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationStore;
+import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 @EventInfo(eventName="PopulationEventListener",
 listenedEvents = "AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
-priority = EventPriority.LISTENER,
+priority = EventPriority.NORMAL,
 filters = { "no_filtering" })
 public class PopulationEventListener implements Event
 {
-	private Map<String, OnlinePlayer> onlinePlayers = new ConcurrentHashMap<String, OnlinePlayer>();
-	
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	private PopulationManager populationManager = EventTracker.getInstance().getPopulationManager();
 	
 	private JsonObject payload;
 
 	//Preprocess Info
 	private String attackerCharacterID;
 	private String characterID;
-	
-	public PopulationEventListener()
-	{
-        EventTracker eventTracker = EventTracker.getInstance();
-        Vertx vertx = eventTracker.getVertx();
-        
-        //Reconnects the websocket if it is not online, or is not responding.
-        vertx.setPeriodic(10000, new Handler<Long>()
-        {
-            public void handle(Long timerID)
-            {
-            	Iterator<Map.Entry<String, OnlinePlayer>> iter = onlinePlayers.entrySet().iterator();
-            	
-            	while (iter.hasNext())
-            	{
-            	    Entry<String, OnlinePlayer> entry = iter.next();
-            		
-            		if((new Date().getTime() - entry.getValue().getLastEvent().getTime()) / 1000 > 600)
-            		{
-            			iter.remove();
-            		}
-            	}
-            	
-            	GenerateEvents();
-            	
-            }
-        });
-	}
 	
 	@Override
 	public void preProcessEvent(JsonObject payload)
@@ -122,7 +85,7 @@ public class PopulationEventListener implements Event
 		//Logout Event.
 		if(eventName.equals("PlayerLogout"))
 		{
-			onlinePlayers.remove(characterID);
+			populationManager.onlinePlayers.remove(characterID);
 		}
 		
 		//Vehicle/Combat Events
@@ -133,9 +96,9 @@ public class PopulationEventListener implements Event
 			Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
 			World world = World.getWorldByID(payload.getString("world_id"));
 			
-			if(onlinePlayers.containsKey(attackerCharacterID))
+			if(populationManager.onlinePlayers.containsKey(attackerCharacterID))
 			{
-				OnlinePlayer player = onlinePlayers.get(attackerCharacterID);
+				OnlinePlayer player = populationManager.onlinePlayers.get(attackerCharacterID);
 				
 				player.setLastEvent(new Date());
 				player.setFaction(faction);
@@ -146,7 +109,7 @@ public class PopulationEventListener implements Event
 			
 			else
 			{
-				onlinePlayers.put(attackerCharacterID, new OnlinePlayer(faction, outfitID, zone, world));
+				populationManager.onlinePlayers.put(attackerCharacterID, new OnlinePlayer(faction, outfitID, zone, world));
 			}
 		}
 		
@@ -188,9 +151,9 @@ public class PopulationEventListener implements Event
 		
 		World world = World.getWorldByID(payload.getString("world_id"));
 		
-		if(onlinePlayers.containsKey(characterID))
+		if(populationManager.onlinePlayers.containsKey(characterID))
 		{
-			OnlinePlayer player = onlinePlayers.get(characterID);
+			OnlinePlayer player = populationManager.onlinePlayers.get(characterID);
 			
 			player.setLastEvent(new Date());
 			player.setFaction(faction);
@@ -201,117 +164,7 @@ public class PopulationEventListener implements Event
 		
 		else
 		{
-			onlinePlayers.put(characterID, new OnlinePlayer(faction, outfitID, zone, world));
-		}
-	}
-	
-	private void GenerateEvents()
-	{
-		PopulationStore totalPopulation = new PopulationStore();
-		Map<World, PopulationStore> worldPopulations = new HashMap<World, PopulationStore>();
-		Map<String, PopulationStore> zonePopulations = new HashMap<String, PopulationStore>();
-		
-		for(World world : World.worlds.values())
-		{
-			worldPopulations.put(world, new PopulationStore());
-			
-			for(Zone zone : Zone.zones.values())
-			{
-				zonePopulations.put(world.getID() + "_" + zone.getID(), new PopulationStore());
-			}
-		}
-		
-		//Count Players
-		for(OnlinePlayer player : onlinePlayers.values())
-		{
-			Faction faction = player.getFaction();
-			String outfitID = player.getOutfitID();
-			String worldID = player.getWorld().getID();
-			String zoneID = player.getZone().getID();
-			
-			worldPopulations.get(player.getWorld()).incrementPopulation(faction, outfitID);
-			zonePopulations.get(worldID + "_" + zoneID).incrementPopulation(faction, outfitID);
-			
-			totalPopulation.incrementPopulation(faction, outfitID);
-		}
-		
-		//Post Events
-		String eventName = "PopulationChange";
-		
-		//Total Population
-		JsonObject totalPayload = new JsonObject();
-		totalPayload.putString("population_total", totalPopulation.getTotalPopulation().toString());
-		totalPayload.putString("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
-		totalPayload.putString("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
-		totalPayload.putString("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
-		totalPayload.putString("outfit_id", "-1");
-		totalPayload.putString("zone_id", "-1");
-		totalPayload.putString("world_id", "-1");
-		
-		EventTracker.getInstance().getEventHandler().handleEvent(eventName, totalPayload);
-		
-		//World Populations
-		for(World world : World.worlds.values())
-		{
-			JsonObject worldPayload = new JsonObject();
-			PopulationStore worldPopulation = worldPopulations.get(world);
-			
-			worldPayload.putString("population_total", worldPopulation.getTotalPopulation().toString());
-			worldPayload.putString("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
-			worldPayload.putString("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
-			worldPayload.putString("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
-			worldPayload.putString("outfit_id", "-1");
-			worldPayload.putString("zone_id", "-1");
-			worldPayload.putString("world_id", world.getID());
-			
-			EventTracker.getInstance().getEventHandler().handleEvent(eventName, worldPayload);
-			
-			for(Entry<String, Integer> outfit : worldPopulation.getOutfitPopulations().entrySet())
-			{
-				JsonObject outfitPayload = new JsonObject();
-				
-				outfitPayload.putString("population_total", outfit.getValue().toString());
-				outfitPayload.putString("population_vs", "-1");
-				outfitPayload.putString("population_nc", "-1");
-				outfitPayload.putString("population_tr", "-1");
-				outfitPayload.putString("outfit_id", outfit.getKey());
-				outfitPayload.putString("zone_id", "-1");
-				outfitPayload.putString("world_id", world.getID());
-				
-				EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
-			}
-			
-			for(Zone zone : Zone.zones.values())
-			{
-				JsonObject zonePayload = new JsonObject();
-				
-				PopulationStore zonePopulation = zonePopulations.get(world.getID() + "_" + zone.getID());
-				
-				zonePayload.putString("population_total", zonePopulation.getTotalPopulation().toString());
-				zonePayload.putString("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
-				zonePayload.putString("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
-				zonePayload.putString("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
-				zonePayload.putString("outfit_id", "-1");
-				zonePayload.putString("zone_id", zone.getID());
-				zonePayload.putString("world_id", world.getID());
-				
-				EventTracker.getInstance().getEventHandler().handleEvent(eventName, zonePayload);
-				
-				for(Entry<String, Integer> outfit : worldPopulation.getOutfitPopulations().entrySet())
-				{
-					JsonObject outfitPayload = new JsonObject();
-					
-					outfitPayload.putString("population_total", outfit.getValue().toString());
-					outfitPayload.putString("population_vs", "-1");
-					outfitPayload.putString("population_nc", "-1");
-					outfitPayload.putString("population_tr", "-1");
-					outfitPayload.putString("outfit_id", outfit.getKey());
-					outfitPayload.putString("zone_id", zone.getID());
-					outfitPayload.putString("world_id", world.getID());
-					
-					EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
-				}
-			}
+			populationManager.onlinePlayers.put(characterID, new OnlinePlayer(faction, outfitID, zone, world));
 		}
 	}
 }

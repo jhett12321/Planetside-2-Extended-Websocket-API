@@ -3,6 +3,7 @@ package com.blackfeatherproductions.event_tracker;
 import org.vertx.java.core.logging.Logger;
 import org.vertx.java.platform.Verticle;
 
+import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
 import com.blackfeatherproductions.event_tracker.feeds.Census;
 import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.server.EventServer;
@@ -22,6 +23,7 @@ public class EventTracker extends Verticle
     private EventManager eventManager;
 	private DynamicDataManager dynamicDataManager;
     private QueryManager queryManager;
+    private PopulationManager populationManager;
     private Utils utils;
 
     //Event Server
@@ -50,6 +52,7 @@ public class EventTracker extends Verticle
         //Managers and Handlers
         dynamicDataManager = new DynamicDataManager();
         queryManager = new QueryManager();
+        populationManager = new PopulationManager();
         utils = new Utils();
         eventManager = new EventManager();
         
@@ -130,5 +133,10 @@ public class EventTracker extends Verticle
 	public void countProcessedEvent()
 	{
 		this.eventsProcessed++;
+	}
+
+	public PopulationManager getPopulationManager()
+	{
+		return populationManager;
 	}
 }

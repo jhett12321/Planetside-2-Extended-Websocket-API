@@ -6,8 +6,10 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.MetagameEventType;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -38,15 +40,18 @@ public class MetagameEvent implements Event
 	@Override
 	public void processEvent()
 	{
-		//Data
-			//Shared
+		JsonObject message = new JsonObject();
+		JsonObject eventData = new JsonObject();
+		JsonObject filterData = new JsonObject();
+		
+		//Data - Shared
 		String event_name = payload.getString("event_name");
 		String timestamp = payload.getString("timestamp");
 		
 		World world = World.getWorldByID(payload.getString("world_id"));
 		WorldInfo worldData = dynamicDataManager.getWorldInfo(world);
 		
-			//Data to be resolved
+		//Data - To be resolved
 		String instance_id = null;
 		String type_id = null;
 		String start_time = "0";
@@ -56,7 +61,7 @@ public class MetagameEvent implements Event
 		
 		Zone zone = null;
 		
-			//Facility Control Data
+		//Data - FacilityControl
 		if(event_name.equals("FacilityControl"))
 		{
 			zone = Zone.getZoneByID(payload.getString("zone_id"));
@@ -83,10 +88,20 @@ public class MetagameEvent implements Event
 				end_time = metagameEventInfo.getEndTime();
 				status = "2";
 				domination = "0";
+				
+				//Facility Captured Object
+				Facility facility = Facility.getFacilityByID(payload.getString("facility_id"));
+				FacilityInfo facilityInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(facility);
+				
+				JsonObject facilityCaptured = new JsonObject();
+				facilityCaptured.putString("facility_id", facility.getID());
+				facilityCaptured.putString("facility_type_id", facility.getTypeID());
+				facilityCaptured.putString("owner", facilityInfo.getOwner().getId());
+				facilityCaptured.putString("zone_id", zone.getID());
 			}
 		}
 		
-			//MetagameEventData
+		//Data - MetagameEvent
 		else
 		{
 			MetagameEventType metagameEventType = MetagameEventType.getMetagameEventTypeByID(payload.getString("metagame_event_id"));
@@ -121,7 +136,7 @@ public class MetagameEvent implements Event
 			}
 		}
 		
-			//Territory Control
+		//Data - Territory Control
 		JsonObject controlInfo = Utils.calculateTerritoryControl(world, zone);
 		String control_vs = controlInfo.getString("control_vs");
 		String control_nc = controlInfo.getString("control_nc");
@@ -133,8 +148,6 @@ public class MetagameEvent implements Event
 		}
 			
 		//Payload
-		JsonObject eventData = new JsonObject();
-		
 		eventData.putString("instance_id", instance_id);
 		eventData.putString("type_id", type_id);
 		eventData.putString("start_time", start_time);
@@ -148,9 +161,7 @@ public class MetagameEvent implements Event
 		eventData.putString("zone_id", zone.getID());
 		eventData.putString("world_id", world.getID());
 			
-		//Filters
-		JsonObject filterData = new JsonObject();
-		
+		//Filters		
 		filterData.putArray("metagames", new JsonArray().addString(instance_id));
 		filterData.putArray("metagame_types", new JsonArray().addString(type_id));
 		filterData.putArray("statuses", new JsonArray().addString(status));
@@ -158,9 +169,7 @@ public class MetagameEvent implements Event
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 		
-		//Broadcast Event
-		JsonObject message = new JsonObject();
-		
+		//Broadcast Event		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
 		

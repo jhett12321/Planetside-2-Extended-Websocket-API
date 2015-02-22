@@ -33,8 +33,10 @@ import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEven
 public class EventManager
 {
     private Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<EventInfo, Class<? extends Event>>();
-    private Map<EventInfo, Event> listeners = new LinkedHashMap<EventInfo, Event>();
+    private Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<EventInfo, Class<? extends Event>>();
+    
     private Queue<QueuedEvent> queuedEvents = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
+    private Queue<QueuedEvent> queuedListeners = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
     
     private List<String> unknownEvents = new ArrayList<String>();
     
@@ -50,6 +52,11 @@ public class EventManager
         {
             public void handle(Long timerID)
             {
+            	for(int i=0; i<queuedListeners.size(); i++)
+            	{
+            		queuedListeners.poll().processEvent();
+            	}
+            	
             	for(int i=0; i<queuedEvents.size(); i++)
             	{
             		queuedEvents.poll().processEvent();
@@ -74,14 +81,14 @@ public class EventManager
     
     private void registerExtendedEvents()
     {
-        //registerEvent(PopulationChangeEvent.class);
+        registerEvent(PopulationChangeEvent.class);
         registerEvent(PlanetsideTimeEvent.class);
         registerEvent(EventTrackerMetricsEvent.class);
     }
     
     private void registerListeners()
     {
-    	//registerListener(PopulationEventListener.class);
+    	registerListener(PopulationEventListener.class);
     }
     
     public void handleEvent(String eventName, JsonObject payload)
@@ -90,14 +97,22 @@ public class EventManager
         {
             boolean eventHandled = false;
             
-            //Listeners
-	        for(Entry<EventInfo, Event> entry : listeners.entrySet())
+	        //Listeners
+	        for(Entry<EventInfo, Class<? extends Event>> entry : listeners.entrySet())
 	        {
 	            if(eventName.matches(entry.getKey().listenedEvents()))
 	            {
-					Event event = entry.getValue();
-					
-	            	queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload));
+					try
+					{
+						Event listener = entry.getValue().newInstance();
+						
+		            	queuedListeners.add(new QueuedEvent(entry.getKey().priority(), listener, payload));
+		                eventHandled = true;
+					}
+					catch (InstantiationException | IllegalAccessException e)
+					{
+						e.printStackTrace();
+					}
 	            }
 	        }
             
@@ -132,10 +147,9 @@ public class EventManager
     }
     
     /**
-     * This method is used to register an event to be handled by the EventManager.
-     * Event payloads are sent to these event classes based on the event names listed in the class' annotation.
-     * Unlike a listener, an instance is created for each event sent.
-     * 
+     * This method is used to register an event to be handled by the EventManager. <br/>
+     * Event payloads are sent to these event classes based on the event names listed in the class' annotation. <br/>
+     * Events are always called after listeners.
      * @param event A class fully implementing the event interface.
      */
     public void registerEvent(Class<? extends Event> event)
@@ -151,11 +165,9 @@ public class EventManager
     }
  
     /**
-     * This method is used to register a listener to be handled by the EventManager.
-     * Event payloads are sent to these event classes based on the event names listed in the class' annotation.
-     * Unlike an event, only one instance of this class is created. Values stored in the listener will remain persistent across events.
-     * 
-     * It is recommended to use EventPriority.LISTENER as event priority.
+     * This method is used to register a listener to be handled by the EventManager. <br/>
+     * Event payloads are sent to these event classes based on the event names listed in the class' annotation. <br/>
+     * Listeners are always called before events.
      * 
      * @param listener A class fully implementing the event interface.
      */
@@ -164,17 +176,11 @@ public class EventManager
         EventInfo info = listener.getAnnotation(EventInfo.class);
         if(info == null)
         {
+        	EventTracker.getInstance().getLogger().warn("Implementing Listener Class: " + listener.getName() + " is missing a required annotation.");
             return;
         }
 
-        try
-        {
-			listeners.put(info, listener.newInstance());
-		}
-        catch (InstantiationException | IllegalAccessException e)
-        {
-			e.printStackTrace();
-		}
+        listeners.put(info, listener);
     }
 
 	public Collection<Class<? extends Event>> getRegisteredEvents()
