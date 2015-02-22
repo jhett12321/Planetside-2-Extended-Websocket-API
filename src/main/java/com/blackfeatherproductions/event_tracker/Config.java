@@ -61,11 +61,11 @@ public class Config
             dbName = prop.getProperty("dbName", "ps2_events");
             
             //API Database Properties
-            apiDbConnectionLimit = Integer.valueOf(prop.getProperty("dbConnectionLimit", "100"));
-            apiDbHost = prop.getProperty("dbHost", "127.0.0.1");
-            apiDbUser = prop.getProperty("dbUser", "api");
-            apiDbPassword = prop.getProperty("dbPassword", "password");
-            apiDbName = prop.getProperty("dbName", "api");
+            apiDbConnectionLimit = Integer.valueOf(prop.getProperty("apiDbConnectionLimit", "100"));
+            apiDbHost = prop.getProperty("apiDbHost", "127.0.0.1");
+            apiDbUser = prop.getProperty("apiDbUser", "api");
+            apiDbPassword = prop.getProperty("apiDbPassword", "password");
+            apiDbName = prop.getProperty("apiDbName", "api");
      
         }
         

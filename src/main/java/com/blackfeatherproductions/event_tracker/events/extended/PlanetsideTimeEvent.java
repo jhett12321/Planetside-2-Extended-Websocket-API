@@ -37,7 +37,6 @@ public class PlanetsideTimeEvent implements Event
 		
 		JsonObject message = new JsonObject();
 		message.putObject("event_data", eventData);
-		message.putString("event_type", "PlanetsideTime");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
 	}

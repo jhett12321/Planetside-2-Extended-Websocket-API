@@ -1,5 +1,12 @@
 package com.blackfeatherproductions.event_tracker.server;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -9,11 +16,13 @@ import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.ServerWebSocket;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
 import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
@@ -22,27 +31,54 @@ import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
 
 public class EventServer
 {
+	private Config config;
+	
+	//API Key Database
+	private String dbUrl;
+	
+	//Actions
 	private Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
 	
+	//Client Info
     public Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket,EventServerClient>();
     
     public EventServer()
     {
         final EventTracker eventTracker = EventTracker.getInstance();
-        Config config = eventTracker.getConfig();
+        config = eventTracker.getConfig();
         Vertx vertx = eventTracker.getVertx();
         
+        //API Key Database
+        dbUrl = "jdbc:mysql://" + config.getApiDbHost() + "/" + config.getApiDbName();
+        
+        //Client Actions
         registerActions();
         
         vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>()
         {
             public void handle(final ServerWebSocket clientConnection)
             {
-            	String apiKey = clientConnection.query();
-            	eventTracker.getLogger().info(apiKey);
-
-            	//TODO Verify API Key
-            	if (true)
+            	Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+            	
+                String query = clientConnection.query();
+                String[] pairs = query.split("&");
+                for (String pair : pairs)
+                {
+                    int idx = pair.indexOf("=");
+                    try
+                    {
+						queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+					}
+                    catch (UnsupportedEncodingException e)
+                    {
+						e.printStackTrace();
+					}
+                }
+                
+            	final String apiKey = queryPairs.get("apikey");
+            	
+            	final String apiName = verifyAPIKey(apiKey);
+            	if (apiName != null)
             	{
 	                clientConnection.closeHandler(new Handler<Void>()
 	                {
@@ -50,6 +86,7 @@ public class EventServer
 						public void handle(final Void event)
 						{
 							clientConnections.remove(clientConnection);
+							eventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
 						}
 	                });
 	                
@@ -59,6 +96,7 @@ public class EventServer
 						public void handle(Throwable event)
 						{
 							clientConnections.remove(clientConnection);
+							eventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
 						}
 	                });
 	                
@@ -79,16 +117,23 @@ public class EventServer
 	                    	
 	                    	if(message != null)
 	                    	{
-	                    		//TODO
-	                    		//handleClientMessage(clientConnection, message);
+	                    		handleClientMessage(clientConnection, message);
 	                    	}
 	
 	                    }
 	                });
 	                 
-	                //TODO Initialize client subscriptions, send connection success message.
-	                eventTracker.getLogger().info("Creating Connection.");
-	                clientConnections.put(clientConnection, new EventServerClient("example", "Example User"));
+	                clientConnections.put(clientConnection, new EventServerClient(clientConnection, apiKey, apiName));
+	                eventTracker.getLogger().info("Client " + apiName + " Connected! API Key: " + apiKey);
+	                
+	                //Send Connection Confirmed Message
+	                JsonObject connectMessage = new JsonObject();
+	                connectMessage.putString("service", "ps2_events");
+	                connectMessage.putString("version", eventTracker.getVersion());
+	                connectMessage.putString("websocket_event", "connectionStateChange");
+	                connectMessage.putString("online", "true");
+	                
+	                clientConnection.writeTextFrame(connectMessage.encodePrettily());
             	}
             	else
             	{
@@ -99,6 +144,46 @@ public class EventServer
         }).listen(config.getServerPort());
     }
     
+    private String verifyAPIKey(String apiKey)
+    {
+    	if(apiKey != null && !apiKey.equals(""))
+    	{
+        	Connection dbConnection = null;
+        	
+        	try
+        	{
+				Class.forName("com.mysql.jdbc.Driver");
+        	
+	        	dbConnection = DriverManager.getConnection(dbUrl, config.getApiDbUser(), config.getApiDbPassword());
+	        	
+	        	PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM APIKeys WHERE api_key = ? AND enabled = 1");
+	        	query.setString(1, apiKey);
+	        	ResultSet resultSet = query.executeQuery();
+	        	
+	        	//Check if API Key exists
+	        	if(resultSet.next())
+	        	{
+	        		String apiName = resultSet.getString("name");
+	        		dbConnection.close();
+	        		return apiName;
+	        	}
+	        	
+	        	else
+	        	{
+	        		dbConnection.close();
+	        		return null;
+	        	}
+        	}
+	        	
+        	catch (ClassNotFoundException | SQLException e)
+        	{
+				e.printStackTrace();
+			}
+    	}
+    	
+    	return null;
+    }
+    
     private void registerActions()
     {
     	registerAction(ActiveAlerts.class);
@@ -106,51 +191,27 @@ public class EventServer
     	registerAction(FacilityStatus.class);
     }
     
-    public void BroadcastEvent(Class<? extends Event> event, JsonObject rawData)
-    {
-        JsonObject messageToSend = new JsonObject();
-        
-        messageToSend.putObject("payload", rawData.getObject("event_data"));
-        messageToSend.putString("event_type", rawData.getString("event_type"));
-        
-        for(Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
-        {
-            //TODO Filter events
-        	connection.getValue();
-        	if((rawData.getString("event_type").equals("EventTrackerMetricsEvent")))
-        	{
-        		connection.getKey().writeTextFrame(messageToSend.encode());
-        	}
-        }
-    }
-    
-    private void registerAction(Class<? extends Action> action)
-    {
-        ActionInfo info = action.getAnnotation(ActionInfo.class);
-        if(info == null)
-        {
-        	EventTracker.getInstance().getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
-            return;
-        }
-
-       	actions.put(info, action);
-    }
-    
-    //TODO
-    /*
     private void handleClientMessage(ServerWebSocket clientConnection, JsonObject message)
     {
 		String eventType = message.getString("event");
 		String action = message.getString("action");
 		
-		if(!action.matches("/subscribe|unsubscribe|unsubscribeall/i"))
+		message.removeField("event");
+		message.removeField("action");
+		
+		if(!action.matches("subscribe|unsubscribe|unsubscribeall"))
 		{
 			handleAction(clientConnection, action, message);
 		}
 		
+		else if(action.matches("subscribe|unsubscribe|unsubscribeall"))
+		{
+			clientConnections.get(clientConnection).handleSubscription(action, eventType, message);
+		}
+		
 		else
 		{
-			
+			clientConnection.writeTextFrame("{\"error\": \"unknownAction\", \"message\": \"There is no Action by that name. Please check your syntax, and try again.\"}");
 		}
     }
     
@@ -172,5 +233,159 @@ public class EventServer
 				}
             }
         }
-    }*/
+    }
+    
+    private void registerAction(Class<? extends Action> action)
+    {
+        ActionInfo info = action.getAnnotation(ActionInfo.class);
+        if(info == null)
+        {
+        	EventTracker.getInstance().getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
+            return;
+        }
+
+       	actions.put(info, action);
+    }
+    
+    public void BroadcastEvent(Class<? extends Event> event, JsonObject rawData)
+    {
+        JsonObject messageToSend = new JsonObject();
+        
+        JsonObject eventFilterData = rawData.getObject("filter_data");
+        
+        messageToSend.putObject("payload", rawData.getObject("event_data"));
+        messageToSend.putString("event_type", event.getAnnotation(EventInfo.class).eventName());
+        
+        for(Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
+        {
+        	//Get Subscription for provided event
+        	JsonObject subscription = connection.getValue().getSubscription(event);
+        	
+        	if(subscription.getArray("show").size() > 0)
+        	{
+        		JsonObject filteredPayload = new JsonObject();
+        		
+        		for(String field : rawData.getObject("event_data").getFieldNames())
+        		{
+        			if(subscription.getArray("show").contains(field))
+        			{
+        				filteredPayload.putString(field, rawData.getObject("event_data").getString(field));
+        			}
+        		}
+        		
+        		messageToSend.putObject("payload", filteredPayload);
+        	}
+        	
+        	if(subscription.getArray("hide").size() > 0)
+        	{
+        		JsonObject filteredPayload = messageToSend.getObject("payload");
+        		
+        		for(String field : rawData.getObject("event_data").getFieldNames())
+        		{
+        			if(subscription.getArray("hide").contains(field))
+        			{
+        				filteredPayload.removeField(field);
+        			}
+        		}
+        		
+        		messageToSend.putObject("payload", filteredPayload);
+        	}
+        	
+        	if(subscription.getString("all").equals("true"))
+        	{
+        		connection.getKey().writeTextFrame(messageToSend.encode());
+        	}
+        	
+        	else
+        	{
+        		Boolean sendMessage = null;
+        		
+        		for(Entry<String, Object> subscriptionProperty : subscription.toMap().entrySet())
+        		{
+        			String property = subscriptionProperty.getKey();
+        			
+        			if(!property.equals("all") && !property.equals("useAND") && !property.equals("show") && !property.equals("hide"))
+        			{
+        				JsonArray filterData = eventFilterData.getArray(property);
+        				
+        				if(property.equals("worlds"))
+        				{
+    						JsonObject propertyValue = subscription.getObject(property);
+    						
+    						if(propertyValue.size() > 0)
+    						{
+	    						if(propertyValue.containsField((String) filterData.get(0)))
+	    						{
+	    							JsonArray zoneData = eventFilterData.getArray("zones");
+	    							
+									if(propertyValue.getObject((String) filterData.get(0)).getArray("zones").contains(zoneData.get(0)))
+									{
+										sendMessage = true;
+									}
+									else if(propertyValue.getObject((String) filterData.get(0)).getArray("zones").size() > 0)
+									{
+										sendMessage = false;
+									}
+									else
+									{
+										sendMessage = true;
+									}
+	    						}
+    						}
+        				}
+        				
+        				else
+        				{
+        					JsonArray propertyValue = subscription.getArray(property);
+        					
+        					if(propertyValue.size() > 0)
+        					{
+	        					if(subscription.getArray("useAND").contains(property))
+	        					{
+									for(int i=0; i<filterData.size(); i++)
+									{
+										if(propertyValue.contains(filterData.get(i)))
+										{
+											sendMessage = true;
+										}
+										else if(propertyValue.size() > 0)
+										{
+											sendMessage = false;
+											break;
+										}
+									}
+	        					}
+	        					
+	        					else
+	        					{
+									for(int i=0; i<filterData.size(); i++)
+									{
+										if(propertyValue.contains(filterData.get(i)))
+										{
+											sendMessage = true;
+											break;
+										}
+										else if(propertyValue.size() > 0)
+										{
+											sendMessage = false;
+										}
+									}
+	        					}
+        					}
+        				}
+        				
+						if(sendMessage != null && !sendMessage)
+						{
+							break;
+						}
+        			}
+        		}
+        		
+				if(sendMessage != null && sendMessage)
+				{
+					connection.getKey().writeTextFrame(messageToSend.encode());
+				}
+        	}
+        }
+    }
 }

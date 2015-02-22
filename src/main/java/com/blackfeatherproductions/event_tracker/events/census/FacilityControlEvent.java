@@ -99,9 +99,9 @@ public class FacilityControlEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "FacilityControl");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+    	EventTracker.getInstance().countProcessedEvent();
 
 		//Update Internal Data
 		if(is_capture.equals("1"))

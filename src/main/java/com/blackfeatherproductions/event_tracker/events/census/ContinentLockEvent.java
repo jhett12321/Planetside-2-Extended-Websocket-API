@@ -73,9 +73,9 @@ public class ContinentLockEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "ContinentLock");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+    	EventTracker.getInstance().countProcessedEvent();
 
 		//Update Internal Data
 		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);

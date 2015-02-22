@@ -30,6 +30,9 @@ public class EventTracker extends Verticle
 	//Metrics
 	private int eventsReceived = 0;
 	private int eventsProcessed = 0;
+	
+	//Maven
+	private String version = "1.0-RC1";
     
     @Override
     public void start()
@@ -93,7 +96,12 @@ public class EventTracker extends Verticle
         return config;
     }
     
-    public EventManager getEventHandler()
+    public String getVersion()
+    {
+		return version;
+	}
+
+	public EventManager getEventHandler()
     {
         return eventManager;
     }

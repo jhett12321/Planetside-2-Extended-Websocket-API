@@ -8,6 +8,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
@@ -28,15 +29,6 @@ public class DynamicDataManager
         	worlds.put(world, new WorldInfo());
         }
         
-        //Clears the character cache periodically
-        vertx.setPeriodic(60000, new Handler<Long>()
-        {
-            public void handle(Long timerID)
-            {
-            	characters.clear();
-            }
-        });
-        
         //Checks that any current metagame events should no-longer be running.
         vertx.setPeriodic(120000, new Handler<Long>()
         {
@@ -50,8 +42,16 @@ public class DynamicDataManager
             			
             			if(new Date().after(endTime))
             			{
-            				//TODO 1.1 (If Required) Trigger End Alert Event for overdue alerts.
-            				EventTracker.getInstance().getLogger().warn("Alert ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + " is overdue.");
+            				EventTracker.getInstance().getLogger().warn("Ending MetagameEvent ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + ": Event is overdue.");
+            				
+            				JsonObject dummyPayload = new JsonObject();
+            				dummyPayload.putString("instance_id", metagameEvent.getInstanceID());
+            				dummyPayload.putString("metagame_event_id", metagameEvent.getType().getID());
+            				dummyPayload.putString("metagame_event_state", "138");
+            				dummyPayload.putString("timestamp", String.valueOf(new Date().getTime() / 1000));
+            				dummyPayload.putString("world_id", worldInfo.getKey().getID());
+            				
+            				EventTracker.getInstance().getEventHandler().handleEvent("MetagameEvent", dummyPayload);
             			}
             		}
             	}
@@ -89,5 +89,10 @@ public class DynamicDataManager
 		}
 		
 		return null;
+	}
+
+	public void removeCharacter(String characterID)
+	{
+		characters.remove(characterID);
 	}
 }

@@ -104,6 +104,7 @@ public class Census
                                 websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
                                 
                                 //TODO RecentCharacterIDs Message.
+                                //websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
                             }
                             
                             else if(message.containsField("subscription"))

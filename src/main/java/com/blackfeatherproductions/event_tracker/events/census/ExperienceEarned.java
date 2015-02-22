@@ -14,11 +14,11 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventName="AchievementEarned",
-listenedEvents = "AchievementEarned",
+@EventInfo(eventName="ExperienceEarned",
+listenedEvents = "GainExperience",
 priority = EventPriority.NORMAL,
-filters = { "characters", "outfits", "factions", "achievements", "zones", "worlds" })
-public class AchievementEarnedEvent implements Event
+filters = { "characters", "outfits", "factions", "experience_types", "loadouts", "zones", "worlds" })
+public class ExperienceEarned implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
@@ -50,10 +50,13 @@ public class AchievementEarnedEvent implements Event
 	public void processEvent()
 	{
 		//Data
+		String amount = payload.getString("amount");
 		CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
 		String outfit_id = character.getOutfitID();
 		Faction faction = character.getFaction();
-		String achievement_id = payload.getString("achievement_id");
+		String experience_id = payload.getString("experience_id");
+		String loadout_id = payload.getString("loadout_id");
+		String other_id = payload.getString("other_id");
 		String timestamp = payload.getString("timestamp");
 		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
 		World world = World.getWorldByID(payload.getString("world_id"));
@@ -61,11 +64,14 @@ public class AchievementEarnedEvent implements Event
 		//Payload
 		JsonObject eventData = new JsonObject();
 		
+		eventData.putString("amount", amount);
 		eventData.putString("character_id", character.getCharacterID());
 		eventData.putString("character_name", character.getCharacterName());
 		eventData.putString("outfit_id", outfit_id);
 		eventData.putString("faction_id", faction.getId());
-		eventData.putString("achievement_id", achievement_id);
+		eventData.putString("experience_id", experience_id);
+		eventData.putString("loadout_id", loadout_id);
+		eventData.putString("other_id", other_id);
 		eventData.putString("timestamp", timestamp);
 		eventData.putString("zone_id", zone.getID());
 		eventData.putString("world_id", world.getID());
@@ -76,7 +82,8 @@ public class AchievementEarnedEvent implements Event
 		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
 		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
-		filterData.putArray("achievements", new JsonArray().addString(achievement_id));
+		filterData.putArray("experience_types", new JsonArray().addString(experience_id));
+		filterData.putArray("loadouts", new JsonArray().addString(loadout_id));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 		

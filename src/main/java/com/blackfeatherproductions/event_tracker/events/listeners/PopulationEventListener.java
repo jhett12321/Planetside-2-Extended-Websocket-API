@@ -126,7 +126,7 @@ public class PopulationEventListener implements Event
 		}
 		
 		//Vehicle/Combat Events
-		if(attackerCharacterID != characterID)
+		if(eventName.equals("Death") || eventName.equals("VehicleDestroy"))
 		{
 			Faction faction = Faction.getFactionByID(payload.getString("attacker_loadout_id"));
 			String outfitID = attacker_character.getOutfitID();

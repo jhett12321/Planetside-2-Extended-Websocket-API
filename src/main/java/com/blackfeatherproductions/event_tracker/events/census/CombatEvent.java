@@ -18,7 +18,7 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventName="CombatEvent",
+@EventInfo(eventName="Combat",
 listenedEvents = "Death",
 priority = EventPriority.NORMAL,
 filters = { "characters", "outfits", "factions", "loadouts", "vehicles", "weapons", "headshots", "zones", "worlds" })
@@ -98,11 +98,13 @@ public class CombatEvent implements Event
 		JsonObject eventData = new JsonObject();
 		
 		eventData.putString("attacker_character_id", attacker_character.getCharacterID());
+		eventData.putString("attacker_character_name", attacker_character.getCharacterName());
 		eventData.putString("attacker_outfit_id", attacker_outfit_id);
 		eventData.putString("attacker_faction_id", attacker_faction.getId());
 		eventData.putString("attacker_loadout_id", attacker_loadout_id);
 		
 		eventData.putString("victim_character_id", victim_character.getCharacterID());
+		eventData.putString("victim_character_name", victim_character.getCharacterName());
 		eventData.putString("victim_outfit_id", victim_outfit_id);
 		eventData.putString("victim_faction_id", victim_faction.getId());
 		eventData.putString("victim_loadout_id", victim_loadout_id);
@@ -134,8 +136,8 @@ public class CombatEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "Combat");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+    	EventTracker.getInstance().countProcessedEvent();
 	}
 }

@@ -20,10 +20,12 @@ import com.blackfeatherproductions.event_tracker.events.census.BattleRankEvent;
 import com.blackfeatherproductions.event_tracker.events.census.CombatEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ContinentLockEvent;
 import com.blackfeatherproductions.event_tracker.events.census.DirectiveCompletedEvent;
+import com.blackfeatherproductions.event_tracker.events.census.ExperienceEarned;
 import com.blackfeatherproductions.event_tracker.events.census.FacilityControlEvent;
 import com.blackfeatherproductions.event_tracker.events.census.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.census.MetagameEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
+import com.blackfeatherproductions.event_tracker.events.extended.EventTrackerMetricsEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
@@ -63,25 +65,27 @@ public class EventManager
         registerEvent(CombatEvent.class);
         registerEvent(ContinentLockEvent.class);
         registerEvent(DirectiveCompletedEvent.class);
+        registerEvent(ExperienceEarned.class);
         registerEvent(FacilityControlEvent.class);
         registerEvent(LoginEvent.class);
         registerEvent(MetagameEvent.class);
-        registerEvent(PlanetsideTimeEvent.class);
         registerEvent(VehicleDestroyEvent.class);
     }
     
     private void registerExtendedEvents()
     {
-        registerEvent(PopulationChangeEvent.class);
+        //registerEvent(PopulationChangeEvent.class);
+        registerEvent(PlanetsideTimeEvent.class);
+        registerEvent(EventTrackerMetricsEvent.class);
     }
     
     private void registerListeners()
     {
-    	registerListener(PopulationEventListener.class);
+    	//registerListener(PopulationEventListener.class);
     }
     
     public void handleEvent(String eventName, JsonObject payload)
-    {   
+    {
         if(Utils.isValidPayload(payload))
         {
             boolean eventHandled = false;

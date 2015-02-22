@@ -163,8 +163,8 @@ public class MetagameEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "MetagameEvent");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+    	EventTracker.getInstance().countProcessedEvent();
 	}
 }

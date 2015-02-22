@@ -1,12 +1,9 @@
 package com.blackfeatherproductions.event_tracker;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.lang.StringUtils;
 import org.vertx.java.core.Handler;
@@ -26,7 +23,7 @@ public class QueryManager
 {
 	private Integer failureCount = 0;
 	
-	private Queue<CharacterQuery> queuedCharacterQueries = new ConcurrentLinkedQueue<CharacterQuery>();
+	private Queue<CharacterQuery> queuedCharacterQueries = new LinkedList<CharacterQuery>();
 	
 	public QueryManager()
 	{
@@ -35,42 +32,30 @@ public class QueryManager
         {
             public void handle(Long timerID)
             {
-            	Map <String, List<CharacterQuery>> characterLists = new HashMap<String, List<CharacterQuery>>();
-            	
             	List<String> characters = new ArrayList<String>();
             	List<CharacterQuery> callbacks = new ArrayList<CharacterQuery>();
             	
-            	for(CharacterQuery characterQuery : queuedCharacterQueries)
+            	for(int i=0; i<queuedCharacterQueries.size(); i++)
             	{
+            		CharacterQuery characterQuery = queuedCharacterQueries.poll();
+            		
             		characters.addAll(characterQuery.getCharacterIDs());
             		callbacks.add(characterQuery);
             		
-            		queuedCharacterQueries.remove(characterQuery);
-            		
             		if(characters.size() >= 150)
             		{
-            			characterLists.put(StringUtils.join(characters, ","), callbacks);
-            			characters.clear();
-            			callbacks.clear();
+                		getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                				false, new CharacterListQuery(callbacks));
+                		
+            			characters = new ArrayList<String>();
+            			callbacks = new ArrayList<CharacterQuery>();
             		}
             	}
             	
             	if(!characters.isEmpty())
             	{
-            		characterLists.put(StringUtils.join(characters, ","), callbacks);
-        			characters.clear();
-        			callbacks.clear();
-            	}
-            	
-            	for(Entry<String, List<CharacterQuery>> characterList : characterLists.entrySet())
-            	{
-            		List<Query> queryCallbacks = new ArrayList<Query>();
-            		
-            		queryCallbacks.add(new CharacterListQuery()); //Makes the Character Info Objects
-            		queryCallbacks.addAll(characterList.getValue()); //Triggers the waiting events for processing.
-            		
-            		getCensusData("/get/ps2:v2/character?character_id=" + characterList.getKey() + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-            				false, queryCallbacks.toArray(new Query[]{}));
+            		getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+            				false, new CharacterListQuery(callbacks));
             	}
             }
         });

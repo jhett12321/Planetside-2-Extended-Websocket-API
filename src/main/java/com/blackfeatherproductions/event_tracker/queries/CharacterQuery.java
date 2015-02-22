@@ -35,8 +35,6 @@ public class CharacterQuery implements Query
 	@Override
 	public void ReceiveData(JsonObject data)
 	{
-		//We have already processed the character list, so just trigger the event.
-		
 		callbackEvent.processEvent();
 	}
 

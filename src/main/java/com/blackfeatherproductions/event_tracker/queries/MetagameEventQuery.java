@@ -33,7 +33,7 @@ public class MetagameEventQuery implements Query
 			String eventState = event.getString("metagame_event_state");
 			String instanceID = event.getString("instance_id");
 			
-			if(eventState == "137" || eventState == "138")
+			if(eventState.equals("137") || eventState.equals("138"))
 			{
 				finishedEvents.add(instanceID);
 			}
@@ -46,7 +46,7 @@ public class MetagameEventQuery implements Query
 			String eventState = event.getString("metagame_event_state");
 			String instanceID = event.getString("instance_id");
 			
-			if((eventState == "135" || eventState == "136") && !finishedEvents.contains(instanceID))
+			if((eventState.equals("135") || eventState.equals("136")) && !finishedEvents.contains(instanceID))
 			{
 				//Process Dummy Event Message
 				JsonObject payload = new JsonObject();

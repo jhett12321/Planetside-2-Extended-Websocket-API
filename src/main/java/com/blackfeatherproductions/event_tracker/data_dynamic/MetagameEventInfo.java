@@ -24,7 +24,7 @@ public class MetagameEventInfo
 	{
 		return instanceID;
 	}
-
+	
 	/**
 	 * @return the type
 	 */

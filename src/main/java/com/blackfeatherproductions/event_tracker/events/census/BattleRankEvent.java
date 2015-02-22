@@ -64,6 +64,7 @@ public class BattleRankEvent implements Event
 		JsonObject eventData = new JsonObject();
 		
 		eventData.putString("character_id", character.getCharacterID());
+		eventData.putString("character_name", character.getCharacterName());
 		eventData.putString("outfit_id", outfit_id);
 		eventData.putString("faction_id", faction.getId());
 		eventData.putString("battle_rank", battle_rank);
@@ -86,8 +87,8 @@ public class BattleRankEvent implements Event
 		
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
-		message.putString("event_type", "BattleRank");
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+    	EventTracker.getInstance().countProcessedEvent();
 	}
 }

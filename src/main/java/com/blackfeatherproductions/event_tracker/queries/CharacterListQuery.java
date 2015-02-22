@@ -1,5 +1,7 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
+import java.util.List;
+
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
@@ -10,7 +12,13 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 public class CharacterListQuery implements Query
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	private List<CharacterQuery> callbacks;
 	
+	public CharacterListQuery(List<CharacterQuery> callbacks)
+	{
+		this.callbacks = callbacks;
+	}
+
 	@Override
 	public void ReceiveData(JsonObject data)
 	{
@@ -21,6 +29,7 @@ public class CharacterListQuery implements Query
 			JsonObject characterData = characterList.get(i);
 			
 			String characterID = characterData.getString("character_id");
+			String characterName = characterData.getObject("name").getString("first");
 			String factionID = characterData.getString("faction_id");
 			
 			String outfitID;
@@ -44,9 +53,14 @@ public class CharacterListQuery implements Query
 				zoneID = "0";
 			}
 			
-			CharacterInfo character = new CharacterInfo(characterID, factionID, outfitID, zoneID);
+			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID);
 			
 			dynamicDataManager.addCharacterData(characterID, character);
+		}
+		
+		for(CharacterQuery event : callbacks)
+		{
+			event.ReceiveData(null); //Triggers the waiting events for processing.
 		}
 	}
 
