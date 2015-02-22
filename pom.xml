@@ -6,7 +6,7 @@
   <groupId>com.blackfeatherproductions</groupId>
   <artifactId>EventTracker</artifactId>
   <packaging>jar</packaging>
-  <version>1.0-RC4</version>
+  <version>1.0-RC5</version>
   <name>Project - EventTracker</name>
   <url>http://maven.apache.org</url>
 

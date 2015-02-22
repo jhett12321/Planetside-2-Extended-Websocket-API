@@ -252,8 +252,9 @@ public class EventServer
         JsonObject messageToSend = new JsonObject();
         
         JsonObject eventFilterData = rawData.getObject("filter_data");
+        JsonObject eventData = rawData.getObject("event_data");
         
-        messageToSend.putObject("payload", rawData.getObject("event_data"));
+        messageToSend.putObject("payload", eventData);
         messageToSend.putString("event_type", event.getAnnotation(EventInfo.class).eventName());
         
         for(Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
@@ -265,11 +266,11 @@ public class EventServer
         	{
         		JsonObject filteredPayload = new JsonObject();
         		
-        		for(String field : rawData.getObject("event_data").getFieldNames())
+        		for(String field : eventData.getFieldNames())
         		{
         			if(subscription.getArray("show").contains(field))
         			{
-        				filteredPayload.putString(field, rawData.getObject("event_data").getString(field));
+        				filteredPayload.putString(field, eventData.getString(field));
         			}
         		}
         		
@@ -280,7 +281,7 @@ public class EventServer
         	{
         		JsonObject filteredPayload = messageToSend.getObject("payload");
         		
-        		for(String field : rawData.getObject("event_data").getFieldNames())
+        		for(String field : eventData.getFieldNames())
         		{
         			if(subscription.getArray("hide").contains(field))
         			{

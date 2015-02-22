@@ -219,6 +219,8 @@ public class EventServerClient
 			clientConnection.writeTextFrame("{\"error\": \"unknownEvent\", \"message\": \"There is no Event Type by that name. Please check your syntax, and try again.\"}");
 		}
 		
+		JsonObject returnSubscriptions = new JsonObject();
+		
 		JsonObject returnObject = new JsonObject();
 		
 		for(Entry<Class<? extends Event>, JsonObject> subscription : subscriptions.entrySet())
@@ -236,6 +238,9 @@ public class EventServerClient
 				}
 			}
 		}
+		
+		returnSubscriptions.putObject("subscriptions", returnObject);
+		returnSubscriptions.putString("action", action);
 		
 		clientConnection.writeTextFrame(returnObject.encode());
 	}
