@@ -50,6 +50,7 @@ public class DynamicDataManager
             				dummyPayload.putString("metagame_event_state", "138");
             				dummyPayload.putString("timestamp", String.valueOf(new Date().getTime() / 1000));
             				dummyPayload.putString("world_id", worldInfo.getKey().getID());
+            				dummyPayload.putString("event_name", "MetagameEvent");
             				
             				EventTracker.getInstance().getEventHandler().handleEvent("MetagameEvent", dummyPayload);
             			}
