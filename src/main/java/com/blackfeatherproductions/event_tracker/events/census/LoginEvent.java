@@ -70,7 +70,7 @@ public class LoginEvent implements Event
 		eventData.putString("character_id", character.getCharacterID());
 		eventData.putString("character_name", character.getCharacterName());
 		eventData.putString("outfit_id", outfit_id);
-		eventData.putString("faction_id", faction.getId());
+		eventData.putString("faction_id", faction.getID());
 		eventData.putString("is_login", is_login);
 		eventData.putString("timestamp", timestamp);
 		eventData.putString("world_id", world.getID());
@@ -80,7 +80,7 @@ public class LoginEvent implements Event
 		
 		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
+		filterData.putArray("factions", new JsonArray().addString(faction.getID()));
 		filterData.putArray("login_types", new JsonArray().addString(is_login));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 		

@@ -1,30 +1,105 @@
 package com.blackfeatherproductions.event_tracker.server.actions;
 
+import java.util.Map.Entry;
+
 import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.json.JsonObject;
 
+import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
+import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 @ActionInfo(actionNames = "zoneStatus")
 public class ZoneStatus implements Action
 {
+	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	
 	@Override
 	public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
 	{
-		//TODO
-/*		JsonObject response = new JsonObject();
-		JsonObject zones;
+		JsonObject response = new JsonObject();
+		response.putString("action", "zoneStatus");
+		
+		JsonObject worlds = new JsonObject();
 		
 		if(actionData.containsField("worlds"))
 		{
-			zones = Utils.getZoneStatus(actionData.getArray("worlds"));
+			for(int i=0; i<actionData.getArray("worlds").size(); i++)
+			{
+				if(Utils.isValidWorld((String) actionData.getArray("worlds").get(i)))
+				{
+					World world = World.getWorldByID((String) actionData.getArray("worlds").get(i));
+					
+					JsonObject worldObj = new JsonObject();
+					JsonObject zones = new JsonObject();
+
+					for(Entry<Zone, ZoneInfo> zoneInfo : dynamicDataManager.getWorldInfo(world).getZones().entrySet())
+					{
+						JsonObject zone = new JsonObject();
+						
+						String locked = "0";
+						if(zoneInfo.getValue().isLocked())
+						{
+							locked = "1";
+						}
+						
+						zone.putString("locked", locked);
+						zone.putString("locked_by", zoneInfo.getValue().getLockingFaction().getID());
+						
+						JsonObject controlInfo = Utils.calculateTerritoryControl(world, zoneInfo.getKey());
+						
+						zone.putString("control_vs", controlInfo.getString("control_vs"));
+						zone.putString("control_nc", controlInfo.getString("control_nc"));
+						zone.putString("control_tr", controlInfo.getString("control_tr"));;
+						
+						zones.putObject(zoneInfo.getKey().getID(), zone);
+					}
+					
+					worldObj.putObject("zones", zones);
+					worlds.putObject(world.getID(), worldObj);
+				}
+			}
 		}
-		
 		else
 		{
-			zones = Utils.getZoneStatus(null);
+			for(World world : World.worlds.values())
+			{
+				JsonObject worldObj = new JsonObject();
+				JsonObject zones = new JsonObject();
+
+				for(Entry<Zone, ZoneInfo> zoneInfo : dynamicDataManager.getWorldInfo(world).getZones().entrySet())
+				{
+					JsonObject zone = new JsonObject();
+					
+					String locked = "0";
+					if(zoneInfo.getValue().isLocked())
+					{
+						locked = "1";
+					}
+					
+					zone.putString("locked", locked);
+					zone.putString("locked_by", zoneInfo.getValue().getLockingFaction().getID());
+					
+					JsonObject controlInfo = Utils.calculateTerritoryControl(world, zoneInfo.getKey());
+					
+					zone.putString("control_vs", controlInfo.getString("control_vs"));
+					zone.putString("control_nc", controlInfo.getString("control_nc"));
+					zone.putString("control_tr", controlInfo.getString("control_tr"));;
+					
+					zones.putObject(zoneInfo.getKey().getID(), zone);
+				}
+				
+				worldObj.putObject("zones", zones);
+				worlds.putObject(world.getID(), worldObj);
+			}
 		}
 		
-		response.putObject("zones", zones);*/
+		//Send Client Response
+		response.putObject("worlds", worlds);
+		
+		clientConnection.writeTextFrame(response.encode());
 	}
 }

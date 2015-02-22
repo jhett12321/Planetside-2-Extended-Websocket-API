@@ -96,7 +96,7 @@ public class MetagameEvent implements Event
 				JsonObject facilityCaptured = new JsonObject();
 				facilityCaptured.putString("facility_id", facility.getID());
 				facilityCaptured.putString("facility_type_id", facility.getTypeID());
-				facilityCaptured.putString("owner", facilityInfo.getOwner().getId());
+				facilityCaptured.putString("owner", facilityInfo.getOwner().getID());
 				facilityCaptured.putString("zone_id", zone.getID());
 			}
 		}

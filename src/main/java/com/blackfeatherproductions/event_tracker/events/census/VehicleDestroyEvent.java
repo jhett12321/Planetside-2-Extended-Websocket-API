@@ -100,13 +100,13 @@ public class VehicleDestroyEvent implements Event
 		eventData.putString("attacker_character_name", attacker_character.getCharacterName());
 		eventData.putString("attacker_outfit_id", attacker_outfit_id);
 		eventData.putString("attacker_loadout_id", attacker_loadout_id);
-		eventData.putString("attacker_faction_id", attacker_faction.getId());
+		eventData.putString("attacker_faction_id", attacker_faction.getID());
 		eventData.putString("attacker_vehicle_id", attacker_vehicle_id);
 		
 		eventData.putString("victim_character_id", victim_character.getCharacterID());
 		eventData.putString("victim_character_name", victim_character.getCharacterName());
 		eventData.putString("victim_outfit_id", victim_outfit_id);
-		eventData.putString("victim_faction_id", victim_faction.getId());
+		eventData.putString("victim_faction_id", victim_faction.getID());
 		eventData.putString("victim_vehicle_id", victim_vehicle_id);
 		
 		eventData.putString("weapon_id", weapon_id);
@@ -121,7 +121,7 @@ public class VehicleDestroyEvent implements Event
 		
 		filterData.putArray("characters", new JsonArray().addString(attacker_character.getCharacterID()).addString(victim_character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(attacker_outfit_id).addString(victim_outfit_id));
-		filterData.putArray("factions", new JsonArray().addString(attacker_faction.getId()).addString(victim_faction.getId()));
+		filterData.putArray("factions", new JsonArray().addString(attacker_faction.getID()).addString(victim_faction.getID()));
 		filterData.putArray("loadouts", new JsonArray().addString(attacker_loadout_id));
 		filterData.putArray("vehicles", new JsonArray().addString(attacker_vehicle_id).addString(victim_vehicle_id));
 		filterData.putArray("weapons", new JsonArray().addString(weapon_id));

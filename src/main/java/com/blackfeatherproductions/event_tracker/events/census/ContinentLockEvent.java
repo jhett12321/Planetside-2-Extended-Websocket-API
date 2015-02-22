@@ -13,7 +13,7 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 @EventInfo(eventName="ContinentLock",
-listenedEvents = "ContinentLock",
+listenedEvents = "ContinentLock|ContinentUnlock",
 priority = EventPriority.LOWEST,
 filters = { "factions", "zones", "worlds" })
 public class ContinentLockEvent implements Event
@@ -54,7 +54,7 @@ public class ContinentLockEvent implements Event
 		eventData.putString("nc_population", nc_population);
 		eventData.putString("tr_population", tr_population);
 		
-		eventData.putString("locked_by", locked_by.getId());
+		eventData.putString("locked_by", locked_by.getID());
 		eventData.putString("metagame_event_id", metagame_event_id);
 		
 		eventData.putString("timestamp", timestamp);
@@ -64,7 +64,7 @@ public class ContinentLockEvent implements Event
 		//Filters
 		JsonObject filterData = new JsonObject();
 		
-		filterData.putArray("factions", new JsonArray().addString(locked_by.getId()));
+		filterData.putArray("factions", new JsonArray().addString(locked_by.getID()));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 		

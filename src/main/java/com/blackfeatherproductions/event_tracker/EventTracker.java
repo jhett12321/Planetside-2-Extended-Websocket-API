@@ -34,7 +34,7 @@ public class EventTracker extends Verticle
 	private int eventsProcessed = 0;
 	
 	//Maven
-	private String version = "1.0-RC2";
+	private String version = "1.0-RC4";
     
     @Override
     public void start()

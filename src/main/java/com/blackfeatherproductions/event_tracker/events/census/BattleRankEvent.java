@@ -66,7 +66,7 @@ public class BattleRankEvent implements Event
 		eventData.putString("character_id", character.getCharacterID());
 		eventData.putString("character_name", character.getCharacterName());
 		eventData.putString("outfit_id", outfit_id);
-		eventData.putString("faction_id", faction.getId());
+		eventData.putString("faction_id", faction.getID());
 		eventData.putString("battle_rank", battle_rank);
 		eventData.putString("timestamp", timestamp);
 		eventData.putString("zone_id", zone.getID());
@@ -77,7 +77,7 @@ public class BattleRankEvent implements Event
 		
 		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
+		filterData.putArray("factions", new JsonArray().addString(faction.getID()));
 		filterData.putArray("battle_ranks", new JsonArray().addString(battle_rank));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));

@@ -70,8 +70,8 @@ public class FacilityControlEvent implements Event
 		eventData.putString("outfit_id", outfit_id);
 		eventData.putString("duration_held", duration_held);
 		
-		eventData.putString("new_faction_id", new_faction.getId());
-		eventData.putString("old_faction_id", old_faction.getId());
+		eventData.putString("new_faction_id", new_faction.getID());
+		eventData.putString("old_faction_id", old_faction.getID());
 		
 		eventData.putString("is_capture", is_capture);
 		
@@ -89,7 +89,7 @@ public class FacilityControlEvent implements Event
 		filterData.putArray("facilities", new JsonArray().addString(facility_id));
 		filterData.putArray("facility_types", new JsonArray().addString(facility.getTypeID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-		filterData.putArray("factions", new JsonArray().addString(new_faction.getId()).addString(old_faction.getId()));
+		filterData.putArray("factions", new JsonArray().addString(new_faction.getID()).addString(old_faction.getID()));
 		filterData.putArray("captures", new JsonArray().addString(is_capture));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));

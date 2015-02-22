@@ -68,7 +68,7 @@ public class ExperienceEarned implements Event
 		eventData.putString("character_id", character.getCharacterID());
 		eventData.putString("character_name", character.getCharacterName());
 		eventData.putString("outfit_id", outfit_id);
-		eventData.putString("faction_id", faction.getId());
+		eventData.putString("faction_id", faction.getID());
 		eventData.putString("experience_id", experience_id);
 		eventData.putString("loadout_id", loadout_id);
 		eventData.putString("other_id", other_id);
@@ -81,7 +81,7 @@ public class ExperienceEarned implements Event
 		
 		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
+		filterData.putArray("factions", new JsonArray().addString(faction.getID()));
 		filterData.putArray("experience_types", new JsonArray().addString(experience_id));
 		filterData.putArray("loadouts", new JsonArray().addString(loadout_id));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));

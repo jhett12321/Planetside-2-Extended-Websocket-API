@@ -19,6 +19,7 @@ import com.blackfeatherproductions.event_tracker.events.census.AchievementEarned
 import com.blackfeatherproductions.event_tracker.events.census.BattleRankEvent;
 import com.blackfeatherproductions.event_tracker.events.census.CombatEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ContinentLockEvent;
+import com.blackfeatherproductions.event_tracker.events.census.ContinentUnlockEvent;
 import com.blackfeatherproductions.event_tracker.events.census.DirectiveCompletedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ExperienceEarned;
 import com.blackfeatherproductions.event_tracker.events.census.FacilityControlEvent;
@@ -71,6 +72,7 @@ public class EventManager
         registerEvent(BattleRankEvent.class);
         registerEvent(CombatEvent.class);
         registerEvent(ContinentLockEvent.class);
+        registerEvent(ContinentUnlockEvent.class);
         registerEvent(DirectiveCompletedEvent.class);
         registerEvent(ExperienceEarned.class);
         registerEvent(FacilityControlEvent.class);

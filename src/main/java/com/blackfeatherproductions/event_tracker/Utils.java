@@ -163,7 +163,7 @@ public class Utils
 		controlInfo.putString("control_vs", controlVS.toString());
 		controlInfo.putString("control_nc", controlNC.toString());
 		controlInfo.putString("control_tr", controlTR.toString());
-		controlInfo.putString("majority_controller", majorityController.getId());
+		controlInfo.putString("majority_controller", majorityController.getID());
 		
 		return controlInfo;
 	}
@@ -240,7 +240,7 @@ public class Utils
 		controlInfo.putString("control_vs", controlVS.toString());
 		controlInfo.putString("control_nc", controlNC.toString());
 		controlInfo.putString("control_tr", controlTR.toString());
-		controlInfo.putString("majority_controller", majorityController.getId());
+		controlInfo.putString("majority_controller", majorityController.getID());
 		
 		return controlInfo;
 	}

@@ -26,7 +26,7 @@ public class Faction
 		this.tag = tag;
 	}
 
-	public String getId()
+	public String getID()
 	{
 		return id;
 	}

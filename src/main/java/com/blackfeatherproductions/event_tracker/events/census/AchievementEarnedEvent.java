@@ -64,7 +64,7 @@ public class AchievementEarnedEvent implements Event
 		eventData.putString("character_id", character.getCharacterID());
 		eventData.putString("character_name", character.getCharacterName());
 		eventData.putString("outfit_id", outfit_id);
-		eventData.putString("faction_id", faction.getId());
+		eventData.putString("faction_id", faction.getID());
 		eventData.putString("achievement_id", achievement_id);
 		eventData.putString("timestamp", timestamp);
 		eventData.putString("zone_id", zone.getID());
@@ -75,7 +75,7 @@ public class AchievementEarnedEvent implements Event
 		
 		filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
 		filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-		filterData.putArray("factions", new JsonArray().addString(faction.getId()));
+		filterData.putArray("factions", new JsonArray().addString(faction.getID()));
 		filterData.putArray("achievements", new JsonArray().addString(achievement_id));
 		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
 		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
