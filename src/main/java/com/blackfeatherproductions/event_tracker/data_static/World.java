@@ -7,6 +7,7 @@ public class World
 {
 	public static Map<String,World> worlds = new HashMap<String, World>();
 	
+	public static World UNKNOWN;
 	public static World CONNERY;
 	public static World MILLER;
 	public static World COBALT;

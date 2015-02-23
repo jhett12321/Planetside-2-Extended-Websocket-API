@@ -19,6 +19,7 @@ public class StaticDataManager
     	//TODO 1.1 Types to be implemented: achievement, item/weapon, vehicle, directive
     	
     	//Worlds
+		World.UNKNOWN = new World("0", "Unknown");
     	World.CONNERY = new World("1", "Connery");
     	World.MILLER = new World("10", "Miller");
     	World.COBALT = new World("13", "Cobalt");
@@ -26,6 +27,7 @@ public class StaticDataManager
     	World.JAEGAR = new World("19", "Jaeger");
     	World.BRIGGS = new World("25", "Briggs");
     	
+    	World.worlds.put("0", World.UNKNOWN);
     	World.worlds.put("1", World.CONNERY);
     	World.worlds.put("10", World.MILLER);
     	World.worlds.put("13", World.COBALT);

@@ -84,13 +84,11 @@ public class PopulationManager
 		
 		//Total Population
 		JsonObject totalPayload = new JsonObject();
+		totalPayload.putString("population_type", "total");
 		totalPayload.putString("population_total", totalPopulation.getTotalPopulation().toString());
 		totalPayload.putString("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
 		totalPayload.putString("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
 		totalPayload.putString("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
-		totalPayload.putString("outfit_id", "-1");
-		totalPayload.putString("zone_id", "-1");
-		totalPayload.putString("world_id", "-1");
 		
 		EventTracker.getInstance().getEventHandler().handleEvent(eventName, totalPayload);
 		
@@ -100,12 +98,11 @@ public class PopulationManager
 			JsonObject worldPayload = new JsonObject();
 			PopulationStore worldPopulation = worldPopulations.get(world);
 			
+			worldPayload.putString("population_type", "world");
 			worldPayload.putString("population_total", worldPopulation.getTotalPopulation().toString());
 			worldPayload.putString("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
 			worldPayload.putString("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
 			worldPayload.putString("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
-			worldPayload.putString("outfit_id", "-1");
-			worldPayload.putString("zone_id", "-1");
 			worldPayload.putString("world_id", world.getID());
 			
 			EventTracker.getInstance().getEventHandler().handleEvent(eventName, worldPayload);
@@ -114,12 +111,9 @@ public class PopulationManager
 			{
 				JsonObject outfitPayload = new JsonObject();
 				
+				outfitPayload.putString("population_type", "outfit");
 				outfitPayload.putString("population_total", outfit.getValue().toString());
-				outfitPayload.putString("population_vs", "-1");
-				outfitPayload.putString("population_nc", "-1");
-				outfitPayload.putString("population_tr", "-1");
 				outfitPayload.putString("outfit_id", outfit.getKey());
-				outfitPayload.putString("zone_id", "-1");
 				outfitPayload.putString("world_id", world.getID());
 				
 				EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
@@ -131,11 +125,11 @@ public class PopulationManager
 				
 				PopulationStore zonePopulation = zonePopulations.get(world.getID() + "_" + zone.getID());
 				
+				zonePayload.putString("population_type", "zone");
 				zonePayload.putString("population_total", zonePopulation.getTotalPopulation().toString());
 				zonePayload.putString("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
 				zonePayload.putString("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
 				zonePayload.putString("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
-				zonePayload.putString("outfit_id", "-1");
 				zonePayload.putString("zone_id", zone.getID());
 				zonePayload.putString("world_id", world.getID());
 				
@@ -145,10 +139,8 @@ public class PopulationManager
 				{
 					JsonObject outfitPayload = new JsonObject();
 					
+					outfitPayload.putString("population_type", "zone_outfit");
 					outfitPayload.putString("population_total", outfit.getValue().toString());
-					outfitPayload.putString("population_vs", "-1");
-					outfitPayload.putString("population_nc", "-1");
-					outfitPayload.putString("population_tr", "-1");
 					outfitPayload.putString("outfit_id", outfit.getKey());
 					outfitPayload.putString("zone_id", zone.getID());
 					outfitPayload.putString("world_id", world.getID());

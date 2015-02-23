@@ -20,7 +20,7 @@ import com.blackfeatherproductions.event_tracker.events.extended.population.Popu
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 @EventInfo(eventName="PopulationEventListener",
-listenedEvents = "AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
+listenedEvents = "CharacterList|AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
 priority = EventPriority.NORMAL,
 filters = { "no_filtering" })
 public class PopulationEventListener implements Event
@@ -149,7 +149,15 @@ public class PopulationEventListener implements Event
 			zone = Zone.UNKNOWN;
 		}
 		
-		World world = World.getWorldByID(payload.getString("world_id"));
+		World world;
+		if(payload.containsField("world_id"))
+		{
+			world = World.getWorldByID(payload.getString("world_id"));
+		}
+		else
+		{
+			world = character.getWorld();
+		}
 		
 		if(populationManager.onlinePlayers.containsKey(characterID))
 		{

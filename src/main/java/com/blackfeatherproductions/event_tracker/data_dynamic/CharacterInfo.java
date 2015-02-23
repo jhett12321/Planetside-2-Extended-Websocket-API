@@ -4,6 +4,7 @@ import org.vertx.java.core.Handler;
 
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
+import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class CharacterInfo
@@ -13,14 +14,16 @@ public class CharacterInfo
 	private String outfitID;
 	private Faction faction;
 	private Zone zone;
+	private World world;
 
-	public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID)
+	public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID)
 	{
 		this.characterID = characterID;
 		this.characterName = characterName;
 		this.faction = Faction.getFactionByID(factionID);
 		this.outfitID = outfitID;
 		this.zone = Zone.getZoneByID(zoneID);
+		this.world = World.getWorldByID(worldID);
 		
         EventTracker.getInstance().getVertx().setTimer(60000, new Handler<Long>()
         {
@@ -54,5 +57,10 @@ public class CharacterInfo
 	public Zone getZone()
 	{
 		return zone;
+	}
+
+	public World getWorld()
+	{
+		return world;
 	}
 }

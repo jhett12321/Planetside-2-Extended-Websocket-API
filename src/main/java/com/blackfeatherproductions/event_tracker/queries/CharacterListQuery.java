@@ -53,7 +53,9 @@ public class CharacterListQuery implements Query
 				zoneID = "0";
 			}
 			
-			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID);
+			String worldID = characterData.getObject("world").getString("world_id");
+			
+			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID);
 			
 			dynamicDataManager.addCharacterData(characterID, character);
 		}
@@ -67,7 +69,7 @@ public class CharacterListQuery implements Query
 				//In this case, we create a blank character.
 				if(!EventTracker.getInstance().getDynamicDataManager().characterDataExists(characterID))
 				{
-					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", ""));
+					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", "", "0"));
 				}
 			}
 			

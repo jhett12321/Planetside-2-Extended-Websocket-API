@@ -8,6 +8,7 @@ import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.WebSocket;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
@@ -103,8 +104,8 @@ public class Census
                                 //Send subscription message
                                 websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
                                 
-                                //TODO RecentCharacterIDs Message.
-                                //websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+                                //Get recent character ID's for population.
+                                websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
                             }
                             
                             else if(message.containsField("subscription"))
@@ -135,6 +136,7 @@ public class Census
 	                            
 	                            else if(serviceType.equals("heartbeat"))
 	                            {
+	                            	lastHeartbeat = new Date().getTime();
 	                            	JsonObject onlineList = message.getObject("online");
 	                            	for(Entry<String, Object> endpoint : onlineList.toMap().entrySet())
 	                            	{
@@ -158,7 +160,20 @@ public class Census
 	                                EventTracker.getInstance().countReceivedEvent();
 	                                
 	                                //Check the world status for this event
-	                                if(eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
+	                                if(payload.containsField("recent_character_id_list"))
+	                                {
+	                                	JsonArray recentCharacterIDList = payload.getArray("recent_character_id_list");
+	                                	for(int i=0; i<recentCharacterIDList.size(); i++)
+	                                	{
+	                                		JsonObject characterPayload = new JsonObject();
+	                                		characterPayload.putString("character_id", (String) recentCharacterIDList.get(i));
+	                                		characterPayload.putString("event_name", "CharacterList");
+	                                		
+	                                		eventTracker.getEventHandler().handleEvent("CharacterList", characterPayload);
+	                                	}
+	                                }
+	                                
+	                                else if(eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
 	                                {
 	                                    eventTracker.getEventHandler().handleEvent(eventName, payload);
 	                                }
