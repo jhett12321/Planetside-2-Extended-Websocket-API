@@ -21,6 +21,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.MavenInfo;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
@@ -129,7 +130,7 @@ public class EventServer
 	                //Send Connection Confirmed Message
 	                JsonObject connectMessage = new JsonObject();
 	                connectMessage.putString("service", "ps2_events");
-	                connectMessage.putString("version", eventTracker.getVersion());
+	                connectMessage.putString("version", MavenInfo.getVersion());
 	                connectMessage.putString("websocket_event", "connectionStateChange");
 	                connectMessage.putString("online", "true");
 	                

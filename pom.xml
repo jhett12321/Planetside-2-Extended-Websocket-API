@@ -6,8 +6,8 @@
   <groupId>com.blackfeatherproductions</groupId>
   <artifactId>EventTracker</artifactId>
   <packaging>jar</packaging>
-  <version>1.0</version>
-  <name>Project - EventTracker</name>
+  <version>1.0.1</version>
+  <name>Planetside 2 Extended Push API</name>
   <url>http://maven.apache.org</url>
 
   <properties>
@@ -289,6 +289,21 @@
           </execution>
         </executions>
       </plugin>
+      
+	  <plugin>
+	    <groupId>org.codehaus.mojo</groupId>
+	    <artifactId>templating-maven-plugin</artifactId>
+	    <version>1.0-alpha-3</version>
+	    <executions>
+	      <execution>
+	        <id>generate-verion-class</id>
+	        <goals>
+	          <goal>filter-sources</goal>
+	        </goals>
+	      </execution>
+	    </executions>
+	  </plugin>
+  
     </plugins>
   </build>
   <reporting>

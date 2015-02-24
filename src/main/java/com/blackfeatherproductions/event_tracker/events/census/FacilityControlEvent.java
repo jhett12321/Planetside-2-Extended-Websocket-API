@@ -56,6 +56,12 @@ public class FacilityControlEvent implements Event
 		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
 		World world = World.getWorldByID(payload.getString("world_id"));
 		
+		//Update Internal Data
+		if(is_capture.equals("1"))
+		{
+			dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
+		}
+		
 		//Territory Control
 		JsonObject controlInfo = Utils.calculateTerritoryControl(world, zone);
 		String control_vs = controlInfo.getString("control_vs");
@@ -102,11 +108,5 @@ public class FacilityControlEvent implements Event
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
     	EventTracker.getInstance().countProcessedEvent();
-
-		//Update Internal Data
-		if(is_capture.equals("1"))
-		{
-			dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
-		}
 	}
 }

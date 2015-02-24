@@ -34,6 +34,7 @@ public class CharacterListQuery implements Query
 			
 			String outfitID;
 			String zoneID;
+			String worldID;
 			
 			if(characterData.containsField("outfit"))
 			{
@@ -53,7 +54,14 @@ public class CharacterListQuery implements Query
 				zoneID = "0";
 			}
 			
-			String worldID = characterData.getObject("world").getString("world_id");
+			if(characterData.containsField("world"))
+			{
+				worldID = characterData.getObject("world").getString("world_id");
+			}
+			else
+			{
+				worldID = "0";
+			}
 			
 			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID);
 			
@@ -69,7 +77,7 @@ public class CharacterListQuery implements Query
 				//In this case, we create a blank character.
 				if(!EventTracker.getInstance().getDynamicDataManager().characterDataExists(characterID))
 				{
-					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", "", "0"));
+					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", "0", "0"));
 				}
 			}
 			

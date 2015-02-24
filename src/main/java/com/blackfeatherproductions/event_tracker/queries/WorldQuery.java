@@ -70,7 +70,7 @@ public class WorldQuery implements Query
 			}
 		}
 		
-		for(Zone zone : Zone.zones.values())
+		for(Zone zone : Zone.getValidZones())
 		{
 			JsonObject territoryControl = Utils.calculateTerritoryControl(world, zone);
 			

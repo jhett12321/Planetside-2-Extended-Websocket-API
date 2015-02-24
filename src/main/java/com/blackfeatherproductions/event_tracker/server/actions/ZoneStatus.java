@@ -65,7 +65,7 @@ public class ZoneStatus implements Action
 		}
 		else
 		{
-			for(World world : World.worlds.values())
+			for(World world : World.getValidWorlds())
 			{
 				JsonObject worldObj = new JsonObject();
 				JsonObject zones = new JsonObject();

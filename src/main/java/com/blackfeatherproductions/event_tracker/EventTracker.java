@@ -32,16 +32,18 @@ public class EventTracker extends Verticle
 	//Metrics
 	private int eventsReceived = 0;
 	private int eventsProcessed = 0;
-	
-	//Maven
-	private String version = "1.0";
     
     @Override
     public void start()
     {
-        instance = this; //Singleton
+    	//Singleton
+        instance = this;
         
+        //Logging
         logger = container.logger();
+        
+        logger.info("Planetside 2 Extended Push API v" + MavenInfo.getVersion());
+        logger.info("Starting up...");
         
         //Config
         config = new Config();
@@ -98,11 +100,6 @@ public class EventTracker extends Verticle
     {
         return config;
     }
-    
-    public String getVersion()
-    {
-		return version;
-	}
 
 	public EventManager getEventHandler()
     {

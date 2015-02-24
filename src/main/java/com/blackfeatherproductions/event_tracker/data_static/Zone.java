@@ -1,5 +1,7 @@
 package com.blackfeatherproductions.event_tracker.data_static;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -56,5 +58,24 @@ public class Zone
     	
     	return null;
     }
-	
+
+    public static Collection<Zone> getAllZones()
+    {
+    	return zones.values();
+    }
+    
+    public static Collection<Zone> getValidZones()
+    {
+    	Collection<Zone> validZones = new ArrayList<Zone>();
+    	
+    	for(Zone zone : zones.values())
+    	{
+    		if(zone != Zone.UNKNOWN)
+    		{
+    			validZones.add(zone);
+    		}
+    	}
+    	
+    	return validZones;
+    }
 }

@@ -70,7 +70,7 @@ public class ActiveAlerts implements Action
 		}
 		else
 		{
-			for(World world : World.worlds.values())
+			for(World world : World.getValidWorlds())
 			{
 				JsonObject metagameEvents = new JsonObject();
 

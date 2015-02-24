@@ -55,11 +55,11 @@ public class PopulationManager
 		Map<World, PopulationStore> worldPopulations = new HashMap<World, PopulationStore>();
 		Map<String, PopulationStore> zonePopulations = new HashMap<String, PopulationStore>();
 		
-		for(World world : World.worlds.values())
+		for(World world : World.getAllWorlds())
 		{
 			worldPopulations.put(world, new PopulationStore());
 			
-			for(Zone zone : Zone.zones.values())
+			for(Zone zone : Zone.getAllZones())
 			{
 				zonePopulations.put(world.getID() + "_" + zone.getID(), new PopulationStore());
 			}
@@ -93,7 +93,7 @@ public class PopulationManager
 		EventTracker.getInstance().getEventHandler().handleEvent(eventName, totalPayload);
 		
 		//World Populations
-		for(World world : World.worlds.values())
+		for(World world : World.getAllWorlds())
 		{
 			JsonObject worldPayload = new JsonObject();
 			PopulationStore worldPopulation = worldPopulations.get(world);
@@ -119,7 +119,7 @@ public class PopulationManager
 				EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
 			}
 			
-			for(Zone zone : Zone.zones.values())
+			for(Zone zone : Zone.getAllZones())
 			{
 				JsonObject zonePayload = new JsonObject();
 				

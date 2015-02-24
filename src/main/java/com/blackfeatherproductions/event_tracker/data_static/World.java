@@ -1,5 +1,7 @@
 package com.blackfeatherproductions.event_tracker.data_static;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -50,5 +52,25 @@ public class World
     	}
     	
     	return null;
+    }
+    
+    public static Collection<World> getAllWorlds()
+    {
+    	return worlds.values();
+    }
+    
+    public static Collection<World> getValidWorlds()
+    {
+    	Collection<World> validWorlds = new ArrayList<World>();
+    	
+    	for(World world : worlds.values())
+    	{
+    		if(world != World.UNKNOWN)
+    		{
+    			validWorlds.add(world);
+    		}
+    	}
+    	
+    	return validWorlds;
     }
 }

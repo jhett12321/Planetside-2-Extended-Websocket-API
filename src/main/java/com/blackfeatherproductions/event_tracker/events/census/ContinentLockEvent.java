@@ -47,6 +47,10 @@ public class ContinentLockEvent implements Event
 		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
 		World world = World.getWorldByID(payload.getString("world_id"));
 		
+		//Update Internal Data
+		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);
+		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(locked_by);
+		
 		//Payload
 		JsonObject eventData = new JsonObject();
 		
@@ -76,9 +80,5 @@ public class ContinentLockEvent implements Event
 		
 		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
     	EventTracker.getInstance().countProcessedEvent();
-
-		//Update Internal Data
-		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);
-		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(locked_by);
 	}
 }

@@ -41,6 +41,9 @@ public class Census
         client.setHost("push.planetside2.com");
         client.setPort(443);
         client.setSSL(true);
+        client.setMaxWebSocketFrameSize(1000000);
+        client.setReceiveBufferSize(1000000);
+        client.setSendBufferSize(1000000);
         
         connectWebsocket();
         
@@ -51,6 +54,7 @@ public class Census
             {
             	if(!websocketConnected)
             	{
+            		eventTracker.getLogger().error("Websocket Connection lost... Reconnecting." );
             		connectWebsocket();
             	}
             	
@@ -99,14 +103,14 @@ public class Census
                             if(message.containsField("connected") && message.getString("connected").equals("true"))
                             {
                                 eventTracker.getLogger().info("Websocket Secure Connection established to push.planetside.com" );
-                                eventTracker.getLogger().info("Subscribing to all events..." );
                                 
-                                //Send subscription message
-                                websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+                                websocketConnected = true;
+                                
+                                eventTracker.getLogger().info("Requesting seen Character IDs..." );
                                 
                                 //Get recent character ID's for population.
                                 websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
-                            }
+                              }
                             
                             else if(message.containsField("subscription"))
                             {
@@ -118,11 +122,6 @@ public class Census
                             {
 	                            if(serviceType.equals("serviceStateChanged"))
 	                            {
-	                                if(!websocketConnected)
-	                                {
-	                                	websocketConnected = true;
-	                                }
-	                                
 	                        		if(message.getString("online").equals("true"))
 	                        		{
 	                        			updateEndpointStatus(Utils.getWorldIDFromEndpointString(message.getString("detail")), true);
@@ -162,6 +161,12 @@ public class Census
 	                                //Check the world status for this event
 	                                if(payload.containsField("recent_character_id_list"))
 	                                {
+	                                	eventTracker.getLogger().info("Character List Received!" );
+	                                    eventTracker.getLogger().info("Subscribing to all events..." );
+	                                	
+	                                	//Send subscription message
+	                                    websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+	                                	
 	                                	JsonArray recentCharacterIDList = payload.getArray("recent_character_id_list");
 	                                	for(int i=0; i<recentCharacterIDList.size(); i++)
 	                                	{
@@ -260,7 +265,7 @@ public class Census
     private void onWebsocketDisconnected()
     {
     	websocketConnected = false;
-    	for(World world : World.worlds.values())
+    	for(World world : World.getValidWorlds())
     	{
     		eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
     	}

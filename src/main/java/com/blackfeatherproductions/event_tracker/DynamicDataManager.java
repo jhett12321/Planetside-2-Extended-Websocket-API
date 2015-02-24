@@ -24,7 +24,7 @@ public class DynamicDataManager
 	{
         Vertx vertx = EventTracker.getInstance().getVertx();
         
-        for(World world : World.worlds.values())
+        for(World world : World.getValidWorlds())
         {
         	worlds.put(world, new WorldInfo());
         }
