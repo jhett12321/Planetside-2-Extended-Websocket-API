@@ -49,7 +49,7 @@ public class ContinentUnlockEvent implements Event
 		
 		//Update Internal Data
 		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(false);
-		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(null);
+		dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NS);
 		
 		//Payload
 		JsonObject eventData = new JsonObject();

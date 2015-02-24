@@ -93,7 +93,7 @@ public class PopulationManager
 		EventTracker.getInstance().getEventHandler().handleEvent(eventName, totalPayload);
 		
 		//World Populations
-		for(World world : World.getAllWorlds())
+		for(World world : World.getValidWorlds())
 		{
 			JsonObject worldPayload = new JsonObject();
 			PopulationStore worldPopulation = worldPopulations.get(world);
@@ -119,7 +119,7 @@ public class PopulationManager
 				EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
 			}
 			
-			for(Zone zone : Zone.getAllZones())
+			for(Zone zone : Zone.getValidZones())
 			{
 				JsonObject zonePayload = new JsonObject();
 				

@@ -13,7 +13,7 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 @EventInfo(eventName="ContinentLock",
-listenedEvents = "ContinentLock|ContinentUnlock",
+listenedEvents = "ContinentLock",
 priority = EventPriority.LOWEST,
 filters = { "factions", "zones", "worlds" })
 public class ContinentLockEvent implements Event

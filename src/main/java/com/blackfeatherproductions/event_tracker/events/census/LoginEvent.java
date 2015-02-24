@@ -16,7 +16,7 @@ import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 @EventInfo(eventName="Login",
 listenedEvents = "PlayerLogin|PlayerLogout",
 priority = EventPriority.NORMAL,
-filters = { "characters", "outfits", "factions", "login_types", "worlds" })
+filters = { "characters", "outfits", "factions", "is_login", "worlds" })
 public class LoginEvent implements Event
 {
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();

@@ -90,6 +90,7 @@ public class WorldQuery implements Query
 			}
 			else
 			{
+				dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NS);
 				dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(false);
 			}
 		}
