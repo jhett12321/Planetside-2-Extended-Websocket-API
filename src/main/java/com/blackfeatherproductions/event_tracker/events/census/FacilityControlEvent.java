@@ -47,7 +47,7 @@ public class FacilityControlEvent implements Event
 		Faction old_faction = Faction.getFactionByID(payload.getString("old_faction_id"));
 		
 		String is_capture = "0";
-		if(new_faction.equals(old_faction))
+		if(!new_faction.equals(old_faction))
 		{
 			is_capture = "1";
 		}

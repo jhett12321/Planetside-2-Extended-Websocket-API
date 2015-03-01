@@ -1,9 +1,12 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.util.Map.Entry;
+
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
+import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -106,21 +109,25 @@ public class Utils
 		float facilitiesNC = 0;
 		float facilitiesTR = 0;
 		
-		for(FacilityInfo facility : dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().values())
+		for(Entry<Facility, FacilityInfo> facility : dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().entrySet())
 		{
-			totalRegions++;
-			
-			if(facility.getOwner() == Faction.VS)
+			//Territory Control ignores warpgates.
+			if(!facility.getKey().getTypeID().equals("7"))
 			{
-				facilitiesVS++;
-			}
-			else if(facility.getOwner() == Faction.NC)
-			{
-				facilitiesNC++;
-			}
-			else if(facility.getOwner() == Faction.TR)
-			{
-				facilitiesTR++;
+				totalRegions++;
+				
+				if(facility.getValue().getOwner() == Faction.VS)
+				{
+					facilitiesVS++;
+				}
+				else if(facility.getValue().getOwner() == Faction.NC)
+				{
+					facilitiesNC++;
+				}
+				else if(facility.getValue().getOwner() == Faction.TR)
+				{
+					facilitiesTR++;
+				}
 			}
 		}
 		

@@ -41,9 +41,10 @@ public class ActiveAlerts implements Action
 						JsonObject metagameEvent = new JsonObject();
 						
 						metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
+						metagameEvent.putString("metagame_event_type_id", metagameEventInfo.getType().getID());
 						metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
 						metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
-						metagameEvent.putString("type_id", metagameEventInfo.getType().getTypeID());
+						metagameEvent.putString("facility_type_id", metagameEventInfo.getType().getFacilityTypeID());
 						
 						JsonObject facilities = new JsonObject();
 						
@@ -81,7 +82,7 @@ public class ActiveAlerts implements Action
 					metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
 					metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
 					metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
-					metagameEvent.putString("type_id", metagameEventInfo.getType().getTypeID());
+					metagameEvent.putString("type_id", metagameEventInfo.getType().getFacilityTypeID());
 					
 					JsonObject facilities = new JsonObject();
 					
