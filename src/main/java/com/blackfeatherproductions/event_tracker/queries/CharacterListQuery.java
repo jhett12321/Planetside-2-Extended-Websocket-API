@@ -35,6 +35,7 @@ public class CharacterListQuery implements Query
 			String outfitID;
 			String zoneID;
 			String worldID;
+			boolean online = true;
 			
 			if(characterData.containsField("outfit"))
 			{
@@ -63,7 +64,12 @@ public class CharacterListQuery implements Query
 				worldID = "0";
 			}
 			
-			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID);
+			if(characterData.containsField("online"))
+			{
+				online = !characterData.getObject("online").getString("online_status").equals("0");
+			}
+			
+			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
 			
 			dynamicDataManager.addCharacterData(characterID, character);
 		}
@@ -77,7 +83,7 @@ public class CharacterListQuery implements Query
 				//In this case, we create a blank character.
 				if(!EventTracker.getInstance().getDynamicDataManager().characterDataExists(characterID))
 				{
-					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", "0", "0"));
+					EventTracker.getInstance().getDynamicDataManager().addCharacterData(characterID, new CharacterInfo(characterID, "", "0", "0", "0", "0", true));
 				}
 			}
 			

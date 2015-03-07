@@ -1,37 +1,63 @@
 package com.blackfeatherproductions.event_tracker.events.extended.population;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.commons.lang.StringUtils;
 import org.vertx.java.core.Handler;
 import org.vertx.java.core.Vertx;
+import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
+import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.QueryManager;
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.OnlinePlayer;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.queries.Query;
 
-public class PopulationManager
+public class PopulationManager implements Query
 {
 	public Map<String, OnlinePlayer> onlinePlayers = new ConcurrentHashMap<String, OnlinePlayer>();
+	private QueryManager queryManager;
+	private DynamicDataManager dynamicDataManager;
+	private EventTracker eventTracker;
+	private Query self = this;
 	
 	public PopulationManager()
 	{
-        EventTracker eventTracker = EventTracker.getInstance();
+        eventTracker = EventTracker.getInstance();
+        dynamicDataManager = eventTracker.getDynamicDataManager();
+        queryManager = eventTracker.getQueryManager();
+        
         Vertx vertx = eventTracker.getVertx();
         
-        //Reconnects the websocket if it is not online, or is not responding.
+        //Regularly sends events for population data.
         vertx.setPeriodic(10000, new Handler<Long>()
+        {
+			@Override
+			public void handle(Long event)
+			{
+	        	generateEvents();
+			}
+        });
+        
+        //Detects if players are no-longer online (i.e. we missed the logout event.)
+        vertx.setPeriodic(60000, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
             	Iterator<Map.Entry<String, OnlinePlayer>> iter = onlinePlayers.entrySet().iterator();
+            	List<String> charactersToCheck = new ArrayList<String>();
             	
             	while (iter.hasNext())
             	{
@@ -39,12 +65,30 @@ public class PopulationManager
             		
             		if((new Date().getTime() - entry.getValue().getLastEvent().getTime()) / 1000 > 600)
             		{
-            			iter.remove();
+            			charactersToCheck.add(entry.getKey());
             		}
             	}
             	
-            	generateEvents();
+            	List<String> characters = new ArrayList<String>();
             	
+            	for(String characterID : charactersToCheck)
+            	{
+            		characters.add(characterID);
+            		
+            		if(characters.size() >= 150)
+            		{
+            			queryManager.getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                				false, self);
+                		
+            			characters = new ArrayList<String>();
+            		}
+            	}
+            	
+            	if(!characters.isEmpty())
+            	{
+            		queryManager.getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+            				false, self);
+            	}
             }
         });
 	}
@@ -149,5 +193,87 @@ public class PopulationManager
 				}
 			}
 		}
+	}
+
+	@Override
+	public void ReceiveData(JsonObject data)
+	{
+		JsonArray characterList = data.getArray("character_list");
+		
+		for(int i=0; i<characterList.size(); i++)
+		{
+			//Update Character Info
+			JsonObject characterData = characterList.get(i);
+			
+			String characterID = characterData.getString("character_id");
+			String characterName = characterData.getObject("name").getString("first");
+			String factionID = characterData.getString("faction_id");
+			
+			String outfitID;
+			String zoneID;
+			String worldID;
+			Boolean online = null;
+			
+			if(characterData.containsField("outfit"))
+			{
+				outfitID = characterData.getObject("outfit").getString("outfit_id");
+			}
+			else
+			{
+				outfitID = "0";
+			}
+			
+			if(characterData.containsField("last_event"))
+			{
+				zoneID = characterData.getObject("last_event").getString("zone_id");
+			}
+			else
+			{
+				zoneID = "0";
+			}
+			
+			if(characterData.containsField("world"))
+			{
+				worldID = characterData.getObject("world").getString("world_id");
+			}
+			else
+			{
+				worldID = "0";
+			}
+			
+			if(characterData.containsField("online"))
+			{
+				online = !characterData.getObject("online").getString("online_status").equals("0");
+			}
+			
+			CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
+			
+			dynamicDataManager.addCharacterData(characterID, character);
+			
+			//Verify Population Data.
+			if(dynamicDataManager.characterDataExists(characterID))
+			{
+				CharacterInfo characterInfo = dynamicDataManager.getCharacterData(characterID);
+				
+				if(characterInfo.isOnline())
+				{
+					onlinePlayers.get(characterID).setLastEvent(new Date());
+				}
+				
+				else if(characterInfo.isOnline() == false)
+				{
+					//This player is no-longer online. Remove the player.
+					onlinePlayers.remove(characterID);
+				}
+
+				else
+				{
+					//This player doesn't have valid online status data.
+					onlinePlayers.remove(characterID);
+				}
+			}
+		}
+		
+    	generateEvents();
 	}
 }

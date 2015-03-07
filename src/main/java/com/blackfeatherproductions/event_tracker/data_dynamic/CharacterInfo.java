@@ -15,8 +15,9 @@ public class CharacterInfo
 	private Faction faction;
 	private Zone zone;
 	private World world;
+	private boolean online;
 
-	public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID)
+	public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
 	{
 		this.characterID = characterID;
 		this.characterName = characterName;
@@ -24,6 +25,7 @@ public class CharacterInfo
 		this.outfitID = outfitID;
 		this.zone = Zone.getZoneByID(zoneID);
 		this.world = World.getWorldByID(worldID);
+		this.online = online;
 		
         EventTracker.getInstance().getVertx().setTimer(60000, new Handler<Long>()
         {
@@ -62,5 +64,10 @@ public class CharacterInfo
 	public World getWorld()
 	{
 		return world;
+	}
+	
+	public boolean isOnline()
+	{
+		return online;
 	}
 }
