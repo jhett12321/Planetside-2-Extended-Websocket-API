@@ -56,6 +56,7 @@ public class MetagameEventQuery implements Query
 				payload.putString("metagame_event_state", eventState);
 				payload.putString("timestamp", event.getString("timestamp"));
 				payload.putString("world_id", event.getString("world_id"));
+				payload.putString("is_dummy", "1");
 				
                 String eventName = payload.getString("event_name");
                 

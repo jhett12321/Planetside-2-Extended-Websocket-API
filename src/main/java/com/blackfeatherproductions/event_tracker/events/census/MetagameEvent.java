@@ -169,34 +169,39 @@ public class MetagameEvent implements Event
 		}
 			
 		//Payload
-		eventData.putString("instance_id", instance_id);
-		eventData.putString("metagame_event_type_id", metagame_event_id);
-		eventData.putString("start_time", start_time);
-		eventData.putString("end_time", "0");
-		eventData.putString("timestamp", timestamp);
-		eventData.putString("facility_type_id", facility_type_id);
-		eventData.putString("status", status);
-		eventData.putString("control_vs", control_vs);
-		eventData.putString("control_nc", control_nc);
-		eventData.putString("control_tr", control_tr);
-		eventData.putString("domination", domination);
-		eventData.putString("zone_id", zone.getID());
-		eventData.putString("world_id", world.getID());
+		boolean isDummy = payload.containsField("is_dummy") && payload.getString("is_dummy") == "1";
+		
+		if(!isDummy)
+		{
+			eventData.putString("instance_id", instance_id);
+			eventData.putString("metagame_event_type_id", metagame_event_id);
+			eventData.putString("start_time", start_time);
+			eventData.putString("end_time", "0");
+			eventData.putString("timestamp", timestamp);
+			eventData.putString("facility_type_id", facility_type_id);
+			eventData.putString("status", status);
+			eventData.putString("control_vs", control_vs);
+			eventData.putString("control_nc", control_nc);
+			eventData.putString("control_tr", control_tr);
+			eventData.putString("domination", domination);
+			eventData.putString("zone_id", zone.getID());
+			eventData.putString("world_id", world.getID());
+				
+			//Filters		
+			filterData.putArray("metagames", new JsonArray().addString(instance_id));
+			filterData.putArray("metagame_event_types", new JsonArray().addString(metagame_event_id));
+			filterData.putArray("facility_types", new JsonArray().addString(facility_type_id));
+			filterData.putArray("statuses", new JsonArray().addString(status));
+			filterData.putArray("dominations", new JsonArray().addString(domination));
+			filterData.putArray("zones", new JsonArray().addString(zone.getID()));
+			filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 			
-		//Filters		
-		filterData.putArray("metagames", new JsonArray().addString(instance_id));
-		filterData.putArray("metagame_event_types", new JsonArray().addString(metagame_event_id));
-		filterData.putArray("facility_types", new JsonArray().addString(facility_type_id));
-		filterData.putArray("statuses", new JsonArray().addString(status));
-		filterData.putArray("dominations", new JsonArray().addString(domination));
-		filterData.putArray("zones", new JsonArray().addString(zone.getID()));
-		filterData.putArray("worlds", new JsonArray().addString(world.getID()));
-		
-		//Broadcast Event		
-		message.putObject("event_data", eventData);
-		message.putObject("filter_data", filterData);
-		
-		eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
-		eventTracker.countProcessedEvent();
+			//Broadcast Event		
+			message.putObject("event_data", eventData);
+			message.putObject("filter_data", filterData);
+			
+			eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+			eventTracker.countProcessedEvent();
+		}
 	}
 }
