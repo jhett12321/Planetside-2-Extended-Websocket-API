@@ -79,7 +79,7 @@ public class QueryManager
 			return;
 		}
 		
-		HttpClient client = vertx.createHttpClient().setHost("census.soe.com");
+		HttpClient client = vertx.createHttpClient().setHost("census.daybreakgames.com");
 		
 		final String query = "/s:" + EventTracker.getInstance().getConfig().getSoeServiceID() + rawQuery;
 
