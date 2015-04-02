@@ -3,17 +3,28 @@ package com.blackfeatherproductions.event_tracker.data_dynamic;
 import java.util.HashMap;
 import java.util.Map;
 
+import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
+//This is the main class for world-centric data.
+//The DynamicDataManager allows the system to get the world instance.
 public class WorldInfo
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
+	private World world;
+	
 	private Map<Zone, ZoneInfo> zones = new HashMap<Zone, ZoneInfo>();
 	private Map<String, MetagameEventInfo> metagameEvents = new HashMap<String, MetagameEventInfo>();
 	
 	private boolean online = false;
 
-	//This is the main class for world-centric data.
-	//The DynamicDataManager allows the system to get the world instance.
+	public WorldInfo(World world)
+	{
+		this.world = world;
+	}
+	
 	public ZoneInfo getZoneInfo(Zone zone)
 	{
 		if(zone != null)
@@ -29,6 +40,11 @@ public class WorldInfo
 		return null;
 	}
 	
+	public World getWorld()
+	{
+		return world;
+	}
+
 	public Map<Zone, ZoneInfo> getZones()
 	{
 		return zones;
@@ -62,5 +78,14 @@ public class WorldInfo
 	public void setOnline(boolean online)
 	{
 		this.online = online;
+		
+		if(!online)
+		{
+            eventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
+		}
+		else
+		{
+			eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
+		}
 	}
 }

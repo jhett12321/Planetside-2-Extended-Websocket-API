@@ -13,6 +13,8 @@ priority = EventPriority.NORMAL,
 filters = { "no_filtering" })
 public class EventTrackerMetricsEvent implements Event
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private JsonObject payload;
 	
 	@Override
@@ -32,7 +34,7 @@ public class EventTrackerMetricsEvent implements Event
 		message.putObject("event_data", payload);
 		message.putObject("filter_data", null);
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+		eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 
 }

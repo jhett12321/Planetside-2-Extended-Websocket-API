@@ -15,6 +15,8 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class WorldQuery implements Query
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private World world;
@@ -23,7 +25,7 @@ public class WorldQuery implements Query
 	{
 		this.world = World.getWorldByID(worldID);
 
-		EventTracker.getInstance().getQueryManager().getCensusData("/get/ps2:v2/map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_name'facility_type'facility_type_id", false, this);
+		eventTracker.getQueryManager().getCensusData("/get/ps2:v2/map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_name'facility_type'facility_type_id", false, this);
 	}
 	
 	@Override

@@ -14,6 +14,8 @@ priority = EventPriority.NORMAL,
 filters = { "population_types", "outfits", "zones", "worlds" })
 public class PopulationChangeEvent implements Event
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private JsonObject payload;
 
 	@Override
@@ -68,7 +70,7 @@ public class PopulationChangeEvent implements Event
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
+		eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
 	}
 
 }

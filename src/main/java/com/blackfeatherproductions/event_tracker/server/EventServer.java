@@ -32,6 +32,8 @@ import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
 
 public class EventServer
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private Config config;
 	
 	//API Key Database
@@ -45,7 +47,6 @@ public class EventServer
     
     public EventServer()
     {
-        final EventTracker eventTracker = EventTracker.getInstance();
         config = eventTracker.getConfig();
         Vertx vertx = eventTracker.getVertx();
         
@@ -241,7 +242,7 @@ public class EventServer
         ActionInfo info = action.getAnnotation(ActionInfo.class);
         if(info == null)
         {
-        	EventTracker.getInstance().getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
+        	eventTracker.getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
             return;
         }
 

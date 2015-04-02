@@ -20,7 +20,8 @@ priority = EventPriority.NORMAL,
 filters = { "characters", "outfits", "factions", "achievements", "zones", "worlds" })
 public class AchievementEarnedEvent implements Event
 {
-	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
 	
 	private JsonObject payload;
 	
@@ -86,7 +87,7 @@ public class AchievementEarnedEvent implements Event
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
-    	EventTracker.getInstance().countProcessedEvent();
+		eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+    	eventTracker.countProcessedEvent();
 	}
 }

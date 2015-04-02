@@ -21,6 +21,8 @@ import com.blackfeatherproductions.event_tracker.queries.Query;
 
 public class QueryManager
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private Integer failureCount = 0;
 	
 	private Queue<CharacterQuery> queuedCharacterQueries = new LinkedList<CharacterQuery>();
@@ -28,7 +30,7 @@ public class QueryManager
 	public QueryManager()
 	{
 		//Character Queue Processor
-        EventTracker.getInstance().getVertx().setPeriodic(1000, new Handler<Long>()
+        eventTracker.getVertx().setPeriodic(1000, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
@@ -63,10 +65,10 @@ public class QueryManager
 	
 	public void getCensusData(String rawQuery, final boolean allowNoData, final Query... callbacks)
 	{	
-		Vertx vertx = EventTracker.getInstance().getVertx();
-		final Logger logger = EventTracker.getInstance().getLogger();
+		Vertx vertx = eventTracker.getVertx();
+		final Logger logger = eventTracker.getLogger();
 		
-		if(failureCount >= EventTracker.getInstance().getConfig().getMaxFailures())
+		if(failureCount >= eventTracker.getConfig().getMaxFailures())
 		{
 			logger.error("[Census REST] Census Failure Limit Reached. Dropping event.");
 			
@@ -81,7 +83,7 @@ public class QueryManager
 		
 		HttpClient client = vertx.createHttpClient().setHost("census.daybreakgames.com");
 		
-		final String query = "/s:" + EventTracker.getInstance().getConfig().getSoeServiceID() + rawQuery;
+		final String query = "/s:" + eventTracker.getConfig().getSoeServiceID() + rawQuery;
 
 		client.getNow(query, new Handler<HttpClientResponse>()
 		{
@@ -110,7 +112,7 @@ public class QueryManager
 		            	{
 		            		//No Valid JSON was returned
 		            		logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
-		            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+		            		logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
 		            		logger.warn("Request: " + query);
 		            		logger.warn(e.getMessage());
 		            		
@@ -127,7 +129,7 @@ public class QueryManager
 					public void handle(Throwable e)
 					{
 	            		logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
-	            		logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getInstance().getConfig().getMaxFailures().toString());
+	            		logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
 	            		logger.warn("Request: " + query);
 	            		logger.warn(e.getMessage());
 	            		

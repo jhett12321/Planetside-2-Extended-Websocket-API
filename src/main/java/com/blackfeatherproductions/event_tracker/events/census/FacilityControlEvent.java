@@ -20,7 +20,8 @@ priority = EventPriority.NORMAL,
 filters = { "facilties", "facility_types", "outfits", "factions", "captures", "zones", "worlds" })
 public class FacilityControlEvent implements Event
 {
-	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
 
@@ -106,7 +107,7 @@ public class FacilityControlEvent implements Event
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
-    	EventTracker.getInstance().countProcessedEvent();
+		eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+		eventTracker.countProcessedEvent();
 	}
 }

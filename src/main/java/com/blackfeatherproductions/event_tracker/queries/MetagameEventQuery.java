@@ -16,7 +16,7 @@ public class MetagameEventQuery implements Query
 	{
 		String timestamp = String.valueOf(Math.round(new Date().getTime() / 1000) - 7201);
 		
-		EventTracker.getInstance().getQueryManager().getCensusData("/get/ps2:v2/world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp, false, this);
+		eventTracker.getQueryManager().getCensusData("/get/ps2:v2/world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp, false, this);
 	}
 
 	@Override

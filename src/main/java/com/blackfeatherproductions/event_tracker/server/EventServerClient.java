@@ -14,6 +14,8 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 
 public class EventServerClient
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	//Connection
 	private ServerWebSocket clientConnection;
 	
@@ -249,7 +251,7 @@ public class EventServerClient
 	{
 		this.subscriptions.clear();
 		
-		for(Class<? extends Event> event : EventTracker.getInstance().getEventHandler().getRegisteredEvents())
+		for(Class<? extends Event> event : eventTracker.getEventHandler().getRegisteredEvents())
 		{
 			EventInfo info = event.getAnnotation(EventInfo.class);
 			

@@ -9,6 +9,8 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class CharacterInfo
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private String characterID;
 	private String characterName;
 	private String outfitID;
@@ -27,11 +29,11 @@ public class CharacterInfo
 		this.world = World.getWorldByID(worldID);
 		this.online = online;
 		
-        EventTracker.getInstance().getVertx().setTimer(60000, new Handler<Long>()
+        eventTracker.getVertx().setTimer(60000, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
-            	EventTracker.getInstance().getDynamicDataManager().removeCharacter(characterID);
+            	eventTracker.getDynamicDataManager().removeCharacter(characterID);
             }
         });
 	}

@@ -27,18 +27,15 @@ import com.blackfeatherproductions.event_tracker.queries.Query;
 
 public class PopulationManager implements Query
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
+	private final QueryManager queryManager = eventTracker.getQueryManager();
+	
 	public Map<String, OnlinePlayer> onlinePlayers = new ConcurrentHashMap<String, OnlinePlayer>();
-	private QueryManager queryManager;
-	private DynamicDataManager dynamicDataManager;
-	private EventTracker eventTracker;
 	private Query self = this;
 	
 	public PopulationManager()
 	{
-        eventTracker = EventTracker.getInstance();
-        dynamicDataManager = eventTracker.getDynamicDataManager();
-        queryManager = eventTracker.getQueryManager();
-        
         Vertx vertx = eventTracker.getVertx();
         
         //Regularly sends events for population data.
@@ -134,7 +131,7 @@ public class PopulationManager implements Query
 		totalPayload.putString("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
 		totalPayload.putString("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
 		
-		EventTracker.getInstance().getEventHandler().handleEvent(eventName, totalPayload);
+		eventTracker.getEventHandler().handleEvent(eventName, totalPayload);
 		
 		//World Populations
 		for(World world : World.getValidWorlds())
@@ -149,7 +146,7 @@ public class PopulationManager implements Query
 			worldPayload.putString("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
 			worldPayload.putString("world_id", world.getID());
 			
-			EventTracker.getInstance().getEventHandler().handleEvent(eventName, worldPayload);
+			eventTracker.getEventHandler().handleEvent(eventName, worldPayload);
 			
 			for(Entry<String, Integer> outfit : worldPopulation.getOutfitPopulations().entrySet())
 			{
@@ -160,7 +157,7 @@ public class PopulationManager implements Query
 				outfitPayload.putString("outfit_id", outfit.getKey());
 				outfitPayload.putString("world_id", world.getID());
 				
-				EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
+				eventTracker.getEventHandler().handleEvent(eventName, outfitPayload);
 			}
 			
 			for(Zone zone : Zone.getValidZones())
@@ -177,7 +174,7 @@ public class PopulationManager implements Query
 				zonePayload.putString("zone_id", zone.getID());
 				zonePayload.putString("world_id", world.getID());
 				
-				EventTracker.getInstance().getEventHandler().handleEvent(eventName, zonePayload);
+				eventTracker.getEventHandler().handleEvent(eventName, zonePayload);
 				
 				for(Entry<String, Integer> outfit : worldPopulation.getOutfitPopulations().entrySet())
 				{
@@ -189,7 +186,7 @@ public class PopulationManager implements Query
 					outfitPayload.putString("zone_id", zone.getID());
 					outfitPayload.putString("world_id", world.getID());
 					
-					EventTracker.getInstance().getEventHandler().handleEvent(eventName, outfitPayload);
+					eventTracker.getEventHandler().handleEvent(eventName, outfitPayload);
 				}
 			}
 		}

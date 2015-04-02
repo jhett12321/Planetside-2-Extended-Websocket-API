@@ -24,7 +24,8 @@ priority = EventPriority.HIGH,
 filters = { "metagames", "metagame_types", "facility_types", "statuses", "dominations", "zones", "worlds" })
 public class MetagameEvent implements Event
 {
-	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 	
 	private JsonObject payload;
 
@@ -195,7 +196,7 @@ public class MetagameEvent implements Event
 		message.putObject("event_data", eventData);
 		message.putObject("filter_data", filterData);
 		
-		EventTracker.getInstance().getEventServer().BroadcastEvent(this.getClass(), message);
-    	EventTracker.getInstance().countProcessedEvent();
+		eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+		eventTracker.countProcessedEvent();
 	}
 }

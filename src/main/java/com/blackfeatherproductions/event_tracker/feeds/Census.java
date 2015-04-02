@@ -19,10 +19,10 @@ import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class Census
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	private final Config config = eventTracker.getConfig();
+	
 	private HttpClient client;
-	private EventTracker eventTracker;
-	private Config config;
-	private Vertx vertx;
 	
 	//Connection Stuff
 	private WebSocket websocket;
@@ -32,9 +32,7 @@ public class Census
 	
     public Census()
     {
-        eventTracker = EventTracker.getInstance();
-        config = eventTracker.getConfig();
-        vertx = eventTracker.getVertx();
+        Vertx vertx = eventTracker.getVertx();
         
         client = vertx.createHttpClient();
         
@@ -156,7 +154,7 @@ public class Census
 	                                JsonObject payload = message.getObject("payload");
 	                                String eventName = payload.getString("event_name");
 	                                
-	                                EventTracker.getInstance().countReceivedEvent();
+	                                eventTracker.countReceivedEvent();
 	                                
 	                                //Check the world status for this event
 	                                if(payload.containsField("recent_character_id_list"))
@@ -249,15 +247,12 @@ public class Census
 	    		
 	    		//Query Census for World Data.
 	    		new WorldQuery(worldID);
-                
-                eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
 	    	}
 	    	
 	    	else
 	    	{
 	    		//No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
 	    		eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
-                eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
 	    	}
     	}
     }

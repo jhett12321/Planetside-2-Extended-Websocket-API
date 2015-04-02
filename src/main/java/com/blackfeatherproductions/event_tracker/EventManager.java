@@ -33,6 +33,8 @@ import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEven
 
 public class EventManager
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
     private Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<EventInfo, Class<? extends Event>>();
     private Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<EventInfo, Class<? extends Event>>();
     
@@ -49,7 +51,7 @@ public class EventManager
     	registerExtendedEvents();
         
         //Process Event Queue
-        EventTracker.getInstance().getVertx().setPeriodic(100, new Handler<Long>()
+        eventTracker.getVertx().setPeriodic(100, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
@@ -139,9 +141,9 @@ public class EventManager
 	        
             if(!eventHandled && !unknownEvents.contains(eventName))
             {
-                EventTracker.getInstance().getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
-                EventTracker.getInstance().getLogger().warn("Payload data:");
-                EventTracker.getInstance().getLogger().warn(payload.encodePrettily());
+                eventTracker.getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
+                eventTracker.getLogger().warn("Payload data:");
+                eventTracker.getLogger().warn(payload.encodePrettily());
                 
                 unknownEvents.add(eventName);
             }
@@ -159,7 +161,7 @@ public class EventManager
         EventInfo info = event.getAnnotation(EventInfo.class);
         if(info == null)
         {
-        	EventTracker.getInstance().getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
+        	eventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
 
@@ -178,7 +180,7 @@ public class EventManager
         EventInfo info = listener.getAnnotation(EventInfo.class);
         if(info == null)
         {
-        	EventTracker.getInstance().getLogger().warn("Implementing Listener Class: " + listener.getName() + " is missing a required annotation.");
+        	eventTracker.getLogger().warn("Implementing Listener Class: " + listener.getName() + " is missing a required annotation.");
             return;
         }
 

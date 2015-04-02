@@ -77,7 +77,6 @@ public class PopulationEventListener implements Event
 	@Override
 	public void processEvent()
 	{
-		CharacterInfo attacker_character = dynamicDataManager.getCharacterData(attackerCharacterID);
 		CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
 		
 		String eventName = payload.getString("event_name");
@@ -89,28 +88,9 @@ public class PopulationEventListener implements Event
 		}
 		
 		//Vehicle/Combat Events
-		if(eventName.equals("Death") || eventName.equals("VehicleDestroy"))
+		else if(eventName.equals("Death") || eventName.equals("VehicleDestroy"))
 		{
-			Faction faction = Faction.getFactionByID(payload.getString("attacker_loadout_id"));
-			String outfitID = attacker_character.getOutfitID();
-			Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
-			World world = World.getWorldByID(payload.getString("world_id"));
-			
-			if(populationManager.onlinePlayers.containsKey(attackerCharacterID))
-			{
-				OnlinePlayer player = populationManager.onlinePlayers.get(attackerCharacterID);
-				
-				player.setLastEvent(new Date());
-				player.setFaction(faction);
-				player.setOutfitID(outfitID);
-				player.setZone(zone);
-				player.setWorld(world);
-			}
-			
-			else
-			{
-				populationManager.onlinePlayers.put(attackerCharacterID, new OnlinePlayer(faction, outfitID, zone, world));
-			}
+			processAttackerCharacter();
 		}
 		
 		//All Character Events
@@ -173,6 +153,32 @@ public class PopulationEventListener implements Event
 		else
 		{
 			populationManager.onlinePlayers.put(characterID, new OnlinePlayer(faction, outfitID, zone, world));
+		}
+	}
+	
+	private void processAttackerCharacter()
+	{
+		CharacterInfo attacker_character = dynamicDataManager.getCharacterData(attackerCharacterID);
+		
+		Faction faction = Faction.getFactionByID(payload.getString("attacker_loadout_id"));
+		String outfitID = attacker_character.getOutfitID();
+		Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
+		World world = World.getWorldByID(payload.getString("world_id"));
+		
+		if(populationManager.onlinePlayers.containsKey(attackerCharacterID))
+		{
+			OnlinePlayer player = populationManager.onlinePlayers.get(attackerCharacterID);
+			
+			player.setLastEvent(new Date());
+			player.setFaction(faction);
+			player.setOutfitID(outfitID);
+			player.setZone(zone);
+			player.setWorld(world);
+		}
+		
+		else
+		{
+			populationManager.onlinePlayers.put(attackerCharacterID, new OnlinePlayer(faction, outfitID, zone, world));
 		}
 	}
 }

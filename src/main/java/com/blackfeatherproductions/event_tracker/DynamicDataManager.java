@@ -17,16 +17,18 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 
 public class DynamicDataManager
 {
+	private final EventTracker eventTracker = EventTracker.getInstance();
+	
 	private Map<String, CharacterInfo> characters = new ConcurrentHashMap<String, CharacterInfo>();
 	private Map<World, WorldInfo> worlds = new HashMap<World, WorldInfo>();
 	
 	public DynamicDataManager()
 	{
-        Vertx vertx = EventTracker.getInstance().getVertx();
+        Vertx vertx = eventTracker.getVertx();
         
         for(World world : World.getValidWorlds())
         {
-        	worlds.put(world, new WorldInfo());
+        	worlds.put(world, new WorldInfo(world));
         }
         
         //Checks that any current metagame events should no-longer be running.
@@ -42,7 +44,7 @@ public class DynamicDataManager
             			
             			if(new Date().after(endTime))
             			{
-            				EventTracker.getInstance().getLogger().warn("Ending MetagameEvent ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + ": Event is overdue.");
+            				eventTracker.getLogger().warn("Ending MetagameEvent ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + ": Event is overdue.");
             				
             				JsonObject dummyPayload = new JsonObject();
             				dummyPayload.putString("instance_id", metagameEvent.getInstanceID());
@@ -52,7 +54,7 @@ public class DynamicDataManager
             				dummyPayload.putString("world_id", worldInfo.getKey().getID());
             				dummyPayload.putString("event_name", "MetagameEvent");
             				
-            				EventTracker.getInstance().getEventHandler().handleEvent("MetagameEvent", dummyPayload);
+            				eventTracker.getEventHandler().handleEvent("MetagameEvent", dummyPayload);
             			}
             		}
             	}
@@ -83,7 +85,7 @@ public class DynamicDataManager
 		{
 			if(!worlds.containsKey(world))
 			{
-				worlds.put(world, new WorldInfo());
+				worlds.put(world, new WorldInfo(world));
 			}
 			
 			return worlds.get(world);
