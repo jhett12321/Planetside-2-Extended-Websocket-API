@@ -65,7 +65,11 @@ public class ActiveAlerts implements Action
 						metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
 					}
 					
-					worlds.putObject(world.getID(), metagameEvents);
+					if(metagameEvents.size() > 0)
+					{
+					
+						worlds.putObject(world.getID(), metagameEvents);
+					}
 				}
 			}
 		}
