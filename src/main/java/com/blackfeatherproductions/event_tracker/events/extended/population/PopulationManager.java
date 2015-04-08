@@ -32,7 +32,9 @@ public class PopulationManager implements Query
 	private final QueryManager queryManager = eventTracker.getQueryManager();
 	
 	public Map<String, OnlinePlayer> onlinePlayers = new ConcurrentHashMap<String, OnlinePlayer>();
+	
 	private Query self = this;
+	private List<String> charactersToCheck = new ArrayList<String>();
 	
 	public PopulationManager()
 	{
@@ -53,8 +55,18 @@ public class PopulationManager implements Query
         {
             public void handle(Long timerID)
             {
+            	//Remove characters that census failed to retrieve online statuses for (deleted characters, low BR, etc)
+            	for(String characterID : charactersToCheck)
+            	{
+        			if(dynamicDataManager.characterDataExists(characterID))
+        			{
+        				onlinePlayers.remove(characterID);
+        			}
+            	}
+            	
+            	charactersToCheck.clear();
+            	
             	Iterator<Map.Entry<String, OnlinePlayer>> iter = onlinePlayers.entrySet().iterator();
-            	List<String> charactersToCheck = new ArrayList<String>();
             	
             	while (iter.hasNext())
             	{

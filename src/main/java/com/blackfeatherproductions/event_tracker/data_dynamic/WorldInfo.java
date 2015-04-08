@@ -77,15 +77,19 @@ public class WorldInfo
 
 	public void setOnline(boolean online)
 	{
-		this.online = online;
-		
-		if(!online)
+		if(online != this.online)
 		{
-            eventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
-		}
-		else
-		{
-			eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
+			this.online = online;
+			
+			if(!online)
+			{
+	            eventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE." );
+	            
+			}
+			else
+			{
+				eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online." );
+			}
 		}
 	}
 }
