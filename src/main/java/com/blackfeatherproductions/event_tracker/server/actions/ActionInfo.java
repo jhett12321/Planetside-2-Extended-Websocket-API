@@ -8,4 +8,3 @@ public @interface ActionInfo
 {
     public String actionNames();
 }
-

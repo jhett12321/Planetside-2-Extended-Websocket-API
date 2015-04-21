@@ -32,36 +32,36 @@ import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
 
 public class EventServer
 {
-	private final EventTracker eventTracker = EventTracker.getInstance();
-	
-	private Config config;
-	
-	//API Key Database
-	private String dbUrl;
-	
-	//Actions
-	private Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
-	
-	//Client Info
-    public Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket,EventServerClient>();
-    
+    private final EventTracker eventTracker = EventTracker.getInstance();
+
+    private Config config;
+
+    //API Key Database
+    private String dbUrl;
+
+    //Actions
+    private Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
+
+    //Client Info
+    public Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket, EventServerClient>();
+
     public EventServer()
     {
         config = eventTracker.getConfig();
         Vertx vertx = eventTracker.getVertx();
-        
+
         //API Key Database
         dbUrl = "jdbc:mysql://" + config.getApiDbHost() + "/" + config.getApiDbName();
-        
+
         //Client Actions
         registerActions();
-        
+
         vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>()
         {
             public void handle(final ServerWebSocket clientConnection)
             {
-            	Map<String, String> queryPairs = new LinkedHashMap<String, String>();
-            	
+                Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+
                 String query = clientConnection.query();
                 String[] pairs = query.split("&");
                 for (String pair : pairs)
@@ -69,326 +69,326 @@ public class EventServer
                     int idx = pair.indexOf("=");
                     try
                     {
-						queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
-					}
+                        queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
+                    }
                     catch (UnsupportedEncodingException e)
                     {
-						e.printStackTrace();
-					}
+                        e.printStackTrace();
+                    }
                 }
-                
-            	final String apiKey = queryPairs.get("apikey");
-            	
-            	final String apiName = verifyAPIKey(apiKey);
-            	if (apiName != null)
-            	{
-	                clientConnection.closeHandler(new Handler<Void>()
-	                {
-						@Override
-						public void handle(final Void event)
-						{
-							clientConnections.remove(clientConnection);
-							eventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
-						}
-	                });
-	                
-	                clientConnection.exceptionHandler(new Handler<Throwable>()
-	                {
-						@Override
-						public void handle(Throwable event)
-						{
-							clientConnections.remove(clientConnection);
-							eventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
-						}
-	                });
-	                
-	                clientConnection.dataHandler(new Handler<Buffer>()
-	                {
-	                    public void handle(Buffer data)
-	                    {
-	                    	JsonObject message = null;
-	                    	
-	                    	try
-	                    	{
-	                    		message = new JsonObject(data.toString());
-	                    	}
-	                    	catch(Exception e)
-	                    	{
-	                    		clientConnection.writeTextFrame("{\"error\": \"BADJSON\", \"message\": \"You have supplied an invalid JSON string. Please check your syntax.\"}");
-	                    	}
-	                    	
-	                    	if(message != null)
-	                    	{
-	                    		handleClientMessage(clientConnection, message);
-	                    	}
-	
-	                    }
-	                });
-	                 
-	                clientConnections.put(clientConnection, new EventServerClient(clientConnection, apiKey, apiName));
-	                eventTracker.getLogger().info("Client " + apiName + " Connected! API Key: " + apiKey);
-	                
-	                //Send Connection Confirmed Message
-	                JsonObject connectMessage = new JsonObject();
-	                connectMessage.putString("service", "ps2_events");
-	                connectMessage.putString("version", MavenInfo.getVersion());
-	                connectMessage.putString("websocket_event", "connectionStateChange");
-	                connectMessage.putString("online", "true");
-	                
-	                clientConnection.writeTextFrame(connectMessage.encodePrettily());
-            	}
-            	else
-            	{
-            		clientConnection.reject();
-            	}
-                
+
+                final String apiKey = queryPairs.get("apikey");
+
+                final String apiName = verifyAPIKey(apiKey);
+                if (apiName != null)
+                {
+                    clientConnection.closeHandler(new Handler<Void>()
+                    {
+                        @Override
+                        public void handle(final Void event)
+                        {
+                            clientConnections.remove(clientConnection);
+                            eventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
+                        }
+                    });
+
+                    clientConnection.exceptionHandler(new Handler<Throwable>()
+                    {
+                        @Override
+                        public void handle(Throwable event)
+                        {
+                            clientConnections.remove(clientConnection);
+                            eventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
+                        }
+                    });
+
+                    clientConnection.dataHandler(new Handler<Buffer>()
+                    {
+                        public void handle(Buffer data)
+                        {
+                            JsonObject message = null;
+
+                            try
+                            {
+                                message = new JsonObject(data.toString());
+                            }
+                            catch (Exception e)
+                            {
+                                clientConnection.writeTextFrame("{\"error\": \"BADJSON\", \"message\": \"You have supplied an invalid JSON string. Please check your syntax.\"}");
+                            }
+
+                            if (message != null)
+                            {
+                                handleClientMessage(clientConnection, message);
+                            }
+
+                        }
+                    });
+
+                    clientConnections.put(clientConnection, new EventServerClient(clientConnection, apiKey, apiName));
+                    eventTracker.getLogger().info("Client " + apiName + " Connected! API Key: " + apiKey);
+
+                    //Send Connection Confirmed Message
+                    JsonObject connectMessage = new JsonObject();
+                    connectMessage.putString("service", "ps2_events");
+                    connectMessage.putString("version", MavenInfo.getVersion());
+                    connectMessage.putString("websocket_event", "connectionStateChange");
+                    connectMessage.putString("online", "true");
+
+                    clientConnection.writeTextFrame(connectMessage.encodePrettily());
+                }
+                else
+                {
+                    clientConnection.reject();
+                }
+
             }
         }).listen(config.getServerPort());
     }
-    
+
     private String verifyAPIKey(String apiKey)
     {
-    	if(apiKey != null && !apiKey.equals(""))
-    	{
-        	Connection dbConnection = null;
-        	
-        	try
-        	{
-				Class.forName("com.mysql.jdbc.Driver");
-        	
-	        	dbConnection = DriverManager.getConnection(dbUrl, config.getApiDbUser(), config.getApiDbPassword());
-	        	
-	        	PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM APIKeys WHERE api_key = ? AND enabled = 1");
-	        	query.setString(1, apiKey);
-	        	ResultSet resultSet = query.executeQuery();
-	        	
-	        	//Check if API Key exists
-	        	if(resultSet.next())
-	        	{
-	        		String apiName = resultSet.getString("name");
-	        		dbConnection.close();
-	        		return apiName;
-	        	}
-	        	
-	        	else
-	        	{
-	        		dbConnection.close();
-	        		return null;
-	        	}
-        	}
-	        	
-        	catch (ClassNotFoundException | SQLException e)
-        	{
-				e.printStackTrace();
-			}
-    	}
-    	
-    	return null;
+        if (apiKey != null && !apiKey.equals(""))
+        {
+            Connection dbConnection = null;
+
+            try
+            {
+                Class.forName("com.mysql.jdbc.Driver");
+
+                dbConnection = DriverManager.getConnection(dbUrl, config.getApiDbUser(), config.getApiDbPassword());
+
+                PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM APIKeys WHERE api_key = ? AND enabled = 1");
+                query.setString(1, apiKey);
+                ResultSet resultSet = query.executeQuery();
+
+                //Check if API Key exists
+                if (resultSet.next())
+                {
+                    String apiName = resultSet.getString("name");
+                    dbConnection.close();
+                    return apiName;
+                }
+
+                else
+                {
+                    dbConnection.close();
+                    return null;
+                }
+            }
+
+            catch (ClassNotFoundException | SQLException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return null;
     }
-    
+
     private void registerActions()
     {
-    	registerAction(ActiveAlerts.class);
-    	registerAction(ZoneStatus.class);
-    	registerAction(FacilityStatus.class);
+        registerAction(ActiveAlerts.class);
+        registerAction(ZoneStatus.class);
+        registerAction(FacilityStatus.class);
     }
-    
+
     private void handleClientMessage(ServerWebSocket clientConnection, JsonObject message)
     {
-		String eventType = message.getString("event");
-		String action = message.getString("action");
-		
-		message.removeField("event");
-		message.removeField("action");
-		
-		if(!action.matches("subscribe|unsubscribe|unsubscribeall"))
-		{
-			handleAction(clientConnection, action, message);
-		}
-		
-		else if(action.matches("subscribe|unsubscribe|unsubscribeall"))
-		{
-			clientConnections.get(clientConnection).handleSubscription(action, eventType, message);
-		}
-		
-		else
-		{
-			clientConnection.writeTextFrame("{\"error\": \"unknownAction\", \"message\": \"There is no Action by that name. Please check your syntax, and try again.\"}");
-		}
+        String eventType = message.getString("event");
+        String action = message.getString("action");
+
+        message.removeField("event");
+        message.removeField("action");
+
+        if (!action.matches("subscribe|unsubscribe|unsubscribeall"))
+        {
+            handleAction(clientConnection, action, message);
+        }
+
+        else if (action.matches("subscribe|unsubscribe|unsubscribeall"))
+        {
+            clientConnections.get(clientConnection).handleSubscription(action, eventType, message);
+        }
+
+        else
+        {
+            clientConnection.writeTextFrame("{\"error\": \"unknownAction\", \"message\": \"There is no Action by that name. Please check your syntax, and try again.\"}");
+        }
     }
-    
+
     private void handleAction(ServerWebSocket clientConnection, String actionName, JsonObject actionData)
     {
-        for(Entry<ActionInfo, Class<? extends Action>> entry : actions.entrySet())
+        for (Entry<ActionInfo, Class<? extends Action>> entry : actions.entrySet())
         {
-            if(actionName.matches(entry.getKey().actionNames()))
+            if (actionName.matches(entry.getKey().actionNames()))
             {
-				try
-				{
-					Action action = entry.getValue().newInstance();
-					
-					action.processAction(clientConnection, actionData);
-				}
-				catch (InstantiationException | IllegalAccessException e)
-				{
-					e.printStackTrace();
-				}
+                try
+                {
+                    Action action = entry.getValue().newInstance();
+
+                    action.processAction(clientConnection, actionData);
+                }
+                catch (InstantiationException | IllegalAccessException e)
+                {
+                    e.printStackTrace();
+                }
             }
         }
     }
-    
+
     private void registerAction(Class<? extends Action> action)
     {
         ActionInfo info = action.getAnnotation(ActionInfo.class);
-        if(info == null)
+        if (info == null)
         {
-        	eventTracker.getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
+            eventTracker.getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
             return;
         }
 
-       	actions.put(info, action);
+        actions.put(info, action);
     }
-    
+
     public void BroadcastEvent(Class<? extends Event> event, JsonObject rawData)
     {
         JsonObject messageToSend = new JsonObject();
-        
+
         JsonObject eventFilterData = rawData.getObject("filter_data");
         JsonObject eventData = rawData.getObject("event_data");
-        
+
         messageToSend.putObject("payload", eventData);
         messageToSend.putString("event_type", event.getAnnotation(EventInfo.class).eventName());
-        
-        for(Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
+
+        for (Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
         {
-        	//Get Subscription for provided event
-        	JsonObject subscription = connection.getValue().getSubscription(event);
-        	
-        	if(subscription.getArray("show").size() > 0)
-        	{
-        		JsonObject filteredPayload = new JsonObject();
-        		
-        		for(String field : eventData.getFieldNames())
-        		{
-        			if(subscription.getArray("show").contains(field))
-        			{
-        				filteredPayload.putString(field, eventData.getString(field));
-        			}
-        		}
-        		
-        		messageToSend.putObject("payload", filteredPayload);
-        	}
-        	
-        	if(subscription.getArray("hide").size() > 0)
-        	{
-        		JsonObject filteredPayload = messageToSend.getObject("payload");
-        		
-        		for(String field : eventData.getFieldNames())
-        		{
-        			if(subscription.getArray("hide").contains(field))
-        			{
-        				filteredPayload.removeField(field);
-        			}
-        		}
-        		
-        		messageToSend.putObject("payload", filteredPayload);
-        	}
-        	
-        	if(subscription.getString("all").equals("true"))
-        	{
-        		connection.getKey().writeTextFrame(messageToSend.encode());
-        	}
-        	
-        	else
-        	{
-        		Boolean sendMessage = null;
-        		
-        		for(Entry<String, Object> subscriptionProperty : subscription.toMap().entrySet())
-        		{
-        			String property = subscriptionProperty.getKey();
-        			
-        			if(!property.equals("all") && !property.equals("useAND") && !property.equals("show") && !property.equals("hide"))
-        			{
-        				JsonArray filterData = eventFilterData.getArray(property);
-        				
-        				if(property.equals("worlds"))
-        				{
-    						JsonObject propertyValue = subscription.getObject(property);
-    						
-    						if(propertyValue.size() > 0)
-    						{
-	    						if(propertyValue.containsField((String) filterData.get(0)))
-	    						{
-	    							JsonArray zoneData = eventFilterData.getArray("zones");
-	    							
-									if(propertyValue.getObject((String) filterData.get(0)).getArray("zones").contains(zoneData.get(0)))
-									{
-										sendMessage = true;
-									}
-									else if(propertyValue.getObject((String) filterData.get(0)).getArray("zones").size() > 0)
-									{
-										sendMessage = false;
-									}
-									else
-									{
-										sendMessage = true;
-									}
-	    						}
-    						}
-        				}
-        				
-        				else
-        				{
-        					JsonArray propertyValue = subscription.getArray(property);
-        					
-        					if(propertyValue.size() > 0)
-        					{
-	        					if(subscription.getArray("useAND").contains(property))
-	        					{
-									for(int i=0; i<filterData.size(); i++)
-									{
-										if(propertyValue.contains(filterData.get(i)))
-										{
-											sendMessage = true;
-										}
-										else if(propertyValue.size() > 0)
-										{
-											sendMessage = false;
-											break;
-										}
-									}
-	        					}
-	        					
-	        					else
-	        					{
-									for(int i=0; i<filterData.size(); i++)
-									{
-										if(propertyValue.contains(filterData.get(i)))
-										{
-											sendMessage = true;
-											break;
-										}
-										else if(propertyValue.size() > 0)
-										{
-											sendMessage = false;
-										}
-									}
-	        					}
-        					}
-        				}
-        				
-						if(sendMessage != null && !sendMessage)
-						{
-							break;
-						}
-        			}
-        		}
-        		
-				if(sendMessage != null && sendMessage)
-				{
-					connection.getKey().writeTextFrame(messageToSend.encode());
-				}
-        	}
+            //Get Subscription for provided event
+            JsonObject subscription = connection.getValue().getSubscription(event);
+
+            if (subscription.getArray("show").size() > 0)
+            {
+                JsonObject filteredPayload = new JsonObject();
+
+                for (String field : eventData.getFieldNames())
+                {
+                    if (subscription.getArray("show").contains(field))
+                    {
+                        filteredPayload.putString(field, eventData.getString(field));
+                    }
+                }
+
+                messageToSend.putObject("payload", filteredPayload);
+            }
+
+            if (subscription.getArray("hide").size() > 0)
+            {
+                JsonObject filteredPayload = messageToSend.getObject("payload");
+
+                for (String field : eventData.getFieldNames())
+                {
+                    if (subscription.getArray("hide").contains(field))
+                    {
+                        filteredPayload.removeField(field);
+                    }
+                }
+
+                messageToSend.putObject("payload", filteredPayload);
+            }
+
+            if (subscription.getString("all").equals("true"))
+            {
+                connection.getKey().writeTextFrame(messageToSend.encode());
+            }
+
+            else
+            {
+                Boolean sendMessage = null;
+
+                for (Entry<String, Object> subscriptionProperty : subscription.toMap().entrySet())
+                {
+                    String property = subscriptionProperty.getKey();
+
+                    if (!property.equals("all") && !property.equals("useAND") && !property.equals("show") && !property.equals("hide"))
+                    {
+                        JsonArray filterData = eventFilterData.getArray(property);
+
+                        if (property.equals("worlds"))
+                        {
+                            JsonObject propertyValue = subscription.getObject(property);
+
+                            if (propertyValue.size() > 0)
+                            {
+                                if (propertyValue.containsField((String) filterData.get(0)))
+                                {
+                                    JsonArray zoneData = eventFilterData.getArray("zones");
+
+                                    if (propertyValue.getObject((String) filterData.get(0)).getArray("zones").contains(zoneData.get(0)))
+                                    {
+                                        sendMessage = true;
+                                    }
+                                    else if (propertyValue.getObject((String) filterData.get(0)).getArray("zones").size() > 0)
+                                    {
+                                        sendMessage = false;
+                                    }
+                                    else
+                                    {
+                                        sendMessage = true;
+                                    }
+                                }
+                            }
+                        }
+
+                        else
+                        {
+                            JsonArray propertyValue = subscription.getArray(property);
+
+                            if (propertyValue.size() > 0)
+                            {
+                                if (subscription.getArray("useAND").contains(property))
+                                {
+                                    for (int i = 0; i < filterData.size(); i++)
+                                    {
+                                        if (propertyValue.contains(filterData.get(i)))
+                                        {
+                                            sendMessage = true;
+                                        }
+                                        else if (propertyValue.size() > 0)
+                                        {
+                                            sendMessage = false;
+                                            break;
+                                        }
+                                    }
+                                }
+
+                                else
+                                {
+                                    for (int i = 0; i < filterData.size(); i++)
+                                    {
+                                        if (propertyValue.contains(filterData.get(i)))
+                                        {
+                                            sendMessage = true;
+                                            break;
+                                        }
+                                        else if (propertyValue.size() > 0)
+                                        {
+                                            sendMessage = false;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        if (sendMessage != null && !sendMessage)
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                if (sendMessage != null && sendMessage)
+                {
+                    connection.getKey().writeTextFrame(messageToSend.encode());
+                }
+            }
         }
     }
 }

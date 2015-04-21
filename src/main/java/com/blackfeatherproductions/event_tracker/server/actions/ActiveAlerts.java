@@ -16,105 +16,105 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 @ActionInfo(actionNames = "activeAlerts")
 public class ActiveAlerts implements Action
 {
-	private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
-	
-	@Override
-	public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
-	{
-		JsonObject response = new JsonObject();
-		response.putString("action", "activeAlerts");
-		
-		JsonObject worlds = new JsonObject();
-		
-		if(actionData.containsField("worlds"))
-		{
-			for(int i=0; i<actionData.getArray("worlds").size(); i++)
-			{
-				if(Utils.isValidWorld((String) actionData.getArray("worlds").get(i)))
-				{
-					World world = World.getWorldByID((String) actionData.getArray("worlds").get(i));
-					
-					JsonObject metagameEvents = new JsonObject();
+    private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
-					for(MetagameEventInfo metagameEventInfo : dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().values())
-					{
-						JsonObject metagameEvent = new JsonObject();
-						
-						metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
-						metagameEvent.putString("metagame_event_type_id", metagameEventInfo.getType().getID());
-						metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
-						metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
-						metagameEvent.putString("facility_type_id", metagameEventInfo.getType().getFacilityTypeID());
-						
-						JsonObject facilities = new JsonObject();
-						
-						for(Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
-						{
-							JsonObject facility = new JsonObject();
-							
-							facility.putString("facility_id", facilityInfo.getKey().getID());
-							facility.putString("facility_type_id", facilityInfo.getKey().getTypeID());
-							facility.putString("owner", facilityInfo.getValue().getOwner().getID());
-							facility.putString("zone_id", metagameEventInfo.getType().getZone().getID());
-							
-							facilities.putObject(facilityInfo.getKey().getID(), facility);
-						}
-						
-						metagameEvent.putObject("facilities", facilities);
-						
-						metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
-					}
-					
-					if(metagameEvents.size() > 0)
-					{
-					
-						worlds.putObject(world.getID(), metagameEvents);
-					}
-				}
-			}
-		}
-		else
-		{
-			for(World world : World.getValidWorlds())
-			{
-				JsonObject metagameEvents = new JsonObject();
+    @Override
+    public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
+    {
+        JsonObject response = new JsonObject();
+        response.putString("action", "activeAlerts");
 
-				for(MetagameEventInfo metagameEventInfo : dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().values())
-				{
-					JsonObject metagameEvent = new JsonObject();
-					
-					metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
-					metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
-					metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
-					metagameEvent.putString("type_id", metagameEventInfo.getType().getFacilityTypeID());
-					
-					JsonObject facilities = new JsonObject();
-					
-					for(Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
-					{
-						JsonObject facility = new JsonObject();
-						
-						facility.putString("facility_id", facilityInfo.getKey().getID());
-						facility.putString("facility_type_id", facilityInfo.getKey().getTypeID());
-						facility.putString("owner", facilityInfo.getValue().getOwner().getID());
-						facility.putString("zone_id", metagameEventInfo.getType().getZone().getID());
-						
-						facilities.putObject(facilityInfo.getKey().getID(), facility);
-					}
-					
-					metagameEvent.putObject("facilities", facilities);
-					
-					metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
-				}
-				
-				worlds.putObject(world.getID(), metagameEvents);
-			}
-		}
-		
-		//Send Client Response
-		response.putObject("worlds", worlds);
-		
-		clientConnection.writeTextFrame(response.encode());
-	}
+        JsonObject worlds = new JsonObject();
+
+        if (actionData.containsField("worlds"))
+        {
+            for (int i = 0; i < actionData.getArray("worlds").size(); i++)
+            {
+                if (Utils.isValidWorld((String) actionData.getArray("worlds").get(i)))
+                {
+                    World world = World.getWorldByID((String) actionData.getArray("worlds").get(i));
+
+                    JsonObject metagameEvents = new JsonObject();
+
+                    for (MetagameEventInfo metagameEventInfo : dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().values())
+                    {
+                        JsonObject metagameEvent = new JsonObject();
+
+                        metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
+                        metagameEvent.putString("metagame_event_type_id", metagameEventInfo.getType().getID());
+                        metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
+                        metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
+                        metagameEvent.putString("facility_type_id", metagameEventInfo.getType().getFacilityTypeID());
+
+                        JsonObject facilities = new JsonObject();
+
+                        for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                        {
+                            JsonObject facility = new JsonObject();
+
+                            facility.putString("facility_id", facilityInfo.getKey().getID());
+                            facility.putString("facility_type_id", facilityInfo.getKey().getTypeID());
+                            facility.putString("owner", facilityInfo.getValue().getOwner().getID());
+                            facility.putString("zone_id", metagameEventInfo.getType().getZone().getID());
+
+                            facilities.putObject(facilityInfo.getKey().getID(), facility);
+                        }
+
+                        metagameEvent.putObject("facilities", facilities);
+
+                        metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
+                    }
+
+                    if (metagameEvents.size() > 0)
+                    {
+
+                        worlds.putObject(world.getID(), metagameEvents);
+                    }
+                }
+            }
+        }
+        else
+        {
+            for (World world : World.getValidWorlds())
+            {
+                JsonObject metagameEvents = new JsonObject();
+
+                for (MetagameEventInfo metagameEventInfo : dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().values())
+                {
+                    JsonObject metagameEvent = new JsonObject();
+
+                    metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
+                    metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
+                    metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
+                    metagameEvent.putString("type_id", metagameEventInfo.getType().getFacilityTypeID());
+
+                    JsonObject facilities = new JsonObject();
+
+                    for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                    {
+                        JsonObject facility = new JsonObject();
+
+                        facility.putString("facility_id", facilityInfo.getKey().getID());
+                        facility.putString("facility_type_id", facilityInfo.getKey().getTypeID());
+                        facility.putString("owner", facilityInfo.getValue().getOwner().getID());
+                        facility.putString("zone_id", metagameEventInfo.getType().getZone().getID());
+
+                        facilities.putObject(facilityInfo.getKey().getID(), facility);
+                    }
+
+                    metagameEvent.putObject("facilities", facilities);
+
+                    metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
+                }
+
+                worlds.putObject(world.getID(), metagameEvents);
+            }
+        }
+
+        //Send Client Response
+        response.putObject("worlds", worlds);
+
+        clientConnection.writeTextFrame(response.encode());
+    }
 
 }

@@ -9,67 +9,67 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class CharacterInfo
 {
-	private final EventTracker eventTracker = EventTracker.getInstance();
-	
-	private String characterID;
-	private String characterName;
-	private String outfitID;
-	private Faction faction;
-	private Zone zone;
-	private World world;
-	private boolean online;
+    private final EventTracker eventTracker = EventTracker.getInstance();
 
-	public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
-	{
-		this.characterID = characterID;
-		this.characterName = characterName;
-		this.faction = Faction.getFactionByID(factionID);
-		this.outfitID = outfitID;
-		this.zone = Zone.getZoneByID(zoneID);
-		this.world = World.getWorldByID(worldID);
-		this.online = online;
-		
+    private String characterID;
+    private String characterName;
+    private String outfitID;
+    private Faction faction;
+    private Zone zone;
+    private World world;
+    private boolean online;
+
+    public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
+    {
+        this.characterID = characterID;
+        this.characterName = characterName;
+        this.faction = Faction.getFactionByID(factionID);
+        this.outfitID = outfitID;
+        this.zone = Zone.getZoneByID(zoneID);
+        this.world = World.getWorldByID(worldID);
+        this.online = online;
+
         eventTracker.getVertx().setTimer(60000, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
-            	eventTracker.getDynamicDataManager().removeCharacter(characterID);
+                eventTracker.getDynamicDataManager().removeCharacter(characterID);
             }
         });
-	}
-	
-	public Faction getFaction()
-	{
-		return faction;
-	}
-	
-	public String getOutfitID()
-	{
-		return outfitID; //TODO 1.1 map outfits for translator
-	}
-	
-	public String getCharacterID()
-	{
-		return characterID;
-	}
+    }
 
-	public String getCharacterName()
-	{
-		return characterName;
-	}
+    public Faction getFaction()
+    {
+        return faction;
+    }
 
-	public Zone getZone()
-	{
-		return zone;
-	}
+    public String getOutfitID()
+    {
+        return outfitID; //TODO 1.1 map outfits for translator
+    }
 
-	public World getWorld()
-	{
-		return world;
-	}
-	
-	public boolean isOnline()
-	{
-		return online;
-	}
+    public String getCharacterID()
+    {
+        return characterID;
+    }
+
+    public String getCharacterName()
+    {
+        return characterName;
+    }
+
+    public Zone getZone()
+    {
+        return zone;
+    }
+
+    public World getWorld()
+    {
+        return world;
+    }
+
+    public boolean isOnline()
+    {
+        return online;
+    }
 }

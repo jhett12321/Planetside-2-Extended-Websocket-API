@@ -8,70 +8,70 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class OnlinePlayer
 {
-	private Faction faction;
-	private String outfitID; 
-	private Zone zone;
-	private World world;
-	
-	private Date lastEvent;
-	
-	public OnlinePlayer(Faction faction, String outfitID, Zone zone, World world)
-	{
-		this.faction = faction;
-		this.outfitID = outfitID;
-		this.zone = zone;
-		this.world = world;
-		
-		this.lastEvent = new Date();
-	}
-	
-	public Zone getZone()
-	{
-		return zone;
-	}
-	
-	public World getWorld()
-	{
-		return world;
-	}
+    private Faction faction;
+    private String outfitID;
+    private Zone zone;
+    private World world;
 
-	public void setWorld(World world)
-	{
-		this.world = world;
-	}
+    private Date lastEvent;
 
-	public Faction getFaction()
-	{
-		return faction;
-	}
-	
-	public String getOutfitID()
-	{
-		return outfitID;
-	}
+    public OnlinePlayer(Faction faction, String outfitID, Zone zone, World world)
+    {
+        this.faction = faction;
+        this.outfitID = outfitID;
+        this.zone = zone;
+        this.world = world;
 
-	public Date getLastEvent()
-	{
-		return lastEvent;
-	}
+        this.lastEvent = new Date();
+    }
 
-	public void setLastEvent(Date lastEvent)
-	{
-		this.lastEvent = lastEvent;
-	}
+    public Zone getZone()
+    {
+        return zone;
+    }
 
-	public void setZone(Zone zone)
-	{
-		this.zone = zone;
-	}
+    public World getWorld()
+    {
+        return world;
+    }
 
-	public void setFaction(Faction faction)
-	{
-		this.faction = faction;
-	}
+    public void setWorld(World world)
+    {
+        this.world = world;
+    }
 
-	public void setOutfitID(String outfitID)
-	{
-		this.outfitID = outfitID;
-	}
+    public Faction getFaction()
+    {
+        return faction;
+    }
+
+    public String getOutfitID()
+    {
+        return outfitID;
+    }
+
+    public Date getLastEvent()
+    {
+        return lastEvent;
+    }
+
+    public void setLastEvent(Date lastEvent)
+    {
+        this.lastEvent = lastEvent;
+    }
+
+    public void setZone(Zone zone)
+    {
+        this.zone = zone;
+    }
+
+    public void setFaction(Faction faction)
+    {
+        this.faction = faction;
+    }
+
+    public void setOutfitID(String outfitID)
+    {
+        this.outfitID = outfitID;
+    }
 }

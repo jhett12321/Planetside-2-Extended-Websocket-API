@@ -33,41 +33,41 @@ import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEven
 
 public class EventManager
 {
-	private final EventTracker eventTracker = EventTracker.getInstance();
-	
+    private final EventTracker eventTracker = EventTracker.getInstance();
+
     private Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<EventInfo, Class<? extends Event>>();
     private Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<EventInfo, Class<? extends Event>>();
-    
+
     private Queue<QueuedEvent> queuedEvents = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
     private Queue<QueuedEvent> queuedListeners = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
-    
+
     private List<String> unknownEvents = new ArrayList<String>();
-    
+
     public EventManager()
     {
-    	//Register events/listeners available for processing.
-    	registerListeners();
-    	registerCensusEvents();
-    	registerExtendedEvents();
-        
+        //Register events/listeners available for processing.
+        registerListeners();
+        registerCensusEvents();
+        registerExtendedEvents();
+
         //Process Event Queue
         eventTracker.getVertx().setPeriodic(100, new Handler<Long>()
         {
             public void handle(Long timerID)
             {
-            	for(int i=0; i<queuedListeners.size(); i++)
-            	{
-            		queuedListeners.poll().processEvent();
-            	}
-            	
-            	for(int i=0; i<queuedEvents.size(); i++)
-            	{
-            		queuedEvents.poll().processEvent();
-            	}
+                for (int i = 0; i < queuedListeners.size(); i++)
+                {
+                    queuedListeners.poll().processEvent();
+                }
+
+                for (int i = 0; i < queuedEvents.size(); i++)
+                {
+                    queuedEvents.poll().processEvent();
+                }
             }
         });
     }
-    
+
     private void registerCensusEvents()
     {
         registerEvent(AchievementEarnedEvent.class);
@@ -82,113 +82,118 @@ public class EventManager
         registerEvent(MetagameEvent.class);
         registerEvent(VehicleDestroyEvent.class);
     }
-    
+
     private void registerExtendedEvents()
     {
         registerEvent(PopulationChangeEvent.class);
         registerEvent(PlanetsideTimeEvent.class);
         registerEvent(EventTrackerMetricsEvent.class);
     }
-    
+
     private void registerListeners()
     {
-    	registerListener(PopulationEventListener.class);
+        registerListener(PopulationEventListener.class);
     }
-    
+
     public void handleEvent(String eventName, JsonObject payload)
     {
-        if(Utils.isValidPayload(payload))
+        if (Utils.isValidPayload(payload))
         {
             boolean eventHandled = false;
-            
-	        //Listeners
-	        for(Entry<EventInfo, Class<? extends Event>> entry : listeners.entrySet())
-	        {
-	            if(eventName.matches(entry.getKey().listenedEvents()))
-	            {
-					try
-					{
-						Event listener = entry.getValue().newInstance();
-						
-		            	queuedListeners.add(new QueuedEvent(entry.getKey().priority(), listener, payload));
-		                eventHandled = true;
-					}
-					catch (InstantiationException | IllegalAccessException e)
-					{
-						e.printStackTrace();
-					}
-	            }
-	        }
-            
-	        //Events
-	        for(Entry<EventInfo, Class<? extends Event>> entry : events.entrySet())
-	        {
-	            if(eventName.matches(entry.getKey().listenedEvents()))
-	            {
-					try
-					{
-						Event event = entry.getValue().newInstance();
-						
-		            	queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload));
-		                eventHandled = true;
-					}
-					catch (InstantiationException | IllegalAccessException e)
-					{
-						e.printStackTrace();
-					}
-	            }
-	        }
-	        
-            if(!eventHandled && !unknownEvents.contains(eventName))
+
+            //Listeners
+            for (Entry<EventInfo, Class<? extends Event>> entry : listeners.entrySet())
+            {
+                if (eventName.matches(entry.getKey().listenedEvents()))
+                {
+                    try
+                    {
+                        Event listener = entry.getValue().newInstance();
+
+                        queuedListeners.add(new QueuedEvent(entry.getKey().priority(), listener, payload));
+                        eventHandled = true;
+                    }
+                    catch (InstantiationException | IllegalAccessException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            //Events
+            for (Entry<EventInfo, Class<? extends Event>> entry : events.entrySet())
+            {
+                if (eventName.matches(entry.getKey().listenedEvents()))
+                {
+                    try
+                    {
+                        Event event = entry.getValue().newInstance();
+
+                        queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload));
+                        eventHandled = true;
+                    }
+                    catch (InstantiationException | IllegalAccessException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+            if (!eventHandled && !unknownEvents.contains(eventName))
             {
                 eventTracker.getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
                 eventTracker.getLogger().warn("Payload data:");
                 eventTracker.getLogger().warn(payload.encodePrettily());
-                
+
                 unknownEvents.add(eventName);
             }
         }
     }
-    
+
     /**
-     * This method is used to register an event to be handled by the EventManager. <br/>
-     * Event payloads are sent to these event classes based on the event names listed in the class' annotation. <br/>
+     * This method is used to register an event to be handled by the
+     * EventManager. <br/>
+     * Event payloads are sent to these event classes based on the event names
+     * listed in the class' annotation. <br/>
      * Events are always called after listeners.
+     *
      * @param event A class fully implementing the event interface.
      */
     public void registerEvent(Class<? extends Event> event)
     {
         EventInfo info = event.getAnnotation(EventInfo.class);
-        if(info == null)
+        if (info == null)
         {
-        	eventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
+            eventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
 
         events.put(info, event);
     }
- 
+
     /**
-     * This method is used to register a listener to be handled by the EventManager. <br/>
-     * Event payloads are sent to these event classes based on the event names listed in the class' annotation. <br/>
+     * This method is used to register a listener to be handled by the
+     * EventManager. <br/>
+     * Event payloads are sent to these event classes based on the event names
+     * listed in the class' annotation. <br/>
      * Listeners are always called before events.
-     * 
+     *
      * @param listener A class fully implementing the event interface.
      */
     public void registerListener(Class<? extends Event> listener)
     {
         EventInfo info = listener.getAnnotation(EventInfo.class);
-        if(info == null)
+        if (info == null)
         {
-        	eventTracker.getLogger().warn("Implementing Listener Class: " + listener.getName() + " is missing a required annotation.");
+            eventTracker.getLogger().warn("Implementing Listener Class: " + listener.getName() + " is missing a required annotation.");
             return;
         }
 
         listeners.put(info, listener);
     }
 
-	public Collection<Class<? extends Event>> getRegisteredEvents()
-	{
-		return events.values();
-	}
+    public Collection<Class<? extends Event>> getRegisteredEvents()
+    {
+        return events.values();
+    }
 }

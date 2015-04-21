@@ -4,5 +4,5 @@ import org.vertx.java.core.json.JsonObject;
 
 public interface Query
 {
-	public void ReceiveData(JsonObject data);
+    public void ReceiveData(JsonObject data);
 }

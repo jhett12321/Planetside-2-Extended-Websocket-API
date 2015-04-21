@@ -5,5 +5,5 @@ import org.vertx.java.core.json.JsonObject;
 
 public interface Action
 {
-	public void processAction(ServerWebSocket clientConnection, JsonObject actionData);
+    public void processAction(ServerWebSocket clientConnection, JsonObject actionData);
 }

@@ -11,35 +11,35 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 
 public class CharacterQuery implements Query
 {
-	private QueryManager queryManager = EventTracker.getInstance().getQueryManager();
-	private Event callbackEvent;
-	
-	private List<String> characterIDs = new ArrayList<String>();
-	
-	public CharacterQuery(List<String> characterIDs, Event callbackEvent)
-	{
-		this.callbackEvent = callbackEvent;
-		this.characterIDs.addAll(characterIDs);
-		
-		queryManager.addCharacterQuery(this);
-	}
-	
-	public CharacterQuery(String characterID, Event callbackEvent)
-	{
-		this.callbackEvent = callbackEvent;
-		this.characterIDs.add(characterID);
-		
-		queryManager.addCharacterQuery(this);
-	}
+    private QueryManager queryManager = EventTracker.getInstance().getQueryManager();
+    private Event callbackEvent;
 
-	@Override
-	public void ReceiveData(JsonObject data)
-	{
-		callbackEvent.processEvent();
-	}
+    private List<String> characterIDs = new ArrayList<String>();
 
-	public List<String> getCharacterIDs()
-	{
-		return characterIDs;
-	}
+    public CharacterQuery(List<String> characterIDs, Event callbackEvent)
+    {
+        this.callbackEvent = callbackEvent;
+        this.characterIDs.addAll(characterIDs);
+
+        queryManager.addCharacterQuery(this);
+    }
+
+    public CharacterQuery(String characterID, Event callbackEvent)
+    {
+        this.callbackEvent = callbackEvent;
+        this.characterIDs.add(characterID);
+
+        queryManager.addCharacterQuery(this);
+    }
+
+    @Override
+    public void ReceiveData(JsonObject data)
+    {
+        callbackEvent.processEvent();
+    }
+
+    public List<String> getCharacterIDs()
+    {
+        return characterIDs;
+    }
 }
