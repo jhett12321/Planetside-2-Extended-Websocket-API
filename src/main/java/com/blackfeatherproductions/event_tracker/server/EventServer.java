@@ -22,6 +22,8 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.MavenInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
@@ -120,6 +122,8 @@ public class EventServer
                             if (message != null)
                             {
                                 handleClientMessage(clientConnection, message);
+                                eventTracker.getLogger().info("Client " + apiName + " Sent Valid JSON Message.");
+                                eventTracker.getLogger().info(message.encodePrettily());
                             }
 
                         }
@@ -136,6 +140,19 @@ public class EventServer
                     connectMessage.putString("online", "true");
 
                     clientConnection.writeTextFrame(connectMessage.encodePrettily());
+                    
+                    //Send Service Status Messages
+                    for(Entry<World,WorldInfo> worldEntry : eventTracker.getDynamicDataManager().getAllWorldInfo().entrySet())
+                    {
+                        JsonObject serviceMessage = new JsonObject();
+                        
+                        JsonObject payload = new JsonObject();
+                        payload.putString("online", worldEntry.getValue().isOnline() ? "1" : "0");
+                        payload.putString("world_id", worldEntry.getKey().getID());
+                        
+                        serviceMessage.putObject("payload", payload);
+                        serviceMessage.putString("event_type", "ServiceStateChange");
+                    }
                 }
                 else
                 {

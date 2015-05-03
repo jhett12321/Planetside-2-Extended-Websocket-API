@@ -5,28 +5,30 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.Utils;
-import com.blackfeatherproductions.event_tracker.data_static.Facility;
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
+import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventName = "FacilityControl",
-        listenedEvents = "FacilityControl",
+@EventInfo(eventName = "PlayerFacilityControl",
+        listenedEvents = "PlayerFacilityCapture|PlayerFacilityDefend",
         priority = EventPriority.NORMAL,
         filters =
         {
-            "facilties", "facility_types", "outfits", "factions", "captures", "zones", "worlds"
+            "characters", "outfits", "factions", "facilities", "captures", "zones", "worlds"
         })
-public class FacilityControlEvent implements Event
+public class PlayerFacilityControlEvent implements Event
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
 
     private JsonObject payload;
+
+    private String characterID;
 
     @Override
     public void preProcessEvent(JsonObject payload)
@@ -34,7 +36,17 @@ public class FacilityControlEvent implements Event
         this.payload = payload;
         if (payload != null)
         {
-            processEvent();
+            characterID = payload.getString("character_id");
+
+            if (dynamicDataManager.characterDataExists(characterID))
+            {
+                processEvent();
+            }
+
+            else
+            {
+                new CharacterQuery(characterID, this);
+            }
         }
     }
 
@@ -42,49 +54,25 @@ public class FacilityControlEvent implements Event
     public void processEvent()
     {
         //Data
+        CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
+        String outfit_id = character.getOutfitID();
+        Faction faction = character.getFaction();
         String facility_id = payload.getString("facility_id");
-        Facility facility = Facility.getFacilityByID(facility_id);
-        String outfit_id = payload.getString("outfit_id");
-        String duration_held = payload.getString("duration_held");
-
-        Faction new_faction = Faction.getFactionByID(payload.getString("new_faction_id"));
-        Faction old_faction = Faction.getFactionByID(payload.getString("old_faction_id"));
-
-        String is_capture = !new_faction.equals(old_faction) ? "1" : "0";
-
         String timestamp = payload.getString("timestamp");
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
-
-        //Update Internal Data
-        if (is_capture.equals("1"))
-        {
-            dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
-        }
-
-        //Territory Control
-        JsonObject controlInfo = Utils.calculateTerritoryControl(world, zone);
-        String control_vs = controlInfo.getString("control_vs");
-        String control_nc = controlInfo.getString("control_nc");
-        String control_tr = controlInfo.getString("control_tr");
+        
+        String is_capture = payload.getString("event_name").equals("PlayerFacilityCapture") ? "1" : "0";
 
         //Payload
         JsonObject eventData = new JsonObject();
 
-        eventData.putString("facility_id", facility_id);
-        eventData.putString("facility_type_id", facility.getTypeID());
+        eventData.putString("character_id", character.getCharacterID());
+        eventData.putString("character_name", character.getCharacterName());
         eventData.putString("outfit_id", outfit_id);
-        eventData.putString("duration_held", duration_held);
-
-        eventData.putString("new_faction_id", new_faction.getID());
-        eventData.putString("old_faction_id", old_faction.getID());
-
+        eventData.putString("faction_id", faction.getID());
+        eventData.putString("facility_id", facility_id);
         eventData.putString("is_capture", is_capture);
-
-        eventData.putString("control_vs", control_vs);
-        eventData.putString("control_nc", control_nc);
-        eventData.putString("control_tr", control_tr);
-
         eventData.putString("timestamp", timestamp);
         eventData.putString("zone_id", zone.getID());
         eventData.putString("world_id", world.getID());
@@ -92,10 +80,10 @@ public class FacilityControlEvent implements Event
         //Filters
         JsonObject filterData = new JsonObject();
 
-        filterData.putArray("facilities", new JsonArray().addString(facility_id));
-        filterData.putArray("facility_types", new JsonArray().addString(facility.getTypeID()));
+        filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
         filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-        filterData.putArray("factions", new JsonArray().addString(new_faction.getID()).addString(old_faction.getID()));
+        filterData.putArray("factions", new JsonArray().addString(faction.getID()));
+        filterData.putArray("facilities", new JsonArray().addString(facility_id));
         filterData.putArray("captures", new JsonArray().addString(is_capture));
         filterData.putArray("zones", new JsonArray().addString(zone.getID()));
         filterData.putArray("worlds", new JsonArray().addString(world.getID()));

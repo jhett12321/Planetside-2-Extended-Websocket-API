@@ -7,14 +7,14 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
-@EventInfo(eventName = "ServerStatusChange",
-        listenedEvents = "ServerStatusChange",
+@EventInfo(eventName = "ServiceStatusChange",
+        listenedEvents = "ServiceStatusChange",
         priority = EventPriority.NORMAL,
         filters =
         {
-            "worlds"
+            "no_filtering"
         })
-public class ServerStatusChangeEvent implements Event
+public class ServiceStateChangeEvent implements Event
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
@@ -36,14 +36,12 @@ public class ServerStatusChangeEvent implements Event
         JsonObject eventData = new JsonObject();
 
         //Event Specific Data
-        eventData.putString("old_time", payload.getString("old_time"));
-        eventData.putString("new_time", payload.getString("new_time"));
-        eventData.putString("diff", payload.getString("diff"));
+        eventData.putString("online", payload.getString("online"));
+        eventData.putString("world_id", payload.getString("world_id"));
 
         JsonObject message = new JsonObject();
         message.putObject("event_data", eventData);
 
         eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
     }
-
 }

@@ -10,6 +10,7 @@ import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 
@@ -75,11 +76,11 @@ public class ActiveAlerts implements Action
         }
         else
         {
-            for (World world : World.getValidWorlds())
+            for (Entry<World, WorldInfo> world : dynamicDataManager.getAllWorldInfo().entrySet())
             {
                 JsonObject metagameEvents = new JsonObject();
 
-                for (MetagameEventInfo metagameEventInfo : dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().values())
+                for (MetagameEventInfo metagameEventInfo : world.getValue().getActiveMetagameEvents().values())
                 {
                     JsonObject metagameEvent = new JsonObject();
 
@@ -90,7 +91,7 @@ public class ActiveAlerts implements Action
 
                     JsonObject facilities = new JsonObject();
 
-                    for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                    for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
                     {
                         JsonObject facility = new JsonObject();
 
@@ -107,7 +108,7 @@ public class ActiveAlerts implements Action
                     metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
                 }
 
-                worlds.putObject(world.getID(), metagameEvents);
+                worlds.putObject(world.getKey().getID(), metagameEvents);
             }
         }
 

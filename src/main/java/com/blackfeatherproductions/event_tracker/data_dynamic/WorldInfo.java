@@ -3,6 +3,8 @@ package com.blackfeatherproductions.event_tracker.data_dynamic;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.vertx.java.core.json.JsonObject;
+
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -84,12 +86,18 @@ public class WorldInfo
             if (!online)
             {
                 eventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE.");
-
             }
             else
             {
                 eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online.");
             }
+            
+            //Generate Events
+            JsonObject payload = new JsonObject();
+            payload.putString("online", online ? "1" : "0");
+            payload.putString("world_id", world.getID());
+            
+            eventTracker.getEventHandler().handleEvent("ServiceStateChangeEvent", payload);
         }
     }
 }

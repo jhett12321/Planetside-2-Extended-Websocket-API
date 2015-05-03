@@ -34,6 +34,7 @@ public class DynamicDataManager
         //Checks that any current metagame events should no-longer be running.
         vertx.setPeriodic(120000, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 for (Entry<World, WorldInfo> worldInfo : worlds.entrySet())
@@ -92,6 +93,11 @@ public class DynamicDataManager
         }
 
         return null;
+    }
+    
+    public Map<World,WorldInfo> getAllWorldInfo()
+    {
+        return worlds;
     }
 
     public void removeCharacter(String characterID)

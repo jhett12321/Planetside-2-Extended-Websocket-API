@@ -14,6 +14,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
@@ -260,9 +261,10 @@ public class Census
     private void onWebsocketDisconnected()
     {
         websocketConnected = false;
-        for (World world : World.getValidWorlds())
+        
+        for (WorldInfo world : eventTracker.getDynamicDataManager().getAllWorldInfo().values())
         {
-            eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
+            world.setOnline(false);
         }
     }
 }

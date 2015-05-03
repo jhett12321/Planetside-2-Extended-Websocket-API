@@ -8,6 +8,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -65,12 +66,12 @@ public class ZoneStatus implements Action
         }
         else
         {
-            for (World world : World.getValidWorlds())
+            for (Entry<World, WorldInfo> world : dynamicDataManager.getAllWorldInfo().entrySet())
             {
                 JsonObject worldObj = new JsonObject();
                 JsonObject zones = new JsonObject();
 
-                for (Entry<Zone, ZoneInfo> zoneInfo : dynamicDataManager.getWorldInfo(world).getZones().entrySet())
+                for (Entry<Zone, ZoneInfo> zoneInfo : world.getValue().getZones().entrySet())
                 {
                     JsonObject zone = new JsonObject();
 
@@ -83,7 +84,7 @@ public class ZoneStatus implements Action
                     zone.putString("locked", locked);
                     zone.putString("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
-                    JsonObject controlInfo = Utils.calculateTerritoryControl(world, zoneInfo.getKey());
+                    JsonObject controlInfo = Utils.calculateTerritoryControl(world.getKey(), zoneInfo.getKey());
 
                     zone.putString("control_vs", controlInfo.getString("control_vs"));
                     zone.putString("control_nc", controlInfo.getString("control_nc"));
@@ -93,7 +94,7 @@ public class ZoneStatus implements Action
                 }
 
                 worldObj.putObject("zones", zones);
-                worlds.putObject(world.getID(), worldObj);
+                worlds.putObject(world.getKey().getID(), worldObj);
             }
         }
 

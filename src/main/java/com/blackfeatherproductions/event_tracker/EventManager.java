@@ -25,10 +25,12 @@ import com.blackfeatherproductions.event_tracker.events.census.ExperienceEarned;
 import com.blackfeatherproductions.event_tracker.events.census.FacilityControlEvent;
 import com.blackfeatherproductions.event_tracker.events.census.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.census.MetagameEvent;
+import com.blackfeatherproductions.event_tracker.events.census.PlayerFacilityControlEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.EventTrackerMetricsEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
+import com.blackfeatherproductions.event_tracker.events.extended.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 
 public class EventManager
@@ -47,6 +49,7 @@ public class EventManager
     {
         //Register events/listeners available for processing.
         registerListeners();
+        registerServiceEvents();
         registerCensusEvents();
         registerExtendedEvents();
 
@@ -67,7 +70,18 @@ public class EventManager
             }
         });
     }
+    
+    /**
+     * Service Events are always sent, regardless of subscriptions.
+     */
+    private void registerServiceEvents()
+    {
+        registerEvent(ServiceStateChangeEvent.class);
+    }
 
+    /**
+     * Census events are revamped events from the default census PUSH feed.
+     */
     private void registerCensusEvents()
     {
         registerEvent(AchievementEarnedEvent.class);
@@ -80,9 +94,13 @@ public class EventManager
         registerEvent(FacilityControlEvent.class);
         registerEvent(LoginEvent.class);
         registerEvent(MetagameEvent.class);
+        registerEvent(PlayerFacilityControlEvent.class);
         registerEvent(VehicleDestroyEvent.class);
     }
 
+    /**
+     * Extended events are new event types that utilize exiting data to create new events.
+     */
     private void registerExtendedEvents()
     {
         registerEvent(PopulationChangeEvent.class);
