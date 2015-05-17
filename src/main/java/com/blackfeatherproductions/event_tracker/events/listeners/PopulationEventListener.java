@@ -28,8 +28,8 @@ import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
         })
 public class PopulationEventListener implements Event
 {
-    private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
-    private PopulationManager populationManager = EventTracker.getInstance().getPopulationManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final PopulationManager populationManager = EventTracker.getInstance().getPopulationManager();
 
     private JsonObject payload;
 
@@ -67,7 +67,7 @@ public class PopulationEventListener implements Event
                 List<String> characterIDs = new ArrayList<String>();
                 characterIDs.add(characterID);
 
-                if (attackerCharacterID != characterID)
+                if (!attackerCharacterID.equals(characterID))
                 {
                     characterIDs.add(attackerCharacterID);
                 }

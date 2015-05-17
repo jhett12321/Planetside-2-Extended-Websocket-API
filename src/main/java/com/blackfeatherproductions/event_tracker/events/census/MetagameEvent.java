@@ -152,7 +152,7 @@ public class MetagameEvent implements Event
             if (payload.getString("metagame_event_state").equals("135") || payload.getString("metagame_event_state").equals("136"))
             {
                 start_time = timestamp;
-                end_time = String.valueOf((Integer.valueOf(timestamp) + 7200));
+                end_time = String.valueOf((Integer.parseInt(timestamp) + 7200));
                 status = "1";
 
                 //Create a new Metagame Event
@@ -166,20 +166,20 @@ public class MetagameEvent implements Event
         String control_nc = controlInfo.getString("control_nc");
         String control_tr = controlInfo.getString("control_tr");
 
-        if (Integer.valueOf(control_vs) >= 100 || Integer.valueOf(control_nc) >= 100 || Integer.valueOf(control_tr) >= 100)
+        if (Integer.parseInt(control_vs) >= 100 || Integer.parseInt(control_nc) >= 100 || Integer.parseInt(control_tr) >= 100)
         {
             domination = "1";
         }
 
         //Payload
-        boolean isDummy = payload.containsField("is_dummy") && payload.getString("is_dummy") == "1";
+        boolean isDummy = payload.containsField("is_dummy") && payload.getString("is_dummy").equals("1");
 
         if (!isDummy)
         {
             eventData.putString("instance_id", instance_id);
             eventData.putString("metagame_event_type_id", metagame_event_id);
             eventData.putString("start_time", start_time);
-            eventData.putString("end_time", "0");
+            eventData.putString("end_time", end_time);
             eventData.putString("timestamp", timestamp);
             eventData.putString("facility_type_id", facility_type_id);
             eventData.putString("status", status);
@@ -203,7 +203,7 @@ public class MetagameEvent implements Event
             message.putObject("event_data", eventData);
             message.putObject("filter_data", filterData);
 
-            eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+            eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
             eventTracker.countProcessedEvent();
         }
     }

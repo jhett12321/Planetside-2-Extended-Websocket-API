@@ -37,7 +37,7 @@ public class EventTrackerMetricsEvent implements Event
         message.putObject("event_data", payload);
         message.putObject("filter_data", null);
 
-        eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
     }
 
 }

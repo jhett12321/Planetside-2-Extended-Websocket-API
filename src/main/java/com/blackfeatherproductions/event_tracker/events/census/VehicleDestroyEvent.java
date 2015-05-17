@@ -65,7 +65,7 @@ public class VehicleDestroyEvent implements Event
                 List<String> characterIDs = new ArrayList<String>();
                 characterIDs.add(victimCharacterID);
 
-                if (attackerCharacterID != victimCharacterID)
+                if (!attackerCharacterID.equals(victimCharacterID))
                 {
                     characterIDs.add(attackerCharacterID);
                 }
@@ -139,7 +139,7 @@ public class VehicleDestroyEvent implements Event
         message.putObject("event_data", eventData);
         message.putObject("filter_data", filterData);
 
-        eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
         eventTracker.countProcessedEvent();
     }
 }

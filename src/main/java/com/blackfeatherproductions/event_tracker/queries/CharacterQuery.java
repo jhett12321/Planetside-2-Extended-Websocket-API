@@ -11,10 +11,10 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 
 public class CharacterQuery implements Query
 {
-    private QueryManager queryManager = EventTracker.getInstance().getQueryManager();
-    private Event callbackEvent;
+    private final QueryManager queryManager = EventTracker.getInstance().getQueryManager();
+    private final Event callbackEvent;
 
-    private List<String> characterIDs = new ArrayList<String>();
+    private final List<String> characterIDs = new ArrayList<String>();
 
     public CharacterQuery(List<String> characterIDs, Event callbackEvent)
     {
@@ -33,7 +33,7 @@ public class CharacterQuery implements Query
     }
 
     @Override
-    public void ReceiveData(JsonObject data)
+    public void receiveData(JsonObject data)
     {
         callbackEvent.processEvent();
     }

@@ -61,7 +61,7 @@ public class PlayerFacilityControlEvent implements Event
         String timestamp = payload.getString("timestamp");
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
-        
+
         String is_capture = payload.getString("event_name").equals("PlayerFacilityCapture") ? "1" : "0";
 
         //Payload
@@ -94,7 +94,7 @@ public class PlayerFacilityControlEvent implements Event
         message.putObject("event_data", eventData);
         message.putObject("filter_data", filterData);
 
-        eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
         eventTracker.countProcessedEvent();
     }
 }

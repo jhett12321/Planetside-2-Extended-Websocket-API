@@ -106,7 +106,7 @@ public class FacilityControlEvent implements Event
         message.putObject("event_data", eventData);
         message.putObject("filter_data", filterData);
 
-        eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
         eventTracker.countProcessedEvent();
     }
 }

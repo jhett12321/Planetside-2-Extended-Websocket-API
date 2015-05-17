@@ -11,13 +11,13 @@ public class CharacterInfo
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private String characterID;
-    private String characterName;
-    private String outfitID;
-    private Faction faction;
-    private Zone zone;
-    private World world;
-    private boolean online;
+    private final String characterID;
+    private final String characterName;
+    private final String outfitID;
+    private final Faction faction;
+    private final Zone zone;
+    private final World world;
+    private final boolean online;
 
     public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
     {
@@ -31,6 +31,7 @@ public class CharacterInfo
 
         eventTracker.getVertx().setTimer(60000, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 eventTracker.getDynamicDataManager().removeCharacter(characterID);

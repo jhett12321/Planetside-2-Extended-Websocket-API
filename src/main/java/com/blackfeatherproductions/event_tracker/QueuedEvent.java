@@ -7,10 +7,10 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 public class QueuedEvent
 {
-    private EventPriority priority;
+    private final EventPriority priority;
 
-    private Event event;
-    private JsonObject payload;
+    private final Event event;
+    private final JsonObject payload;
 
     public QueuedEvent(EventPriority priority, Event event, JsonObject payload)
     {

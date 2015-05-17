@@ -17,9 +17,9 @@ public class WorldQuery implements Query
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
-    private World world;
+    private final World world;
 
     public WorldQuery(String worldID)
     {
@@ -29,7 +29,7 @@ public class WorldQuery implements Query
     }
 
     @Override
-    public void ReceiveData(JsonObject data)
+    public void receiveData(JsonObject data)
     {
         WorldInfo worldInfo = dynamicDataManager.getWorldInfo(world);
 

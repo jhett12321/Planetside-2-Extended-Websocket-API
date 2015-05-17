@@ -4,10 +4,10 @@ import com.blackfeatherproductions.event_tracker.data_static.MetagameEventType;
 
 public class MetagameEventInfo
 {
-    private MetagameEventType type;
-    private String startTime;
-    private String endTime;
-    private String instanceID;
+    private final MetagameEventType type;
+    private final String startTime;
+    private final String endTime;
+    private final String instanceID;
 
     public MetagameEventInfo(String instanceID, MetagameEventType type, String startTime, String endTime)
     {

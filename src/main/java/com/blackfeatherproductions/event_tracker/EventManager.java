@@ -33,17 +33,18 @@ import com.blackfeatherproductions.event_tracker.events.extended.PopulationChang
 import com.blackfeatherproductions.event_tracker.events.extended.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 
+//TODO ItemAdded and SkillAdded events.
 public class EventManager
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<EventInfo, Class<? extends Event>>();
-    private Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<EventInfo, Class<? extends Event>>();
+    private final Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<EventInfo, Class<? extends Event>>();
+    private final Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<EventInfo, Class<? extends Event>>();
 
-    private Queue<QueuedEvent> queuedEvents = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
-    private Queue<QueuedEvent> queuedListeners = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
+    private final Queue<QueuedEvent> queuedEvents = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
+    private final Queue<QueuedEvent> queuedListeners = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
 
-    private List<String> unknownEvents = new ArrayList<String>();
+    private final List<String> unknownEvents = new ArrayList<String>();
 
     public EventManager()
     {
@@ -56,6 +57,7 @@ public class EventManager
         //Process Event Queue
         eventTracker.getVertx().setPeriodic(100, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 for (int i = 0; i < queuedListeners.size(); i++)
@@ -70,7 +72,7 @@ public class EventManager
             }
         });
     }
-    
+
     /**
      * Service Events are always sent, regardless of subscriptions.
      */
@@ -99,7 +101,8 @@ public class EventManager
     }
 
     /**
-     * Extended events are new event types that utilize exiting data to create new events.
+     * Extended events are new event types that utilize exiting data to create
+     * new events.
      */
     private void registerExtendedEvents()
     {

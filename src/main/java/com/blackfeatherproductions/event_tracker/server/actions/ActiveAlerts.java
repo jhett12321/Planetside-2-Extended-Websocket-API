@@ -17,7 +17,7 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 @ActionInfo(actionNames = "activeAlerts")
 public class ActiveAlerts implements Action
 {
-    private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
     @Override
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)

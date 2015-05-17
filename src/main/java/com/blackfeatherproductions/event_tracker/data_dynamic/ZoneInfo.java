@@ -11,7 +11,7 @@ public class ZoneInfo
     private Boolean locked;
     private Faction locking_faction;
 
-    private Map<Facility, FacilityInfo> facilities = new HashMap<Facility, FacilityInfo>();
+    private final Map<Facility, FacilityInfo> facilities = new HashMap<Facility, FacilityInfo>();
 
     /**
      * @return the locking faction of this zone, otherwise null if the zone is

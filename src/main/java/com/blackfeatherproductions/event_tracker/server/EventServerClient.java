@@ -17,14 +17,14 @@ public class EventServerClient
     private final EventTracker eventTracker = EventTracker.getInstance();
 
     //Connection
-    private ServerWebSocket clientConnection;
+    private final ServerWebSocket clientConnection;
 
     //Identification
-    private String apiKey;
-    private String name;
+    private final String apiKey;
+    private final String name;
 
     //Subscriptions
-    private Map<Class<? extends Event>, JsonObject> subscriptions = new HashMap<Class<? extends Event>, JsonObject>();
+    private final Map<Class<? extends Event>, JsonObject> subscriptions = new HashMap<Class<? extends Event>, JsonObject>();
     private boolean subscribedToAll = false;
 
     public EventServerClient(ServerWebSocket connection, String apiKey, String name)
@@ -82,132 +82,19 @@ public class EventServerClient
         {
             JsonObject subscription = subscriptions.get(event);
 
-            if (action.equals("subscribe"))
+            switch (action)
             {
-                for (String property : messageFilters.toMap().keySet())
-                {
-                    if (subscription.containsField(property))
-                    {
-                        if (property.equals("all"))
-                        {
-                            if (messageFilters.getString(property).equals("true"))
-                            {
-                                subscription.putString(property, "true");
-                            }
-                        }
-
-                        else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
-                        {
-                            for (int i = 0; i < messageFilters.getArray(property).size(); i++)
-                            {
-                                if (!subscription.getArray(property).contains(messageFilters.getArray(property).get(i)))
-                                {
-                                    subscription.getArray(property).add(messageFilters.getArray(property).get(i));
-                                }
-                            }
-                        }
-
-                        else if (property.equals("worlds"))
-                        {
-                            for (int i = 0; i < messageFilters.getArray(property).size(); i++)
-                            {
-                                if (!subscription.getObject(property).containsField((String) messageFilters.getArray(property).get(i)))
-                                {
-                                    JsonObject worldObject = new JsonObject();
-                                    worldObject.putArray("zones", new JsonArray());
-
-                                    subscription.getObject(property).putObject((String) messageFilters.getArray(property).get(i), worldObject);
-                                }
-
-                                if (messageFilters.containsField("zones"))
-                                {
-                                    for (int j = 0; j < messageFilters.getArray("zones").size(); j++)
-                                    {
-                                        if (!subscription.getObject(property).getObject((String) messageFilters.getArray(property).get(i)).getArray("zones").contains(messageFilters.getArray("zones").get(j)))
-                                        {
-                                            subscription.getObject(property).getObject((String) messageFilters.getArray(property).get(i)).getArray("zones").add(messageFilters.getArray("zones").get(j));
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-
-            else if (action.equals("unsubscribe"))
-            {
-                for (String property : messageFilters.toMap().keySet())
-                {
-                    if (subscription.containsField(property))
-                    {
-                        if (property.equals("all"))
-                        {
-                            if (messageFilters.getString(property).equals("false"))
-                            {
-                                subscription.putString(property, "false");
-                            }
-                        }
-
-                        else if (!property.equals("world") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
-                        {
-                            JsonArray filteredArray = new JsonArray();
-
-                            for (int i = 0; i < subscription.getArray(property).size(); i++)
-                            {
-                                if (!messageFilters.getArray(property).contains(subscription.getArray(property).get(i)))
-                                {
-                                    filteredArray.add(messageFilters.getArray(property).get(i));
-                                }
-                            }
-
-                            subscription.putArray(property, filteredArray);
-                        }
-
-                        else if (property.equals("worlds"))
-                        {
-                            JsonObject filteredObject = new JsonObject();
-
-                            for (Entry<String, Object> world : subscription.getObject(property).toMap().entrySet())
-                            {
-                                if (!messageFilters.getObject(property).containsField(world.getKey()))
-                                {
-                                    JsonObject worldObject = new JsonObject();
-                                    worldObject.putArray("zones", new JsonArray());
-
-                                    filteredObject.putObject(world.getKey(), worldObject);
-                                }
-
-                                if (subscription.containsField("zones"))
-                                {
-                                    for (int i = 0; i < subscription.getArray("zones").size(); i++)
-                                    {
-                                        if (!messageFilters.getObject(property).getObject(world.getKey()).getArray("zones").contains(messageFilters.getArray("zones").get(i)))
-                                        {
-                                            filteredObject.getObject(world.getKey()).getArray("zones").add(messageFilters.getArray("zones").get(i));
-                                        }
-                                    }
-                                }
-                            }
-
-                            subscription.putObject(property, filteredObject);
-                        }
-                    }
-                }
-
-            }
-
-            else if (action.equals("unsubcribeAll"))
-            {
-                subscription = new JsonObject();
-
-                subscription.putString("all", "false");
-                subscription.putObject("worlds", new JsonObject());
-                subscription.putArray("useAND", new JsonArray());
-                subscription.putArray("show", new JsonArray());
-                subscription.putArray("hide", new JsonArray());
-
-                subscriptions.put(event, subscription);
+                case "subscribe":
+                    subscribe(messageFilters, subscription);
+                    break;
+                case "unsubscribe":
+                    unsubscribe(messageFilters, subscription);
+                    break;
+                case "unsubcribeAll":
+                    subscriptions.put(event, getBlankSubscription(event));
+                    break;
+                default:
+                    break;
             }
         }
 
@@ -247,34 +134,153 @@ public class EventServerClient
         clientConnection.writeTextFrame(returnObject.encode());
     }
 
+    private void subscribe(JsonObject messageFilters, JsonObject subscription)
+    {
+        for (String property : messageFilters.toMap().keySet())
+        {
+            if (subscription.containsField(property))
+            {
+                if (property.equals("all"))
+                {
+                    if (messageFilters.getString(property).equals("true"))
+                    {
+                        subscription.putString(property, "true");
+                    }
+                }
+
+                else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
+                {
+                    for (int i = 0; i < messageFilters.getArray(property).size(); i++)
+                    {
+                        if (!subscription.getArray(property).contains(messageFilters.getArray(property).get(i)))
+                        {
+                            subscription.getArray(property).add(messageFilters.getArray(property).get(i));
+                        }
+                    }
+                }
+
+                else if (property.equals("worlds"))
+                {
+                    for (int i = 0; i < messageFilters.getArray(property).size(); i++)
+                    {
+                        if (!subscription.getObject(property).containsField((String) messageFilters.getArray(property).get(i)))
+                        {
+                            JsonObject worldObject = new JsonObject();
+                            worldObject.putArray("zones", new JsonArray());
+
+                            subscription.getObject(property).putObject((String) messageFilters.getArray(property).get(i), worldObject);
+                        }
+
+                        if (messageFilters.containsField("zones"))
+                        {
+                            for (int j = 0; j < messageFilters.getArray("zones").size(); j++)
+                            {
+                                if (!subscription.getObject(property).getObject((String) messageFilters.getArray(property).get(i)).getArray("zones").contains(messageFilters.getArray("zones").get(j)))
+                                {
+                                    subscription.getObject(property).getObject((String) messageFilters.getArray(property).get(i)).getArray("zones").add(messageFilters.getArray("zones").get(j));
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void unsubscribe(JsonObject messageFilters, JsonObject subscription)
+    {
+        for (String property : messageFilters.toMap().keySet())
+        {
+            if (subscription.containsField(property))
+            {
+                if (property.equals("all"))
+                {
+                    if (messageFilters.getString(property).equals("false"))
+                    {
+                        subscription.putString(property, "false");
+                    }
+                }
+
+                else if (!property.equals("world") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
+                {
+                    JsonArray filteredArray = new JsonArray();
+
+                    for (int i = 0; i < subscription.getArray(property).size(); i++)
+                    {
+                        if (!messageFilters.getArray(property).contains(subscription.getArray(property).get(i)))
+                        {
+                            filteredArray.add(messageFilters.getArray(property).get(i));
+                        }
+                    }
+
+                    subscription.putArray(property, filteredArray);
+                }
+
+                else if (property.equals("worlds"))
+                {
+                    JsonObject filteredObject = new JsonObject();
+
+                    for (Entry<String, Object> world : subscription.getObject(property).toMap().entrySet())
+                    {
+                        if (!messageFilters.getObject(property).containsField(world.getKey()))
+                        {
+                            JsonObject worldObject = new JsonObject();
+                            worldObject.putArray("zones", new JsonArray());
+
+                            filteredObject.putObject(world.getKey(), worldObject);
+                        }
+
+                        if (subscription.containsField("zones"))
+                        {
+                            for (int i = 0; i < subscription.getArray("zones").size(); i++)
+                            {
+                                if (!messageFilters.getObject(property).getObject(world.getKey()).getArray("zones").contains(messageFilters.getArray("zones").get(i)))
+                                {
+                                    filteredObject.getObject(world.getKey()).getArray("zones").add(messageFilters.getArray("zones").get(i));
+                                }
+                            }
+                        }
+                    }
+
+                    subscription.putObject(property, filteredObject);
+                }
+            }
+        }
+    }
+
     private void clearSubscriptions()
     {
         this.subscriptions.clear();
 
         for (Class<? extends Event> event : eventTracker.getEventHandler().getRegisteredEvents())
         {
-            EventInfo info = event.getAnnotation(EventInfo.class);
+            //Add blank subscription to this client;
+            subscriptions.put(event, getBlankSubscription(event));
+        }
+    }
 
-            JsonObject subscription = new JsonObject();
-            if (!info.filters()[0].equals("no_filtering"))
+    private JsonObject getBlankSubscription(Class<? extends Event> event)
+    {
+        EventInfo info = event.getAnnotation(EventInfo.class);
+
+        JsonObject subscription = new JsonObject();
+        if (!info.filters()[0].equals("no_filtering"))
+        {
+            //Event Specific Filters
+            for (String filter : info.filters())
             {
-                //Event Specific Filters
-                for (String filter : info.filters())
-                {
-                    subscription.putArray(filter, new JsonArray());
-                }
-
-                //Global Filters
-                subscription.putObject("worlds", new JsonObject());
-                subscription.putArray("useAND", new JsonArray());
+                subscription.putArray(filter, new JsonArray());
             }
 
-            subscription.putString("all", "false");
-            subscription.putArray("show", new JsonArray());
-            subscription.putArray("hide", new JsonArray());
-
-            //Add blank subscription to this client;
-            subscriptions.put(event, subscription);
+            //Global Filters
+            subscription.putObject("worlds", new JsonObject());
+            subscription.putArray("useAND", new JsonArray());
         }
+
+        subscription.putString("all", "false");
+        subscription.putArray("show", new JsonArray());
+        subscription.putArray("hide", new JsonArray());
+
+        return subscription;
     }
 }

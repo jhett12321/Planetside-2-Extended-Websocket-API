@@ -17,8 +17,8 @@ public class World
     public static World JAEGAR;
     public static World BRIGGS;
 
-    private String id;
-    private String name;
+    private final String id;
+    private final String name;
 
     public World(String id, String name)
     {

@@ -32,20 +32,29 @@ import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
 import com.blackfeatherproductions.event_tracker.server.actions.FacilityStatus;
 import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
 
+//TODO Make bad JSON more verbose for clients, and not throw exceptions.
+//TODO Refactor "useAND" to "exclusive mode"
+//TODO Implement subscription mode
+//4am thoughts:
+//4:14 AM - Jhett12321: how about if there are two things you pass to the subscription
+//4:15 AM - Jhett12321: the first is a list of filters that the event must contain data for all (so if you pass it headshots, and worlds, it MUST be a headshot in one of the given worlds)
+//4:16 AM - Jhett12321: the second is a list of filters that must contain at least one match (if you give it a zone and a world, it can be in that zone on any world, or any zone in that specific world)
+//4:19 AM - Jhett12321: so the flow would be it would loop through the "must match" list, and check to see if all of the filters contain a match
+//4:19 AM - Jhett12321: if those pass, it moves on to the "one match" list, and if any of those filters match it sends the event
 public class EventServer
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private Config config;
+    private final Config config;
 
     //API Key Database
-    private String dbUrl;
+    private final String dbUrl;
 
     //Actions
-    private Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
+    private final Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
 
     //Client Info
-    public Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket, EventServerClient>();
+    public final Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket, EventServerClient>();
 
     public EventServer()
     {
@@ -60,6 +69,7 @@ public class EventServer
 
         vertx.createHttpServer().websocketHandler(new Handler<ServerWebSocket>()
         {
+            @Override
             public void handle(final ServerWebSocket clientConnection)
             {
                 Map<String, String> queryPairs = new LinkedHashMap<String, String>();
@@ -68,7 +78,7 @@ public class EventServer
                 String[] pairs = query.split("&");
                 for (String pair : pairs)
                 {
-                    int idx = pair.indexOf("=");
+                    int idx = pair.indexOf('=');
                     try
                     {
                         queryPairs.put(URLDecoder.decode(pair.substring(0, idx), "UTF-8"), URLDecoder.decode(pair.substring(idx + 1), "UTF-8"));
@@ -106,6 +116,7 @@ public class EventServer
 
                     clientConnection.dataHandler(new Handler<Buffer>()
                     {
+                        @Override
                         public void handle(Buffer data)
                         {
                             JsonObject message = null;
@@ -140,16 +151,16 @@ public class EventServer
                     connectMessage.putString("online", "true");
 
                     clientConnection.writeTextFrame(connectMessage.encodePrettily());
-                    
+
                     //Send Service Status Messages
-                    for(Entry<World,WorldInfo> worldEntry : eventTracker.getDynamicDataManager().getAllWorldInfo().entrySet())
+                    for (Entry<World, WorldInfo> worldEntry : eventTracker.getDynamicDataManager().getAllWorldInfo().entrySet())
                     {
                         JsonObject serviceMessage = new JsonObject();
-                        
+
                         JsonObject payload = new JsonObject();
                         payload.putString("online", worldEntry.getValue().isOnline() ? "1" : "0");
                         payload.putString("world_id", worldEntry.getKey().getID());
-                        
+
                         serviceMessage.putObject("payload", payload);
                         serviceMessage.putString("event_type", "ServiceStateChange");
                     }
@@ -180,18 +191,16 @@ public class EventServer
                 ResultSet resultSet = query.executeQuery();
 
                 //Check if API Key exists
+                String apiName = null;
                 if (resultSet.next())
                 {
-                    String apiName = resultSet.getString("name");
-                    dbConnection.close();
-                    return apiName;
+                    apiName = resultSet.getString("name");
                 }
 
-                else
-                {
-                    dbConnection.close();
-                    return null;
-                }
+                query.close();
+                dbConnection.close();
+
+                return apiName;
             }
 
             catch (ClassNotFoundException | SQLException e)
@@ -266,7 +275,7 @@ public class EventServer
         actions.put(info, action);
     }
 
-    public void BroadcastEvent(Class<? extends Event> event, JsonObject rawData)
+    public void broadcastEvent(Class<? extends Event> event, JsonObject rawData)
     {
         JsonObject messageToSend = new JsonObject();
 

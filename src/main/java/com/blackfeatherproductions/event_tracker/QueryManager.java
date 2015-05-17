@@ -19,6 +19,8 @@ import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 import com.blackfeatherproductions.event_tracker.queries.Query;
 
+//TODO Add all queries to a queue.
+//TODO Queries will have 25 attempts to succeed before failing, unless they are a "must return" data query.
 public class QueryManager
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
@@ -32,6 +34,7 @@ public class QueryManager
         //Character Queue Processor
         eventTracker.getVertx().setPeriodic(1000, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 List<String> characters = new ArrayList<String>();
@@ -74,7 +77,7 @@ public class QueryManager
 
             for (Query callback : callbacks)
             {
-                callback.ReceiveData(null);
+                callback.receiveData(null);
             }
 
             failureCount = 0;
@@ -87,25 +90,26 @@ public class QueryManager
 
         client.getNow(query, new Handler<HttpClientResponse>()
         {
+            @Override
             public void handle(HttpClientResponse resp)
             {
                 resp.bodyHandler(new Handler<Buffer>()
                 {
+                    @Override
                     public void handle(Buffer body)
                     {
                         try
                         {
                             JsonObject data = new JsonObject(body.toString());
 
-                            if (data != null && data.containsField("returned") && data.getInteger("returned") != 0)
+                            if (data.containsField("returned") && data.getInteger("returned") != 0)
                             {
                                 for (Query callback : callbacks)
                                 {
-                                    callback.ReceiveData(data);
+                                    callback.receiveData(data);
                                 }
 
                                 failureCount = 0;
-                                return;
                             }
                         }
                         catch (DecodeException e)

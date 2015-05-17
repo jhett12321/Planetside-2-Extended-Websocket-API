@@ -15,9 +15,9 @@ public class Zone
     public static Zone AMERISH;
     public static Zone HOSSIN;
 
-    private String id;
-    private String name;
-    private String desc;
+    private final String id;
+    private final String name;
+    private final String desc;
 
     public Zone(String id, String name, String desc)
     {

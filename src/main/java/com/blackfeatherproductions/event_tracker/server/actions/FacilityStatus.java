@@ -16,7 +16,7 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 @ActionInfo(actionNames = "facilityStatus")
 public class FacilityStatus implements Action
 {
-    private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
     @Override
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)

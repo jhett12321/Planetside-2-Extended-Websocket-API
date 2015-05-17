@@ -13,8 +13,8 @@ public class CharacterListQuery implements Query
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
-    private List<CharacterQuery> callbacks;
+    private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
+    private final List<CharacterQuery> callbacks;
 
     public CharacterListQuery(List<CharacterQuery> callbacks)
     {
@@ -22,7 +22,7 @@ public class CharacterListQuery implements Query
     }
 
     @Override
-    public void ReceiveData(JsonObject data)
+    public void receiveData(JsonObject data)
     {
         JsonArray characterList = data.getArray("character_list");
 
@@ -80,7 +80,7 @@ public class CharacterListQuery implements Query
         {
             for (String characterID : event.getCharacterIDs())
             {
-				//Census does not always have data for all characters.
+                //Census does not always have data for all characters.
                 //Since the above iterator loops over returned data, and not the requested ids, it does not create these blank entries.
                 //In this case, we create a blank character.
                 if (!eventTracker.getDynamicDataManager().characterDataExists(characterID))
@@ -89,7 +89,7 @@ public class CharacterListQuery implements Query
                 }
             }
 
-            event.ReceiveData(null); //Triggers the waiting events for processing.
+            event.receiveData(null); //Triggers the waiting events for processing.
         }
     }
 

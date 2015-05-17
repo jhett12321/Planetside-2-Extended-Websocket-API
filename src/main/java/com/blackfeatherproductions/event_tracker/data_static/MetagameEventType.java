@@ -5,14 +5,14 @@ import java.util.Map;
 
 public class MetagameEventType
 {
-    public static Map<String, MetagameEventType> metagameEventTypes = new HashMap<String, MetagameEventType>();
+    public static final Map<String, MetagameEventType> metagameEventTypes = new HashMap<String, MetagameEventType>();
 
-    private String id;
-    private String name;
-    private String desc;
-    private Zone zone;
-    private String facilityID;
-    private String facilityTypeID;
+    private final String id;
+    private final String name;
+    private final String desc;
+    private final Zone zone;
+    private final String facilityID;
+    private final String facilityTypeID;
 
     public MetagameEventType(String id, String name, String desc, Zone zone, String facilityID, String facilityTypeID)
     {

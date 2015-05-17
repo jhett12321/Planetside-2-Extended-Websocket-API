@@ -13,10 +13,10 @@ public class Faction
     public static Faction NC;
     public static Faction TR;
 
-    private String id;
-    private List<String> loadoutIDs;
-    private String name;
-    private String tag;
+    private final String id;
+    private final List<String> loadoutIDs;
+    private final String name;
+    private final String tag;
 
     public Faction(String id, List<String> loadoutsVS, String name, String tag)
     {

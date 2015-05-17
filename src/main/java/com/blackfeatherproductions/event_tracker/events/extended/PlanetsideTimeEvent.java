@@ -43,6 +43,6 @@ public class PlanetsideTimeEvent implements Event
         JsonObject message = new JsonObject();
         message.putObject("event_data", eventData);
 
-        eventTracker.getEventServer().BroadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
     }
 }

@@ -7,10 +7,10 @@ public class Facility
 {
     public static Map<String, Facility> facilities = new HashMap<String, Facility>();
 
-    private String id;
-    private String name;
-    private String type;
-    private String typeID;
+    private final String id;
+    private final String name;
+    private final String type;
+    private final String typeID;
 
     public Facility(String id, String name, String type, String typeID)
     {

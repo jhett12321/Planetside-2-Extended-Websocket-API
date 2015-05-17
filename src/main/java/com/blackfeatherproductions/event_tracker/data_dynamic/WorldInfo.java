@@ -15,10 +15,10 @@ public class WorldInfo
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private World world;
+    private final World world;
 
-    private Map<Zone, ZoneInfo> zones = new HashMap<Zone, ZoneInfo>();
-    private Map<String, MetagameEventInfo> metagameEvents = new HashMap<String, MetagameEventInfo>();
+    private final Map<Zone, ZoneInfo> zones = new HashMap<Zone, ZoneInfo>();
+    private final Map<String, MetagameEventInfo> metagameEvents = new HashMap<String, MetagameEventInfo>();
 
     private boolean online = false;
 
@@ -91,12 +91,12 @@ public class WorldInfo
             {
                 eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online.");
             }
-            
+
             //Generate Events
             JsonObject payload = new JsonObject();
             payload.putString("online", online ? "1" : "0");
             payload.putString("world_id", world.getID());
-            
+
             eventTracker.getEventHandler().handleEvent("ServiceStateChangeEvent", payload);
         }
     }

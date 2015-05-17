@@ -13,7 +13,7 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class Utils
 {
-    private static DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private static final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
     public static String getWorldIDFromEndpointString(String endPointString)
     {
@@ -162,7 +162,6 @@ public class Utils
 
         if (controlTR > majorityControl)
         {
-            majorityControl = controlTR;
             majorityController = Faction.TR;
         }
         else if (controlTR == majorityControl)
@@ -241,7 +240,6 @@ public class Utils
 
         if (controlTR > majorityControl)
         {
-            majorityControl = controlTR;
             majorityController = Faction.TR;
         }
         else if (controlTR == majorityControl)

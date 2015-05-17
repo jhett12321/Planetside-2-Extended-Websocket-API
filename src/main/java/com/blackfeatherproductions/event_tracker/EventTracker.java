@@ -24,7 +24,6 @@ public class EventTracker extends Verticle
     private DynamicDataManager dynamicDataManager;
     private QueryManager queryManager;
     private PopulationManager populationManager;
-    private Utils utils;
 
     //Event Server
     private EventServer eventServer;
@@ -55,7 +54,6 @@ public class EventTracker extends Verticle
         dynamicDataManager = new DynamicDataManager();
         queryManager = new QueryManager();
         populationManager = new PopulationManager();
-        utils = new Utils();
         eventManager = new EventManager();
 
         //Event Server
@@ -74,11 +72,6 @@ public class EventTracker extends Verticle
     public QueryManager getQueryManager()
     {
         return queryManager;
-    }
-
-    public Utils getUtils()
-    {
-        return utils;
     }
 
     public DynamicDataManager getDynamicDataManager()

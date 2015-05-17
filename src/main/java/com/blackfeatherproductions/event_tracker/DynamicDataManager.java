@@ -19,8 +19,8 @@ public class DynamicDataManager
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
-    private Map<String, CharacterInfo> characters = new ConcurrentHashMap<String, CharacterInfo>();
-    private Map<World, WorldInfo> worlds = new HashMap<World, WorldInfo>();
+    private final Map<String, CharacterInfo> characters = new ConcurrentHashMap<String, CharacterInfo>();
+    private final Map<World, WorldInfo> worlds = new HashMap<World, WorldInfo>();
 
     public DynamicDataManager()
     {
@@ -41,7 +41,7 @@ public class DynamicDataManager
                 {
                     for (MetagameEventInfo metagameEvent : worldInfo.getValue().getActiveMetagameEvents().values())
                     {
-                        Date endTime = new Date(Long.valueOf(metagameEvent.getEndTime()) * 1000);
+                        Date endTime = new Date(Long.parseLong(metagameEvent.getEndTime()) * 1000);
 
                         if (new Date().after(endTime))
                         {
@@ -94,8 +94,8 @@ public class DynamicDataManager
 
         return null;
     }
-    
-    public Map<World,WorldInfo> getAllWorldInfo()
+
+    public Map<World, WorldInfo> getAllWorldInfo()
     {
         return worlds;
     }

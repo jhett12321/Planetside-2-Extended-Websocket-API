@@ -16,7 +16,7 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 @ActionInfo(actionNames = "zoneStatus")
 public class ZoneStatus implements Action
 {
-    private DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
     @Override
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
@@ -54,7 +54,7 @@ public class ZoneStatus implements Action
 
                         zone.putString("control_vs", controlInfo.getString("control_vs"));
                         zone.putString("control_nc", controlInfo.getString("control_nc"));
-                        zone.putString("control_tr", controlInfo.getString("control_tr"));;
+                        zone.putString("control_tr", controlInfo.getString("control_tr"));
 
                         zones.putObject(zoneInfo.getKey().getID(), zone);
                     }
@@ -88,7 +88,7 @@ public class ZoneStatus implements Action
 
                     zone.putString("control_vs", controlInfo.getString("control_vs"));
                     zone.putString("control_nc", controlInfo.getString("control_nc"));
-                    zone.putString("control_tr", controlInfo.getString("control_tr"));;
+                    zone.putString("control_tr", controlInfo.getString("control_tr"));
 
                     zones.putObject(zoneInfo.getKey().getID(), zone);
                 }

@@ -23,7 +23,7 @@ public class Census
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final Config config = eventTracker.getConfig();
 
-    private HttpClient client;
+    private final HttpClient client;
 
     //Connection Stuff
     private WebSocket websocket;
@@ -44,11 +44,10 @@ public class Census
         client.setReceiveBufferSize(1000000);
         client.setSendBufferSize(1000000);
 
-        connectWebsocket();
-
         //Reconnects the websocket if it is not online, or is not responding.
         vertx.setPeriodic(10000, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 if (!websocketConnected)
@@ -69,6 +68,7 @@ public class Census
         //Generates event metric messages
         vertx.setPeriodic(1000, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 JsonObject payload = new JsonObject();
@@ -79,6 +79,8 @@ public class Census
                 eventTracker.getEventHandler().handleEvent("EventTrackerMetrics", payload);
             }
         });
+
+        connectWebsocket();
     }
 
     public void connectWebsocket()
@@ -95,31 +97,31 @@ public class Census
                     public void handle(Buffer data)
                     {
                         JsonObject message = new JsonObject(data.toString());
-                        if (message != null)
+                        String serviceType = message.getString("type");
+
+                        if (message.containsField("connected") && message.getString("connected").equals("true"))
                         {
-                            String serviceType = message.getString("type");
+                            eventTracker.getLogger().info("Websocket Secure Connection established to push.planetside.com");
 
-                            if (message.containsField("connected") && message.getString("connected").equals("true"))
+                            websocketConnected = true;
+
+                            eventTracker.getLogger().info("Requesting seen Character IDs...");
+
+                            //Get recent character ID's for population.
+                            websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
+                        }
+
+                        else if (message.containsField("subscription"))
+                        {
+                            eventTracker.getLogger().info("Census Confirmed event feed subscription:");
+                            eventTracker.getLogger().info(message.encodePrettily());
+                        }
+
+                        else if (serviceType != null)
+                        {
+                            switch (serviceType)
                             {
-                                eventTracker.getLogger().info("Websocket Secure Connection established to push.planetside.com");
-
-                                websocketConnected = true;
-
-                                eventTracker.getLogger().info("Requesting seen Character IDs...");
-
-                                //Get recent character ID's for population.
-                                websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
-                            }
-
-                            else if (message.containsField("subscription"))
-                            {
-                                eventTracker.getLogger().info("Census Confirmed event feed subscription:");
-                                eventTracker.getLogger().info(message.encodePrettily());
-                            }
-
-                            else if (serviceType != null)
-                            {
-                                if (serviceType.equals("serviceStateChanged"))
+                                case "serviceStateChanged":
                                 {
                                     if (message.getString("online").equals("true"))
                                     {
@@ -130,12 +132,14 @@ public class Census
                                     {
                                         updateEndpointStatus(Utils.getWorldIDFromEndpointString(message.getString("detail")), false);
                                     }
+                                    
+                                    break;
                                 }
-
-                                else if (serviceType.equals("heartbeat"))
+                                case "heartbeat":
                                 {
                                     lastHeartbeat = new Date().getTime();
                                     JsonObject onlineList = message.getObject("online");
+                                    
                                     for (Entry<String, Object> endpoint : onlineList.toMap().entrySet())
                                     {
                                         if (endpoint.getValue().equals("true"))
@@ -148,15 +152,16 @@ public class Census
                                             updateEndpointStatus(Utils.getWorldIDFromEndpointString(endpoint.getKey()), false);
                                         }
                                     }
+                                    
+                                    break;
                                 }
-
-                                else if (serviceType.equals("serviceMessage"))
+                                case "serviceMessage":
                                 {
                                     JsonObject payload = message.getObject("payload");
                                     String eventName = payload.getString("event_name");
-
+                                    
                                     eventTracker.countReceivedEvent();
-
+                                    
                                     //Check the world status for this event
                                     if (payload.containsField("recent_character_id_list"))
                                     {
@@ -181,20 +186,22 @@ public class Census
                                     {
                                         eventTracker.getEventHandler().handleEvent(eventName, payload);
                                     }
-                                }
 
-                                else
+                                    break;
+                                }
+                                default:
                                 {
                                     eventTracker.getLogger().warn("Could not handle message!");
                                     eventTracker.getLogger().warn(message.encodePrettily());
+                                    break;
                                 }
                             }
+                        }
 
-                            else if (!message.containsField("send this for help"))
-                            {
-                                eventTracker.getLogger().warn("Could not handle message!");
-                                eventTracker.getLogger().warn(message.encodePrettily());
-                            }
+                        else if (!message.containsField("send this for help"))
+                        {
+                            eventTracker.getLogger().warn("Could not handle message!");
+                            eventTracker.getLogger().warn(message.encodePrettily());
                         }
                     }
                 });
@@ -240,12 +247,11 @@ public class Census
             currentServerStatus = eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)).isOnline();
         }
 
-        if (currentServerStatus != newValue)
+        if (!currentServerStatus.equals(newValue))
         {
             if (newValue)
             {
-	    		//Data is (now) being received for this world.
-
+	    	//Data is (now) being received for this world.
                 //Query Census for World Data.
                 new WorldQuery(worldID);
             }
@@ -261,7 +267,7 @@ public class Census
     private void onWebsocketDisconnected()
     {
         websocketConnected = false;
-        
+
         for (WorldInfo world : eventTracker.getDynamicDataManager().getAllWorldInfo().values())
         {
             world.setOnline(false);

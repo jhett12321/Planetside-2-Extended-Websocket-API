@@ -53,6 +53,7 @@ public class PopulationManager implements Query
         //Detects if players are no-longer online (i.e. we missed the logout event.)
         vertx.setPeriodic(60000, new Handler<Long>()
         {
+            @Override
             public void handle(Long timerID)
             {
                 //Remove characters that census failed to retrieve online statuses for (deleted characters, low BR, etc)
@@ -205,7 +206,7 @@ public class PopulationManager implements Query
     }
 
     @Override
-    public void ReceiveData(JsonObject data)
+    public void receiveData(JsonObject data)
     {
         JsonArray characterList = data.getArray("character_list");
 
@@ -221,7 +222,7 @@ public class PopulationManager implements Query
             String outfitID;
             String zoneID;
             String worldID;
-            Boolean online = null;
+            Boolean online;
 
             if (characterData.containsField("outfit"))
             {
@@ -254,6 +255,10 @@ public class PopulationManager implements Query
             {
                 online = !characterData.getObject("online").getString("online_status").equals("0");
             }
+            else
+            {
+                online = false;
+            }
 
             CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
 
@@ -269,15 +274,10 @@ public class PopulationManager implements Query
                     onlinePlayers.get(characterID).setLastEvent(new Date());
                 }
 
-                else if (characterInfo.isOnline() == false)
-                {
-                    //This player is no-longer online. Remove the player.
-                    onlinePlayers.remove(characterID);
-                }
-
                 else
                 {
                     //This player doesn't have valid online status data.
+                    //This player is no-longer online. Remove the player.
                     onlinePlayers.remove(characterID);
                 }
             }
