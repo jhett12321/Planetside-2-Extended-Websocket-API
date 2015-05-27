@@ -34,7 +34,6 @@ import com.blackfeatherproductions.event_tracker.events.extended.PopulationChang
 import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 
-//TODO ItemAdded and SkillAdded events.
 public class EventManager
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
@@ -50,11 +49,8 @@ public class EventManager
     public EventManager()
     {
         //Register events/listeners available for processing.
-        registerListeners();
-        registerServiceEvents();
-        registerCensusEvents();
-        registerExtendedEvents();
-
+        registerEvents();
+        
         //Process Event Queue
         eventTracker.getVertx().setPeriodic(100, new Handler<Long>()
         {
@@ -72,50 +68,6 @@ public class EventManager
                 }
             }
         });
-    }
-
-    /**
-     * Service Events are always sent, regardless of subscriptions.
-     */
-    private void registerServiceEvents()
-    {
-        registerEvent(ServiceStateChangeEvent.class);
-    }
-
-    /**
-     * Census events are revamped events from the default census PUSH feed.
-     */
-    private void registerCensusEvents()
-    {
-        registerEvent(AchievementEarnedEvent.class);
-        registerEvent(BattleRankEvent.class);
-        registerEvent(CombatEvent.class);
-        registerEvent(ContinentLockEvent.class);
-        registerEvent(ContinentUnlockEvent.class);
-        registerEvent(DirectiveCompletedEvent.class);
-        registerEvent(ExperienceEarned.class);
-        registerEvent(FacilityControlEvent.class);
-        registerEvent(ItemAddedEvent.class);
-        registerEvent(LoginEvent.class);
-        registerEvent(MetagameEvent.class);
-        registerEvent(PlayerFacilityControlEvent.class);
-        registerEvent(SkillAddedEvent.class);
-        registerEvent(VehicleDestroyEvent.class);
-    }
-
-    /**
-     * Extended events are new event types that utilize exiting data to create
-     * new events.
-     */
-    private void registerExtendedEvents()
-    {
-        registerEvent(PopulationChangeEvent.class);
-        registerEvent(PlanetsideTimeEvent.class);
-    }
-
-    private void registerListeners()
-    {
-        registerListener(PopulationEventListener.class);
     }
 
     public void handleEvent(String eventName, JsonObject payload)
@@ -172,13 +124,41 @@ public class EventManager
             }
         }
     }
+    
+    private void registerEvents()
+    {
+        //Listeners
+        registerEvent(PopulationEventListener.class);
+        
+        //Service Events
+        registerEvent(ServiceStateChangeEvent.class);
+        
+        //Census Events
+        registerEvent(AchievementEarnedEvent.class);
+        registerEvent(BattleRankEvent.class);
+        registerEvent(CombatEvent.class);
+        registerEvent(ContinentLockEvent.class);
+        registerEvent(ContinentUnlockEvent.class);
+        registerEvent(DirectiveCompletedEvent.class);
+        registerEvent(ExperienceEarned.class);
+        registerEvent(FacilityControlEvent.class);
+        registerEvent(ItemAddedEvent.class);
+        registerEvent(LoginEvent.class);
+        registerEvent(MetagameEvent.class);
+        registerEvent(PlayerFacilityControlEvent.class);
+        registerEvent(SkillAddedEvent.class);
+        registerEvent(VehicleDestroyEvent.class);
+        
+        //Extended Events
+        registerEvent(PopulationChangeEvent.class);
+        registerEvent(PlanetsideTimeEvent.class);
+    }
 
     /**
      * This method is used to register an event to be handled by the
      * EventManager. <br/>
      * Event payloads are sent to these event classes based on the event names
      * listed in the class' annotation. <br/>
-     * Events are always called after listeners.
      *
      * @param event A class fully implementing the event interface.
      */
@@ -190,29 +170,17 @@ public class EventManager
             eventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
-
-        events.put(info, event);
-    }
-
-    /**
-     * This method is used to register a listener to be handled by the
-     * EventManager. <br/>
-     * Event payloads are sent to these event classes based on the event names
-     * listed in the class' annotation. <br/>
-     * Listeners are always called before events.
-     *
-     * @param listener A class fully implementing the event interface.
-     */
-    public void registerListener(Class<? extends Event> listener)
-    {
-        EventInfo info = listener.getAnnotation(EventInfo.class);
-        if (info == null)
+        
+        switch(info.eventType())
         {
-            eventTracker.getLogger().warn("Implementing Listener Class: " + listener.getName() + " is missing a required annotation.");
-            return;
+            case SERVICE:
+            case EVENT:
+                events.put(info, event);
+                break;
+            case LISTENER:
+                listeners.put(info, event);
+                break;
         }
-
-        listeners.put(info, listener);
     }
 
     public Collection<Class<? extends Event>> getRegisteredEvents()

@@ -26,6 +26,7 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
+import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
 import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
@@ -289,13 +290,14 @@ public class EventServer
         {
             Boolean sendMessage = null;
             
-            //TODO Add Type parameter to event annotation.
-            if(event.getAnnotation(EventInfo.class).eventName().equals("ServiceStateChange"))
+            EventType eventType = event.getAnnotation(EventInfo.class).eventType();
+            
+            if(eventType.equals(EventType.SERVICE))
             {
                 sendMessage = true;
             }
             
-            else
+            else if(eventType.equals(EventType.EVENT))
             {
                 //Get Subscription for provided event
                 JsonObject subscription = connection.getValue().getSubscription(event);

@@ -6,8 +6,10 @@ import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
+import com.blackfeatherproductions.event_tracker.events.EventType;
 
-@EventInfo(eventName = "ServiceStateChange",
+@EventInfo(eventType = EventType.SERVICE,
+        eventName = "ServiceStateChange",
         listenedEvents = "ServiceStateChange",
         priority = EventPriority.HIGHEST)
 public class ServiceStateChangeEvent implements Event

@@ -6,8 +6,10 @@ import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
+import com.blackfeatherproductions.event_tracker.events.EventType;
 
-@EventInfo(eventName = "PlanetsideTime",
+@EventInfo(eventType = EventType.EVENT,
+        eventName = "PlanetsideTime",
         listenedEvents = "PlanetsideTime",
         priority = EventPriority.NORMAL)
 public class PlanetsideTimeEvent implements Event

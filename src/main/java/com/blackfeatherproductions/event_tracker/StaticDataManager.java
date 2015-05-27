@@ -14,9 +14,9 @@ public class StaticDataManager
     {
         //Initialises Static Game Data
 
-        //TODO 1.1 Query Census for all required static data
-        //TODO 1.1 All Data Types need to eventually have their own class.
-        //TODO 1.1 Types to be implemented: achievement, item/weapon, vehicle, directive
+        //TODO 1.3 Query Census for all required static data
+        //TODO 1.3 All Data Types need to eventually have their own class.
+        //TODO 1.3 Types to be implemented: achievement, item/weapon, vehicle, directive
         //Worlds
         World.UNKNOWN = new World("0", "Unknown");
         World.CONNERY = new World("1", "Connery");

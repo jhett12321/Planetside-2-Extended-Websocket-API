@@ -12,9 +12,11 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventName = "ItemAdded",
+@EventInfo(eventType = EventType.EVENT,
+        eventName = "ItemAdded",
         listenedEvents = "ItemAdded",
         priority = EventPriority.NORMAL,
         filters =

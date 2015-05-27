@@ -6,6 +6,8 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface EventInfo
 {
+    public EventType eventType();
+    
     public String eventName();
 
     public String listenedEvents();

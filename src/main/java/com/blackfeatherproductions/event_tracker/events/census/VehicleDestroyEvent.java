@@ -16,9 +16,11 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
+import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventName = "VehicleDestroy",
+@EventInfo(eventType = EventType.EVENT,
+        eventName = "VehicleDestroy",
         listenedEvents = "VehicleDestroy",
         priority = EventPriority.NORMAL,
         filters =

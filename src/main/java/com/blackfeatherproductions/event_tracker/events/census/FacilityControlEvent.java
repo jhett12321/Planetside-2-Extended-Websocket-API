@@ -13,8 +13,10 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
+import com.blackfeatherproductions.event_tracker.events.EventType;
 
-@EventInfo(eventName = "FacilityControl",
+@EventInfo(eventType = EventType.EVENT,
+        eventName = "FacilityControl",
         listenedEvents = "FacilityControl",
         priority = EventPriority.NORMAL,
         filters =
