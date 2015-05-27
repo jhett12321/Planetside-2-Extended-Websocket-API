@@ -9,11 +9,7 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 
 @EventInfo(eventName = "PlanetsideTime",
         listenedEvents = "PlanetsideTime",
-        priority = EventPriority.NORMAL,
-        filters =
-        {
-            "no_filtering"
-        })
+        priority = EventPriority.NORMAL)
 public class PlanetsideTimeEvent implements Event
 {
     private final EventTracker eventTracker = EventTracker.getInstance();

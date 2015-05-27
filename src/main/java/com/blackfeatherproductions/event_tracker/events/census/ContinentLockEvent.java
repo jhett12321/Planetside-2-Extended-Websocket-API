@@ -83,6 +83,5 @@ public class ContinentLockEvent implements Event
         message.putObject("filter_data", filterData);
 
         eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
-        eventTracker.countProcessedEvent();
     }
 }

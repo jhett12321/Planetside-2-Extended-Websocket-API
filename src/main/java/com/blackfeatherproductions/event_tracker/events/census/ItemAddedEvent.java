@@ -3,28 +3,32 @@ package com.blackfeatherproductions.event_tracker.events.census;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
+import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-@EventInfo(eventName = "ContinentUnlock",
-        listenedEvents = "ContinentUnlock",
-        priority = EventPriority.LOWEST,
+@EventInfo(eventName = "ItemAdded",
+        listenedEvents = "ItemAdded",
+        priority = EventPriority.NORMAL,
         filters =
         {
-            "factions", "zones", "worlds"
+            "characters", "outfits", "factions", "items", "zones", "worlds"
         })
-public class ContinentUnlockEvent implements Event
+public class ItemAddedEvent implements Event
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
 
     private JsonObject payload;
+
+    private String characterID;
 
     @Override
     public void preProcessEvent(JsonObject payload)
@@ -32,7 +36,17 @@ public class ContinentUnlockEvent implements Event
         this.payload = payload;
         if (payload != null)
         {
-            processEvent();
+            characterID = payload.getString("character_id");
+
+            if (dynamicDataManager.characterDataExists(characterID))
+            {
+                processEvent();
+            }
+
+            else
+            {
+                new CharacterQuery(characterID, this);
+            }
         }
     }
 
@@ -40,31 +54,22 @@ public class ContinentUnlockEvent implements Event
     public void processEvent()
     {
         //Data
-        String vs_population = payload.getString("vs_population");
-        String nc_population = payload.getString("nc_population");
-        String tr_population = payload.getString("tr_population");
-
-        Faction unlocked_by = Faction.getFactionByID(payload.getString("triggering_faction"));
-        String metagame_event_id = payload.getString("metagame_event_id");
-
+        CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
+        String outfit_id = character.getOutfitID();
+        Faction faction = character.getFaction();
+        String item_id = payload.getString("item_id");
         String timestamp = payload.getString("timestamp");
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
 
-        //Update Internal Data
-        dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(false);
-        dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NS);
-
         //Payload
         JsonObject eventData = new JsonObject();
 
-        eventData.putString("vs_population", vs_population);
-        eventData.putString("nc_population", nc_population);
-        eventData.putString("tr_population", tr_population);
-
-        eventData.putString("unlocked_by", unlocked_by.getID());
-        eventData.putString("metagame_event_id", metagame_event_id);
-
+        eventData.putString("character_id", character.getCharacterID());
+        eventData.putString("character_name", character.getCharacterName());
+        eventData.putString("outfit_id", outfit_id);
+        eventData.putString("faction_id", faction.getID());
+        eventData.putString("item_id", item_id);
         eventData.putString("timestamp", timestamp);
         eventData.putString("zone_id", zone.getID());
         eventData.putString("world_id", world.getID());
@@ -72,7 +77,10 @@ public class ContinentUnlockEvent implements Event
         //Filters
         JsonObject filterData = new JsonObject();
 
-        filterData.putArray("factions", new JsonArray().addString(unlocked_by.getID()));
+        filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
+        filterData.putArray("outfits", new JsonArray().addString(outfit_id));
+        filterData.putArray("factions", new JsonArray().addString(faction.getID()));
+        filterData.putArray("items", new JsonArray().addString(item_id));
         filterData.putArray("zones", new JsonArray().addString(zone.getID()));
         filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 

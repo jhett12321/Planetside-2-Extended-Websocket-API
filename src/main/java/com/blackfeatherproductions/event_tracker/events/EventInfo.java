@@ -10,7 +10,7 @@ public @interface EventInfo
 
     public String listenedEvents();
 
-    public String[] filters();
+    public String[] filters() default {"no_filtering"};
 
     public EventPriority priority();
 }

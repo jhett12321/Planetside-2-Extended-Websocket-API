@@ -142,6 +142,5 @@ public class CombatEvent implements Event
         message.putObject("filter_data", filterData);
 
         eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
-        eventTracker.countProcessedEvent();
     }
 }

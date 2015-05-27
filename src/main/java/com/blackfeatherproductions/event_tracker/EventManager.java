@@ -27,10 +27,9 @@ import com.blackfeatherproductions.event_tracker.events.census.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.census.MetagameEvent;
 import com.blackfeatherproductions.event_tracker.events.census.PlayerFacilityControlEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
-import com.blackfeatherproductions.event_tracker.events.extended.EventTrackerMetricsEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
-import com.blackfeatherproductions.event_tracker.events.extended.ServiceStateChangeEvent;
+import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 
 //TODO ItemAdded and SkillAdded events.
@@ -108,7 +107,6 @@ public class EventManager
     {
         registerEvent(PopulationChangeEvent.class);
         registerEvent(PlanetsideTimeEvent.class);
-        registerEvent(EventTrackerMetricsEvent.class);
     }
 
     private void registerListeners()
