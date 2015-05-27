@@ -6,6 +6,7 @@ import java.util.Map.Entry;
 
 import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.json.JsonArray;
+import org.vertx.java.core.json.JsonElement;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.EventTracker;
@@ -80,6 +81,8 @@ public class EventServerClient
 
         if (event != null)
         {
+            parseMessageFilters(messageFilters);
+            
             JsonObject subscription = subscriptions.get(event);
 
             switch (action)
@@ -282,5 +285,67 @@ public class EventServerClient
         subscription.putArray("hide", new JsonArray());
 
         return subscription;
+    }
+    
+    /**
+     * Converts subscription filters to the correct types used internally by the event tracker.
+     * @param messageFilters 
+     */
+    private void parseMessageFilters(JsonObject messageFilters)
+    {
+        for (String property : messageFilters.toMap().keySet())
+        {
+            Class dataType = messageFilters.getField(property);
+            //JsonElement rawProperty = messageFilters.getElement(property);
+            
+            //The all property is always a string
+            if (property.equals("all"))
+            {
+                String parsedProperty = "";
+                
+                if(dataType.equals(JsonArray.class))
+                {
+                    parsedProperty = messageFilters.getArray(property).get(0);
+                }
+                else if(dataType.equals(JsonObject.class))
+                {
+                    parsedProperty = messageFilters.getObject(property).getFieldNames().iterator().next();
+                }
+                else if(dataType.equals(Boolean.class))
+                {
+                    parsedProperty = messageFilters.getBoolean(property).toString();
+                }
+                
+                if(!parsedProperty.equals("true") && !parsedProperty.equals("false"))
+                {
+                    parsedProperty = "true";
+                }
+                
+                messageFilters.removeField(property);
+                messageFilters.putString(property, parsedProperty);
+            }
+            
+            //Everything else should be an array.
+            else
+            {
+                JsonArray parsedProperty = new JsonArray();
+                
+                if(dataType.equals(String.class))
+                {
+                    parsedProperty.add(messageFilters.getString(property));
+                }
+                else if(dataType.equals(JsonObject.class))
+                {
+                    parsedProperty.addArray(messageFilters.getObject(property).asArray());
+                }
+                else if(dataType.equals(Boolean.class))
+                {
+                    parsedProperty.add(messageFilters.getBoolean(property).toString());
+                }
+                
+                messageFilters.removeField(property);
+                messageFilters.putArray(property, parsedProperty);
+            }
+        }
     }
 }
