@@ -6,7 +6,6 @@ import java.util.Map.Entry;
 
 import org.vertx.java.core.http.ServerWebSocket;
 import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonElement;
 import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.EventTracker;
@@ -134,7 +133,7 @@ public class EventServerClient
         returnSubscriptions.putObject("subscriptions", returnObject);
         returnSubscriptions.putString("action", action);
 
-        clientConnection.writeTextFrame(returnObject.encode());
+        clientConnection.writeTextFrame(returnSubscriptions.encode());
     }
 
     private void subscribe(JsonObject messageFilters, JsonObject subscription)
@@ -198,13 +197,10 @@ public class EventServerClient
             {
                 if (property.equals("all"))
                 {
-                    if (messageFilters.getString(property).equals("false"))
-                    {
-                        subscription.putString(property, "false");
-                    }
+                    subscription.putString(property, "false");
                 }
 
-                else if (!property.equals("world") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
+                else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
                 {
                     JsonArray filteredArray = new JsonArray();
 
@@ -225,10 +221,11 @@ public class EventServerClient
 
                     for (Entry<String, Object> world : subscription.getObject(property).toMap().entrySet())
                     {
-                        if (!messageFilters.getObject(property).containsField(world.getKey()))
+                        if (!messageFilters.getArray(property).contains(world.getKey()))
                         {
                             JsonObject worldObject = new JsonObject();
-                            worldObject.putArray("zones", new JsonArray());
+                            JsonArray zoneArray = new JsonArray();
+                            worldObject.putArray("zones", zoneArray);
 
                             filteredObject.putObject(world.getKey(), worldObject);
                         }
@@ -237,9 +234,9 @@ public class EventServerClient
                         {
                             for (int i = 0; i < subscription.getArray("zones").size(); i++)
                             {
-                                if (!messageFilters.getObject(property).getObject(world.getKey()).getArray("zones").contains(messageFilters.getArray("zones").get(i)))
+                                if (!messageFilters.getArray("zones").contains(subscription.getArray("zones").get(i)))
                                 {
-                                    filteredObject.getObject(world.getKey()).getArray("zones").add(messageFilters.getArray("zones").get(i));
+                                    filteredObject.getObject(world.getKey()).getArray("zones").add(subscription.getArray("zones").get(i));
                                 }
                             }
                         }
@@ -295,25 +292,28 @@ public class EventServerClient
     {
         for (String property : messageFilters.toMap().keySet())
         {
-            Class dataType = messageFilters.getField(property);
-            //JsonElement rawProperty = messageFilters.getElement(property);
+            Object rawData = messageFilters.getField(property);
             
             //The all property is always a string
             if (property.equals("all"))
             {
                 String parsedProperty = "";
                 
-                if(dataType.equals(JsonArray.class))
+                if(rawData instanceof JsonArray)
                 {
-                    parsedProperty = messageFilters.getArray(property).get(0);
+                    parsedProperty = ((JsonArray) rawData).get(0);
                 }
-                else if(dataType.equals(JsonObject.class))
+                else if(rawData instanceof JsonObject)
                 {
-                    parsedProperty = messageFilters.getObject(property).getFieldNames().iterator().next();
+                    parsedProperty = ((JsonObject) rawData).getFieldNames().iterator().next();
                 }
-                else if(dataType.equals(Boolean.class))
+                else if(rawData instanceof Boolean)
                 {
-                    parsedProperty = messageFilters.getBoolean(property).toString();
+                    parsedProperty = ((Boolean) rawData).toString();
+                }
+                else
+                {
+                    parsedProperty = (String) rawData;
                 }
                 
                 if(!parsedProperty.equals("true") && !parsedProperty.equals("false"))
@@ -330,17 +330,21 @@ public class EventServerClient
             {
                 JsonArray parsedProperty = new JsonArray();
                 
-                if(dataType.equals(String.class))
+                if(rawData instanceof String)
                 {
-                    parsedProperty.add(messageFilters.getString(property));
+                    parsedProperty.add((String) rawData);
                 }
-                else if(dataType.equals(JsonObject.class))
+                else if(rawData instanceof JsonObject)
                 {
-                    parsedProperty.addArray(messageFilters.getObject(property).asArray());
+                    parsedProperty.addArray(((JsonObject) rawData).asArray());
                 }
-                else if(dataType.equals(Boolean.class))
+                else if(rawData instanceof Boolean)
                 {
-                    parsedProperty.add(messageFilters.getBoolean(property).toString());
+                    parsedProperty.add(((Boolean) rawData).toString());
+                }
+                else
+                {
+                    parsedProperty = (JsonArray) rawData;
                 }
                 
                 messageFilters.removeField(property);

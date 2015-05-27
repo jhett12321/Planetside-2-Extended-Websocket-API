@@ -23,9 +23,11 @@ import com.blackfeatherproductions.event_tracker.events.census.ContinentUnlockEv
 import com.blackfeatherproductions.event_tracker.events.census.DirectiveCompletedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ExperienceEarned;
 import com.blackfeatherproductions.event_tracker.events.census.FacilityControlEvent;
+import com.blackfeatherproductions.event_tracker.events.census.ItemAddedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.LoginEvent;
 import com.blackfeatherproductions.event_tracker.events.census.MetagameEvent;
 import com.blackfeatherproductions.event_tracker.events.census.PlayerFacilityControlEvent;
+import com.blackfeatherproductions.event_tracker.events.census.SkillAddedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
@@ -93,9 +95,11 @@ public class EventManager
         registerEvent(DirectiveCompletedEvent.class);
         registerEvent(ExperienceEarned.class);
         registerEvent(FacilityControlEvent.class);
+        registerEvent(ItemAddedEvent.class);
         registerEvent(LoginEvent.class);
         registerEvent(MetagameEvent.class);
         registerEvent(PlayerFacilityControlEvent.class);
+        registerEvent(SkillAddedEvent.class);
         registerEvent(VehicleDestroyEvent.class);
     }
 

@@ -97,7 +97,7 @@ public class WorldInfo
             payload.putString("online", online ? "1" : "0");
             payload.putString("world_id", world.getID());
 
-            eventTracker.getEventHandler().handleEvent("ServiceStateChangeEvent", payload);
+            eventTracker.getEventHandler().handleEvent("ServiceStateChange", payload);
         }
     }
 }
