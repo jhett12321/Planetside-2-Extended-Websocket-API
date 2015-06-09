@@ -24,19 +24,24 @@ public class Census
     private final Config config = eventTracker.getConfig();
 
     private final HttpClient client;
-
-    //Connection Stuff
     private WebSocket websocket;
-    private boolean websocketConnected = false;
-
+    
+    //Connection Stuff
+    private WebsocketConnectState websocketConnectState = WebsocketConnectState.CLOSED;
     private long lastHeartbeat = 0;
+    private long startTime = 0;
 
+    //================================================================================
+    // Constructor
+    //================================================================================
+    
     public Census()
     {
         Vertx vertx = eventTracker.getVertx();
 
         client = vertx.createHttpClient();
 
+        //Websocket & Client Attributes
         client.setHost("push.planetside2.com");
         client.setPort(443);
         client.setSSL(true);
@@ -50,26 +55,41 @@ public class Census
             @Override
             public void handle(Long timerID)
             {
-                if (!websocketConnected)
+                //Connect the websocket if it is closed.
+                if (websocketConnectState.equals(WebsocketConnectState.CLOSED))
                 {
-                    eventTracker.getLogger().error("Websocket Connection lost... Reconnecting.");
+                    eventTracker.getLogger().info("Reconnecting...");
                     connectWebsocket();
                 }
 
-                //If we have not received a heartbeat in the last 5 minutes, restart the connection
-                else if (lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 300000)
+                //If we have not received a heartbeat in the last 2 minutes, disconnect, then restart the connection
+                else if (!websocketConnectState.equals(WebsocketConnectState.CONNECTING) && lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 120000)
                 {
                     eventTracker.getLogger().error("No hearbeat message received for > 5 minutes. Restarting websocket connection.");
-                    websocket.close();
+                    disconnectWebsocket();
+                }
+                
+                //If the current connection attempt has lasted longer than a minute, cancel the attempt and try again.
+                else if(websocketConnectState.equals(WebsocketConnectState.CONNECTING) && startTime != 0 && (new Date().getTime()) - startTime > 60000)
+                {
+                    eventTracker.getLogger().error("Websocket Connection Timeout Reached. Retrying connection...");
+                    disconnectWebsocket();
                 }
             }
         });
 
         connectWebsocket();
     }
-
+    
+    //================================================================================
+    // Websocket Connection Management
+    //================================================================================
+    
     public void connectWebsocket()
     {
+        websocketConnectState = WebsocketConnectState.CONNECTING;
+        startTime = new Date().getTime();
+        
         client.connectWebsocket("/streaming?service-id=s:" + config.getSoeServiceID(), new Handler<WebSocket>()
         {
             @Override
@@ -81,18 +101,19 @@ public class Census
                     @Override
                     public void handle(Buffer data)
                     {
+                        //We received a valid message from census.
                         JsonObject message = new JsonObject(data.toString());
                         String serviceType = message.getString("type");
 
                         if (message.containsField("connected") && message.getString("connected").equals("true"))
                         {
+                            //We are now connected.
+                            //Set our connection state to open.
+                            websocketConnectState = WebsocketConnectState.OPEN;
                             eventTracker.getLogger().info("Websocket Secure Connection established to push.planetside.com");
 
-                            websocketConnected = true;
-
-                            eventTracker.getLogger().info("Requesting seen Character IDs...");
-
                             //Get recent character ID's for population.
+                            eventTracker.getLogger().info("Requesting seen Character IDs...");
                             websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
                         }
 
@@ -145,31 +166,7 @@ public class Census
                                     JsonObject payload = message.getObject("payload");
                                     String eventName = payload.getString("event_name");
                                     
-                                    //Check the world status for this event
-                                    if (payload.containsField("recent_character_id_list"))
-                                    {
-                                        eventTracker.getLogger().info("Character List Received!");
-                                        eventTracker.getLogger().info("Subscribing to all events...");
-
-                                        //Send subscription message
-                                        websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
-
-                                        JsonArray recentCharacterIDList = payload.getArray("recent_character_id_list");
-                                        for (int i = 0; i < recentCharacterIDList.size(); i++)
-                                        {
-                                            JsonObject characterPayload = new JsonObject();
-                                            characterPayload.putString("character_id", (String) recentCharacterIDList.get(i));
-                                            characterPayload.putString("event_name", "CharacterList");
-
-                                            eventTracker.getEventHandler().handleEvent("CharacterList", characterPayload);
-                                        }
-                                    }
-
-                                    else if (eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
-                                    {
-                                        eventTracker.getEventHandler().handleEvent(eventName, payload);
-                                    }
-
+                                    processServiceMessage(payload, eventName);
                                     break;
                                 }
                                 default:
@@ -194,7 +191,8 @@ public class Census
                     @Override
                     public void handle(Void arg0)
                     {
-                        onWebsocketDisconnected();
+                        eventTracker.getLogger().error("Websocket connection lost: The websocket connection was closed.");
+                        disconnectWebsocket();
                     }
                 });
 
@@ -203,7 +201,8 @@ public class Census
                     @Override
                     public void handle(Void arg0)
                     {
-                        onWebsocketDisconnected();
+                        eventTracker.getLogger().error("Websocket connection lost: The websocket connection ended.");
+                        disconnectWebsocket();
                     }
                 });
 
@@ -212,14 +211,65 @@ public class Census
                     @Override
                     public void handle(Throwable arg0)
                     {
-                        onWebsocketDisconnected();
+                        eventTracker.getLogger().error("Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
+                        disconnectWebsocket();
                         arg0.printStackTrace();
                     }
                 });
             }
         });
     }
+    
+    private void disconnectWebsocket()
+    {
+        //Close the websocket if not already, and set it to null to free unused memory.
+        websocket.close();
+        websocket = null;
+        
+        //Set the connection state to closed
+        websocketConnectState = WebsocketConnectState.CLOSED;
 
+        //Update endpoints if they are not already offline.
+        for (WorldInfo world : eventTracker.getDynamicDataManager().getAllWorldInfo().values())
+        {
+            world.setOnline(false);
+        }
+    }
+    
+    //================================================================================
+    // Message Management
+    //================================================================================
+
+    private void processServiceMessage(JsonObject payload, String eventName)
+    {
+        //This is the final init step. Process the character list.
+        if (payload.containsField("recent_character_id_list"))
+        {
+            eventTracker.getLogger().info("Character List Received!");
+            eventTracker.getLogger().info("Subscribing to all events...");
+
+            //Send subscription message
+            websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+
+            JsonArray recentCharacterIDList = payload.getArray("recent_character_id_list");
+            for (int i = 0; i < recentCharacterIDList.size(); i++)
+            {
+                JsonObject characterPayload = new JsonObject();
+                characterPayload.putString("character_id", (String) recentCharacterIDList.get(i));
+                characterPayload.putString("event_name", "CharacterList");
+
+                eventTracker.getEventHandler().handleEvent("CharacterList", characterPayload);
+            }
+        }
+
+        //This is a regular event.
+        //Don't send this event if the world is not online, otherwise send it to the event manage for processing.
+        else if (eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
+        {
+            eventTracker.getEventHandler().handleEvent(eventName, payload);
+        }
+    }
+    
     private void updateEndpointStatus(String worldID, Boolean newValue)
     {
         Boolean currentServerStatus = false;
@@ -244,16 +294,6 @@ public class Census
                 //No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
                 eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
             }
-        }
-    }
-
-    private void onWebsocketDisconnected()
-    {
-        websocketConnected = false;
-
-        for (WorldInfo world : eventTracker.getDynamicDataManager().getAllWorldInfo().values())
-        {
-            world.setOnline(false);
         }
     }
 }
