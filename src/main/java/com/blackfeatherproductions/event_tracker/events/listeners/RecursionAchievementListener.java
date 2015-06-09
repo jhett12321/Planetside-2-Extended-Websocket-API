@@ -21,12 +21,11 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
-//TODO Some of these events overlap, and can be truncated to improve performance.
 @EventInfo(eventType = EventType.LISTENER,
-        eventName = "PopulationEventListener",
-        listenedEvents = "CharacterList|AchievementEarned|BattleRankUp|Death|DirectiveCompleted|GainExperience|ItemAdded|PlayerLogin|PlayerLogout|PlayerFacilityCapture|PlayerFacilityDefend|VehicleDestroy",
-        priority = EventPriority.NORMAL)
-public class PopulationEventListener implements Event
+        eventName = "RecursionAchievementListener",
+        listenedEvents = "AchievementEarned|BattleRankUp|Death|DirectiveCompleted|GainExperience|ItemAdded|PlayerLogin|PlayerLogout|PlayerFacilityCapture|PlayerFacilityDefend|VehicleDestroy",
+        priority = EventPriority.LOW)
+public class RecursionAchievementListener implements Event
 {
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
     private final PopulationManager populationManager = EventTracker.getInstance().getPopulationManager();

@@ -5,6 +5,7 @@ import java.util.Date;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.events.extended.recursion.RecursionPlayer;
 
 public class OnlinePlayer
 {
@@ -14,6 +15,8 @@ public class OnlinePlayer
     private World world;
 
     private Date lastEvent;
+    
+    private RecursionPlayer player;
 
     public OnlinePlayer(Faction faction, String outfitID, Zone zone, World world)
     {
@@ -23,6 +26,7 @@ public class OnlinePlayer
         this.world = world;
 
         this.lastEvent = new Date();
+        this.player = new RecursionPlayer(this);
     }
 
     public Zone getZone()

@@ -6,7 +6,7 @@
   <groupId>com.blackfeatherproductions</groupId>
   <artifactId>EventTracker</artifactId>
   <packaging>jar</packaging>
-  <version>1.2</version>
+  <version>1.3-SNAPSHOT</version>
   <name>Planetside 2 Extended Push API</name>
   <url>http://maven.apache.org</url>
 
