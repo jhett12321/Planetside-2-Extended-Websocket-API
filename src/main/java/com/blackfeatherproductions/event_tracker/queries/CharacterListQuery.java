@@ -24,56 +24,59 @@ public class CharacterListQuery implements Query
     @Override
     public void receiveData(JsonObject data)
     {
-        JsonArray characterList = data.getArray("character_list");
-
-        for (int i = 0; i < characterList.size(); i++)
+        if(data != null)
         {
-            JsonObject characterData = characterList.get(i);
+            JsonArray characterList = data.getArray("character_list");
 
-            String characterID = characterData.getString("character_id");
-            String characterName = characterData.getObject("name").getString("first");
-            String factionID = characterData.getString("faction_id");
-
-            String outfitID;
-            String zoneID;
-            String worldID;
-            boolean online = true;
-
-            if (characterData.containsField("outfit"))
+            for (int i = 0; i < characterList.size(); i++)
             {
-                outfitID = characterData.getObject("outfit").getString("outfit_id");
-            }
-            else
-            {
-                outfitID = "0";
-            }
+                JsonObject characterData = characterList.get(i);
 
-            if (characterData.containsField("last_event"))
-            {
-                zoneID = characterData.getObject("last_event").getString("zone_id");
-            }
-            else
-            {
-                zoneID = "0";
-            }
+                String characterID = characterData.getString("character_id");
+                String characterName = characterData.getObject("name").getString("first");
+                String factionID = characterData.getString("faction_id");
 
-            if (characterData.containsField("world"))
-            {
-                worldID = characterData.getObject("world").getString("world_id");
-            }
-            else
-            {
-                worldID = "0";
-            }
+                String outfitID;
+                String zoneID;
+                String worldID;
+                boolean online = true;
 
-            if (characterData.containsField("online"))
-            {
-                online = !characterData.getObject("online").getString("online_status").equals("0");
+                if (characterData.containsField("outfit"))
+                {
+                    outfitID = characterData.getObject("outfit").getString("outfit_id");
+                }
+                else
+                {
+                    outfitID = "0";
+                }
+
+                if (characterData.containsField("last_event"))
+                {
+                    zoneID = characterData.getObject("last_event").getString("zone_id");
+                }
+                else
+                {
+                    zoneID = "0";
+                }
+
+                if (characterData.containsField("world"))
+                {
+                    worldID = characterData.getObject("world").getString("world_id");
+                }
+                else
+                {
+                    worldID = "0";
+                }
+
+                if (characterData.containsField("online"))
+                {
+                    online = !characterData.getObject("online").getString("online_status").equals("0");
+                }
+
+                CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
+
+                dynamicDataManager.addCharacterData(characterID, character);
             }
-
-            CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
-
-            dynamicDataManager.addCharacterData(characterID, character);
         }
 
         for (CharacterQuery event : callbacks)
@@ -91,6 +94,8 @@ public class CharacterListQuery implements Query
 
             event.receiveData(null); //Triggers the waiting events for processing.
         }
+        
+        callbacks.clear();
     }
 
 }

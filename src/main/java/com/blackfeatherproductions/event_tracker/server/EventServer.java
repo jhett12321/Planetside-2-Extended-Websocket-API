@@ -326,7 +326,7 @@ public class EventServer
                                         JsonArray subscriptionZoneData = subscriptionValue.getObject((String) filterData.get(0)).getArray("zones");
                                         JsonArray zoneData = eventFilterData.getArray("zones");
                                         
-                                        if(subscriptionZoneData.size() == 0 || subscriptionZoneData.contains(zoneData.get(0)))
+                                        if(subscriptionZoneData == null || subscriptionZoneData.size() == 0 || subscriptionZoneData.contains(zoneData.get(0)))
                                         {
                                             sendMessage = true;
                                         }
