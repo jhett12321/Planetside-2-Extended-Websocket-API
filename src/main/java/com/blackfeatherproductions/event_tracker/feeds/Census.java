@@ -48,6 +48,18 @@ public class Census
         client.setMaxWebSocketFrameSize(1000000);
         client.setReceiveBufferSize(1000000);
         client.setSendBufferSize(1000000);
+        
+        //Disconnects the websocket if we receive an exception.
+        client.exceptionHandler(new Handler<Throwable>()
+        {
+            @Override
+            public void handle(Throwable arg0)
+            {
+                eventTracker.getLogger().error("Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
+                disconnectWebsocket();
+                arg0.printStackTrace();
+            }
+        });
 
         //Reconnects the websocket if it is not online, or is not responding.
         vertx.setPeriodic(10000, new Handler<Long>()
@@ -205,17 +217,6 @@ public class Census
                         disconnectWebsocket();
                     }
                 });
-
-                websocket.exceptionHandler(new Handler<Throwable>()
-                {
-                    @Override
-                    public void handle(Throwable arg0)
-                    {
-                        eventTracker.getLogger().error("Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
-                        disconnectWebsocket();
-                        arg0.printStackTrace();
-                    }
-                });
             }
         });
     }
@@ -223,8 +224,18 @@ public class Census
     private void disconnectWebsocket()
     {
         //Close the websocket if not already, and set it to null to free unused memory.
-        websocket.close();
-        websocket = null;
+        if(websocket != null)
+        {
+            try
+            {
+                websocket.close();
+            }
+            catch(IllegalStateException e)
+            {
+                
+            }
+            websocket = null;
+        }
         
         //Set the connection state to closed
         websocketConnectState = WebsocketConnectState.CLOSED;

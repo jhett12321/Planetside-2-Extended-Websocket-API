@@ -88,7 +88,7 @@ public class PopulationManager implements Query
                     if (characters.size() >= 150)
                     {
                         queryManager.getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                                false, self);
+                                true, self);
 
                         characters = new ArrayList<String>();
                     }
@@ -97,7 +97,7 @@ public class PopulationManager implements Query
                 if (!characters.isEmpty())
                 {
                     queryManager.getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            false, self);
+                            true, self);
                 }
             }
         });

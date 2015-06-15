@@ -50,7 +50,7 @@ public class QueryManager
                     if (characters.size() >= 150)
                     {
                         getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                                false, new CharacterListQuery(callbacks));
+                                true, new CharacterListQuery(callbacks));
 
                         characters = new ArrayList<String>();
                         callbacks = new ArrayList<CharacterQuery>();
@@ -60,18 +60,18 @@ public class QueryManager
                 if (!characters.isEmpty())
                 {
                     getCensusData("/get/ps2:v2/character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            false, new CharacterListQuery(callbacks));
+                            true, new CharacterListQuery(callbacks));
                 }
             }
         });
     }
 
-    public void getCensusData(String rawQuery, final boolean allowNoData, final Query... callbacks)
+    public void getCensusData(final String rawQuery, final boolean allowNoData, final Query... callbacks)
     {
         Vertx vertx = eventTracker.getVertx();
         final Logger logger = eventTracker.getLogger();
 
-        if (failureCount >= eventTracker.getConfig().getMaxFailures())
+        if (failureCount > eventTracker.getConfig().getMaxFailures() && allowNoData)
         {
             logger.error("[Census REST] Census Failure Limit Reached. Dropping event.");
 
@@ -80,13 +80,28 @@ public class QueryManager
                 callback.receiveData(null);
             }
 
-            failureCount = 0;
+            failureCount = eventTracker.getConfig().getMaxFailures();
             return;
         }
 
         HttpClient client = vertx.createHttpClient().setHost("census.daybreakgames.com");
-
         final String query = "/s:" + eventTracker.getConfig().getSoeServiceID() + rawQuery;
+        
+        client.exceptionHandler(new Handler<Throwable>()
+        {
+            @Override
+            public void handle(Throwable e)
+            {
+                logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
+                logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
+                logger.warn("Request: " + query);
+                logger.warn(e.getMessage());
+
+                failureCount++;
+
+                getCensusData(rawQuery, allowNoData, callbacks);
+            }
+        });
 
         client.getNow(query, new Handler<HttpClientResponse>()
         {
@@ -122,24 +137,8 @@ public class QueryManager
 
                             failureCount++;
 
-                            getCensusData(query, allowNoData, callbacks);
+                            getCensusData(rawQuery, allowNoData, callbacks);
                         }
-                    }
-                });
-
-                resp.exceptionHandler(new Handler<Throwable>()
-                {
-                    @Override
-                    public void handle(Throwable e)
-                    {
-                        logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
-                        logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
-                        logger.warn("Request: " + query);
-                        logger.warn(e.getMessage());
-
-                        failureCount++;
-
-                        getCensusData(query, allowNoData, callbacks);
                     }
                 });
             }
