@@ -8,6 +8,7 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
@@ -17,7 +18,6 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
-import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "Combat",
@@ -31,6 +31,7 @@ public class CombatEvent implements Event
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
+    private final QueryManager queryManager = eventTracker.getQueryManager();
 
     private JsonObject payload;
 
@@ -72,14 +73,14 @@ public class CombatEvent implements Event
                     characterIDs.add(attackerCharacterID);
                 }
 
-                new CharacterQuery(characterIDs, this);
+                queryManager.queryCharacter(characterIDs, this);
             }
         }
     }
 
     @Override
     public void processEvent()
-    {
+    {   
         //Data
         CharacterInfo attacker_character = dynamicDataManager.getCharacterData(attackerCharacterID);
         String attacker_outfit_id = attacker_character.getOutfitID();

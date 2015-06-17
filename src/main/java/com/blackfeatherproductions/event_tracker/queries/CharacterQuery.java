@@ -5,13 +5,10 @@ import java.util.List;
 
 import org.vertx.java.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.events.Event;
 
-public class CharacterQuery implements Query
+public class CharacterQuery
 {
-    private final QueryManager queryManager = EventTracker.getInstance().getQueryManager();
     private final Event callbackEvent;
 
     private final List<String> characterIDs = new ArrayList<String>();
@@ -20,22 +17,17 @@ public class CharacterQuery implements Query
     {
         this.callbackEvent = callbackEvent;
         this.characterIDs.addAll(characterIDs);
-
-        queryManager.addCharacterQuery(this);
     }
 
     public CharacterQuery(String characterID, Event callbackEvent)
     {
         this.callbackEvent = callbackEvent;
         this.characterIDs.add(characterID);
-
-        queryManager.addCharacterQuery(this);
     }
 
-    @Override
-    public void receiveData(JsonObject data)
+    public Event getCallbackEvent()
     {
-        callbackEvent.processEvent();
+        return callbackEvent;
     }
 
     public List<String> getCharacterIDs()

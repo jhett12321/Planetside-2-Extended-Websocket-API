@@ -79,9 +79,9 @@ public class CharacterListQuery implements Query
             }
         }
 
-        for (CharacterQuery event : callbacks)
+        for (CharacterQuery callback : callbacks)
         {
-            for (String characterID : event.getCharacterIDs())
+            for (String characterID : callback.getCharacterIDs())
             {
                 //Census does not always have data for all characters.
                 //Since the above iterator loops over returned data, and not the requested ids, it does not create these blank entries.
@@ -92,7 +92,7 @@ public class CharacterListQuery implements Query
                 }
             }
 
-            event.receiveData(null); //Triggers the waiting events for processing.
+            callback.getCallbackEvent().processEvent(); //Triggers the waiting events for processing.
         }
         
         callbacks.clear();

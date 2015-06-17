@@ -1,7 +1,6 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 import org.vertx.java.core.json.JsonArray;
@@ -12,13 +11,6 @@ import com.blackfeatherproductions.event_tracker.EventTracker;
 public class MetagameEventQuery implements Query
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
-
-    public MetagameEventQuery(String worldID)
-    {
-        String timestamp = String.valueOf(new Date().getTime() / 1000 - 7201);
-
-        eventTracker.getQueryManager().getCensusData("/get/ps2:v2/world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp, false, this);
-    }
 
     @Override
     public void receiveData(JsonObject data)

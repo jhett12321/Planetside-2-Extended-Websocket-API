@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker;
 
+import com.blackfeatherproductions.event_tracker.events.Event;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -17,7 +18,10 @@ import org.vertx.java.core.logging.Logger;
 
 import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
+import com.blackfeatherproductions.event_tracker.queries.MetagameEventQuery;
 import com.blackfeatherproductions.event_tracker.queries.Query;
+import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
+import java.util.Date;
 
 //TODO Add all queries to a queue.
 //TODO Queries will have 25 attempts to succeed before failing, unless they are a "must return" data query.
@@ -144,9 +148,26 @@ public class QueryManager
             }
         });
     }
-
-    public void addCharacterQuery(CharacterQuery query)
+    
+    public void queryCharacter(List<String> characterIDs, Event callbackEvent)
     {
-        this.queuedCharacterQueries.add(query);
+        this.queuedCharacterQueries.add(new CharacterQuery(characterIDs, callbackEvent));
+    }
+    
+    public void queryCharacter(String characterID, Event callbackEvent)
+    {
+        this.queuedCharacterQueries.add(new CharacterQuery(characterID, callbackEvent));
+    }
+    
+    public void queryWorld(String worldID)
+    {
+        getCensusData("/get/ps2:v2/map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_name'facility_type'facility_type_id", false, new WorldQuery(worldID));
+    }
+    
+    public void queryWorldMetagameEvents(String worldID)
+    {
+        String timestamp = String.valueOf(new Date().getTime() / 1000 - 7201);
+
+        getCensusData("/get/ps2:v2/world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp, false, new MetagameEventQuery());
     }
 }

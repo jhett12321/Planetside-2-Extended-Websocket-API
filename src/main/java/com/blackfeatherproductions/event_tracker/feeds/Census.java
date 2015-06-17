@@ -13,14 +13,15 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
-import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class Census
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
+    private final QueryManager queryManager = eventTracker.getQueryManager();
     private final Config config = eventTracker.getConfig();
 
     private final HttpClient client;
@@ -297,7 +298,7 @@ public class Census
             {
 	    	//Data is (now) being received for this world.
                 //Query Census for World Data.
-                new WorldQuery(worldID);
+                queryManager.queryWorld(worldID);
             }
 
             else

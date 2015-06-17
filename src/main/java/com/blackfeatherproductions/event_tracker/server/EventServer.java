@@ -151,7 +151,7 @@ public class EventServer
                     connectMessage.putString("websocket_event", "connectionStateChange");
                     connectMessage.putString("online", "true");
 
-                    clientConnection.writeTextFrame(connectMessage.encodePrettily());
+                    clientConnection.writeTextFrame(connectMessage.encode());
 
                     //Send Service Status Messages
                     for (Entry<World, WorldInfo> worldEntry : eventTracker.getDynamicDataManager().getAllWorldInfo().entrySet())
@@ -164,6 +164,7 @@ public class EventServer
 
                         serviceMessage.putObject("payload", payload);
                         serviceMessage.putString("event_type", "ServiceStateChange");
+                        clientConnection.writeTextFrame(serviceMessage.encode());
                     }
                 }
                 else
