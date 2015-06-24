@@ -13,6 +13,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "Login",
@@ -24,18 +25,44 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
         })
 public class LoginEvent implements Event
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
     private final QueryManager queryManager = eventTracker.getQueryManager();
 
+    //Raw Data
     private JsonObject payload;
-
     private String characterID;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         if (payload != null)
         {
             characterID = payload.getString("character_id");
@@ -47,7 +74,7 @@ public class LoginEvent implements Event
 
             else
             {
-                queryManager.queryCharacter(characterID, this);
+                queryManager.queryCharacter(characterID, environment, this);
             }
         }
     }
@@ -57,7 +84,7 @@ public class LoginEvent implements Event
     {
         String event_name = payload.getString("event_name");
 
-        //Data
+        //Raw Data
         CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
         String outfit_id = character.getOutfitID();
         Faction faction = character.getFaction();
@@ -71,9 +98,7 @@ public class LoginEvent implements Event
         String timestamp = payload.getString("timestamp");
         World world = World.getWorldByID(payload.getString("world_id"));
 
-        //Payload
-        JsonObject eventData = new JsonObject();
-
+        //Event Data
         eventData.putString("character_id", character.getCharacterID());
         eventData.putString("character_name", character.getCharacterName());
         eventData.putString("outfit_id", outfit_id);
@@ -82,9 +107,7 @@ public class LoginEvent implements Event
         eventData.putString("timestamp", timestamp);
         eventData.putString("world_id", world.getID());
 
-        //Filters
-        JsonObject filterData = new JsonObject();
-
+        //Filter Data
         filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
         filterData.putArray("outfits", new JsonArray().addString(outfit_id));
         filterData.putArray("factions", new JsonArray().addString(faction.getID()));
@@ -92,11 +115,6 @@ public class LoginEvent implements Event
         filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 
         //Broadcast Event
-        JsonObject message = new JsonObject();
-
-        message.putObject("event_data", eventData);
-        message.putObject("filter_data", filterData);
-
-        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this);
     }
 }

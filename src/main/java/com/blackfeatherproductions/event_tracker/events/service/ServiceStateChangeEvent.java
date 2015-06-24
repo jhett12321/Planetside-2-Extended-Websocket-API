@@ -7,6 +7,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.SERVICE,
         eventName = "ServiceStateChange",
@@ -16,12 +17,38 @@ public class ServiceStateChangeEvent implements Event
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
 
+    //Raw Data
     private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         if (payload != null)
         {
             processEvent();
@@ -31,15 +58,11 @@ public class ServiceStateChangeEvent implements Event
     @Override
     public void processEvent()
     {
-        JsonObject eventData = new JsonObject();
-
-        //Event Specific Data
+        //Event Data
         eventData.putString("online", payload.getString("online"));
         eventData.putString("world_id", payload.getString("world_id"));
 
-        JsonObject message = new JsonObject();
-        message.putObject("event_data", eventData);
-
-        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+        //Broadcast Event
+        eventTracker.getEventServer().broadcastEvent(this);
     }
 }

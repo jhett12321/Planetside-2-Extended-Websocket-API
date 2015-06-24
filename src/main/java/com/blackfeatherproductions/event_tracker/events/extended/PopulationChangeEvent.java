@@ -8,6 +8,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "PopulationChange",
@@ -19,24 +20,48 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
         })
 public class PopulationChangeEvent implements Event
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
 
+    //Raw Data
     private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         processEvent();
     }
 
     @Override
     public void processEvent()
     {
-        //Payload & Filters
-        JsonObject eventData = new JsonObject();
-        JsonObject filterData = new JsonObject();
-
+        //Event/Filter Data
         String populationType = payload.getString("population_type");
 
         eventData.putString("population_type", populationType);
@@ -70,12 +95,6 @@ public class PopulationChangeEvent implements Event
         }
 
         //Broadcast Event
-        JsonObject message = new JsonObject();
-
-        message.putObject("event_data", eventData);
-        message.putObject("filter_data", filterData);
-
-        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this);
     }
-
 }

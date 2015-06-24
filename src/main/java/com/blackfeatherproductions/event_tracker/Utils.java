@@ -10,16 +10,30 @@ import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils
 {
     private static final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
-    public static String getWorldIDFromEndpointString(String endPointString)
+    public static List<String> getWorldIDsFromEndpointString(String endPointString)
     {
-        String worldID = endPointString.replaceAll("(\\D+)", "");
-
-        return worldID;
+        List<String> worldIDs = new ArrayList<String>();
+        
+        //Match all ID values we get from the endpoint message.
+        Pattern p = Pattern.compile("[0-9]+");
+        Matcher m = p.matcher(endPointString);
+        
+        while (m.find())
+        {
+            String worldID = m.group();
+            worldIDs.add(worldID);
+        }
+        
+        return worldIDs;
     }
 
     public static boolean isValidPayload(JsonObject payload)

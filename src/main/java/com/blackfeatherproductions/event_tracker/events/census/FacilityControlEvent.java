@@ -14,6 +14,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "FacilityControl",
@@ -25,15 +26,42 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
         })
 public class FacilityControlEvent implements Event
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
+    //Raw Data
     private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         if (payload != null)
         {
             processEvent();
@@ -43,7 +71,7 @@ public class FacilityControlEvent implements Event
     @Override
     public void processEvent()
     {
-        //Data
+        //Raw Data
         String facility_id = payload.getString("facility_id");
         Facility facility = Facility.getFacilityByID(facility_id);
         String outfit_id = payload.getString("outfit_id");
@@ -70,9 +98,7 @@ public class FacilityControlEvent implements Event
         String control_nc = controlInfo.getString("control_nc");
         String control_tr = controlInfo.getString("control_tr");
 
-        //Payload
-        JsonObject eventData = new JsonObject();
-
+        //Event Data
         eventData.putString("facility_id", facility_id);
         eventData.putString("facility_type_id", facility.getTypeID());
         eventData.putString("outfit_id", outfit_id);
@@ -91,9 +117,7 @@ public class FacilityControlEvent implements Event
         eventData.putString("zone_id", zone.getID());
         eventData.putString("world_id", world.getID());
 
-        //Filters
-        JsonObject filterData = new JsonObject();
-
+        //Filter Data
         filterData.putArray("facilities", new JsonArray().addString(facility_id));
         filterData.putArray("facility_types", new JsonArray().addString(facility.getTypeID()));
         filterData.putArray("outfits", new JsonArray().addString(outfit_id));
@@ -103,11 +127,6 @@ public class FacilityControlEvent implements Event
         filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 
         //Broadcast Event
-        JsonObject message = new JsonObject();
-
-        message.putObject("event_data", eventData);
-        message.putObject("filter_data", filterData);
-
-        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this);
     }
 }

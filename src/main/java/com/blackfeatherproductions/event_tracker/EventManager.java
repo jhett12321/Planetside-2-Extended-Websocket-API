@@ -21,7 +21,7 @@ import com.blackfeatherproductions.event_tracker.events.census.CombatEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ContinentLockEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ContinentUnlockEvent;
 import com.blackfeatherproductions.event_tracker.events.census.DirectiveCompletedEvent;
-import com.blackfeatherproductions.event_tracker.events.census.ExperienceEarned;
+import com.blackfeatherproductions.event_tracker.events.census.ExperienceEarnedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.FacilityControlEvent;
 import com.blackfeatherproductions.event_tracker.events.census.ItemAddedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.LoginEvent;
@@ -33,6 +33,7 @@ import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeE
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 public class EventManager
 {
@@ -70,7 +71,7 @@ public class EventManager
         });
     }
 
-    public void handleEvent(String eventName, JsonObject payload)
+    public void handleEvent(String eventName, JsonObject payload, Environment environment)
     {
         if (Utils.isValidPayload(payload))
         {
@@ -85,7 +86,7 @@ public class EventManager
                     {
                         Event listener = entry.getValue().newInstance();
 
-                        queuedListeners.add(new QueuedEvent(entry.getKey().priority(), listener, payload));
+                        queuedListeners.add(new QueuedEvent(entry.getKey().priority(), listener, payload, environment));
                         eventHandled = true;
                     }
                     catch (InstantiationException | IllegalAccessException e)
@@ -104,7 +105,7 @@ public class EventManager
                     {
                         Event event = entry.getValue().newInstance();
 
-                        queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload));
+                        queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload, environment));
                         eventHandled = true;
                     }
                     catch (InstantiationException | IllegalAccessException e)
@@ -140,7 +141,7 @@ public class EventManager
         registerEvent(ContinentLockEvent.class);
         registerEvent(ContinentUnlockEvent.class);
         registerEvent(DirectiveCompletedEvent.class);
-        registerEvent(ExperienceEarned.class);
+        registerEvent(ExperienceEarnedEvent.class);
         registerEvent(FacilityControlEvent.class);
         registerEvent(ItemAddedEvent.class);
         registerEvent(LoginEvent.class);

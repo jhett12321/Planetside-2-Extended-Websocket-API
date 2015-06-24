@@ -20,6 +20,7 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 
 @EventInfo(eventType = EventType.LISTENER,
@@ -28,20 +29,44 @@ import com.blackfeatherproductions.event_tracker.events.extended.population.Popu
         priority = EventPriority.NORMAL)
 public class PopulationEventListener implements Event
 {
+    //Utils
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
     private final PopulationManager populationManager = EventTracker.getInstance().getPopulationManager();
     private final QueryManager queryManager = EventTracker.getInstance().getQueryManager();
 
-    private JsonObject payload;
-
-    //Preprocess Info
+    //Raw Data
     private String attackerCharacterID;
     private String characterID;
+    private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = null;
+    private JsonObject filterData = null;
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
 
         if (payload != null)
         {
@@ -73,7 +98,7 @@ public class PopulationEventListener implements Event
                     characterIDs.add(attackerCharacterID);
                 }
 
-                queryManager.queryCharacter(characterIDs, this);
+                queryManager.queryCharacter(characterIDs, environment, this);
             }
         }
     }
@@ -88,7 +113,7 @@ public class PopulationEventListener implements Event
         //Logout Event.
         if (eventName.equals("PlayerLogout"))
         {
-            populationManager.onlinePlayers.remove(characterID);
+            populationManager.envOnlinePlayers.get(environment).remove(characterID);
         }
 
         //Vehicle/Combat Events
@@ -143,9 +168,9 @@ public class PopulationEventListener implements Event
             world = character.getWorld();
         }
 
-        if (populationManager.onlinePlayers.containsKey(characterID))
+        if (populationManager.envOnlinePlayers.get(environment).containsKey(characterID))
         {
-            OnlinePlayer player = populationManager.onlinePlayers.get(characterID);
+            OnlinePlayer player = populationManager.envOnlinePlayers.get(environment).get(characterID);
 
             player.setLastEvent(new Date());
             player.setFaction(faction);
@@ -156,7 +181,7 @@ public class PopulationEventListener implements Event
 
         else
         {
-            populationManager.onlinePlayers.put(characterID, new OnlinePlayer(faction, outfitID, zone, world));
+            populationManager.envOnlinePlayers.get(environment).put(characterID, new OnlinePlayer(faction, outfitID, zone, world));
         }
     }
 
@@ -169,9 +194,9 @@ public class PopulationEventListener implements Event
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
 
-        if (populationManager.onlinePlayers.containsKey(attackerCharacterID))
+        if (populationManager.envOnlinePlayers.get(environment).containsKey(attackerCharacterID))
         {
-            OnlinePlayer player = populationManager.onlinePlayers.get(attackerCharacterID);
+            OnlinePlayer player = populationManager.envOnlinePlayers.get(environment).get(attackerCharacterID);
 
             player.setLastEvent(new Date());
             player.setFaction(faction);
@@ -182,7 +207,7 @@ public class PopulationEventListener implements Event
 
         else
         {
-            populationManager.onlinePlayers.put(attackerCharacterID, new OnlinePlayer(faction, outfitID, zone, world));
+            populationManager.envOnlinePlayers.get(environment).put(attackerCharacterID, new OnlinePlayer(faction, outfitID, zone, world));
         }
     }
 }

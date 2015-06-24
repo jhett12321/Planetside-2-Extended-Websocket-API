@@ -5,6 +5,8 @@ import org.vertx.java.platform.Verticle;
 
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
 import com.blackfeatherproductions.event_tracker.feeds.Census;
+import com.blackfeatherproductions.event_tracker.feeds.CensusPS4EU;
+import com.blackfeatherproductions.event_tracker.feeds.CensusPS4US;
 import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.server.EventServer;
 
@@ -57,6 +59,8 @@ public class EventTracker extends Verticle
 
         //Feeds
         new Census();
+        new CensusPS4US();
+        //new CensusPS4EU(); //EU Census REST Down.
         new CensusRest();
     }
 

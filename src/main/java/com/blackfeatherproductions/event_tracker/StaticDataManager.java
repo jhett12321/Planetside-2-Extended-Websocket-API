@@ -14,26 +14,33 @@ public class StaticDataManager
     {
         //Initialises Static Game Data
 
-        //TODO 1.3 Query Census for all required static data
-        //TODO 1.3 All Data Types need to eventually have their own class.
-        //TODO 1.3 Types to be implemented: achievement, item/weapon, vehicle, directive
+        //TODO 1.4 Query Census for all required static data
+        //TODO 1.4 All Data Types need to eventually have their own class.
+        //TODO 1.4 Types to be implemented: achievement, item/weapon, vehicle, directive
         //Worlds
         World.UNKNOWN = new World("0", "Unknown");
-        World.CONNERY = new World("1", "Connery");
-        World.MILLER = new World("10", "Miller");
-        World.COBALT = new World("13", "Cobalt");
-        World.EMERALD = new World("17", "Emerald");
-        World.JAEGAR = new World("19", "Jaeger");
-        World.BRIGGS = new World("25", "Briggs");
-
         World.worlds.put("0", World.UNKNOWN);
-        World.worlds.put("1", World.CONNERY);
-        World.worlds.put("10", World.MILLER);
-        World.worlds.put("13", World.COBALT);
-        World.worlds.put("17", World.EMERALD);
-        World.worlds.put("19", World.JAEGAR);
-        World.worlds.put("25", World.BRIGGS);
-
+        
+        //PC
+        World.worlds.put("1", new World("1", "Connery"));
+        World.worlds.put("10", new World("10", "Miller"));
+        World.worlds.put("13", new World("13", "Cobalt"));
+        World.worlds.put("17", new World("17", "Emerald"));
+        World.worlds.put("19", new World("19", "Jaeger"));
+        World.worlds.put("25", new World("25", "Briggs"));
+        
+        //PS4US
+        World.worlds.put("1000", new World("1000", "Genudine"));
+        World.worlds.put("1001", new World("1001", "Palos"));
+        World.worlds.put("1002", new World("1002", "Crux"));
+        World.worlds.put("1003", new World("1003", "Searhus"));
+        
+        //PS4EU
+        World.worlds.put("2000", new World("2000", "Ceres"));
+        World.worlds.put("2001", new World("2001", "Lithcorp"));
+        World.worlds.put("2002", new World("2002", "Rashnu"));
+        World.worlds.put("2003", new World("2003", "Dahaka"));
+        
         //Zones
         Zone.UNKNOWN = new Zone("0", "Unknown", "INTERNAL: This is an unknown zone.");
         Zone.INDAR = new Zone("2", "Indar", "The arid continent of Indar is home to an assortment of biomes. Grassy savannas, rocky canyons, and the open plains of the seabed provide unique challenges to soldiers.");

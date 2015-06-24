@@ -27,6 +27,7 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
 import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
@@ -277,21 +278,22 @@ public class EventServer
         actions.put(info, action);
     }
 
-    public void broadcastEvent(Class<? extends Event> event, JsonObject rawData)
+    public void broadcastEvent(Event event)
     {
+        Class<? extends Event> eventClass = event.getClass();
         JsonObject messageToSend = new JsonObject();
 
-        JsonObject eventFilterData = rawData.getObject("filter_data");
-        JsonObject eventData = rawData.getObject("event_data");
+        JsonObject eventFilterData = event.getFilterData();
+        JsonObject eventData = event.getEventData();
 
         messageToSend.putObject("payload", eventData);
-        messageToSend.putString("event_type", event.getAnnotation(EventInfo.class).eventName());
+        messageToSend.putString("event_type", eventClass.getAnnotation(EventInfo.class).eventName());
 
         for (Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
         {
             Boolean sendMessage = null;
             
-            EventType eventType = event.getAnnotation(EventInfo.class).eventType();
+            EventType eventType = eventClass.getAnnotation(EventInfo.class).eventType();
             
             if(eventType.equals(EventType.SERVICE))
             {
@@ -301,11 +303,25 @@ public class EventServer
             else if(eventType.equals(EventType.EVENT))
             {
                 //Get Subscription for provided event
-                JsonObject subscription = connection.getValue().getSubscription(event);
+                JsonObject subscription = connection.getValue().getSubscription(eventClass);
                 
                 if (subscription.getString("all").equals("true"))
                 {
                     sendMessage = true;
+                }
+                
+                JsonArray envSubscription = subscription.getArray("environments");
+                if(envSubscription.size() > 0)
+                {
+                    sendMessage = false;
+                    
+                    for(int i=0; i< envSubscription.size(); i++)
+                    {
+                        if(event.getEnvironment().toString().equalsIgnoreCase((String) envSubscription.get(i)))
+                        {
+                            sendMessage = true;
+                        }
+                    }
                 }
 
                 else

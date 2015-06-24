@@ -22,7 +22,7 @@ public class CharacterListQuery implements Query
     }
 
     @Override
-    public void receiveData(JsonObject data)
+    public void receiveData(JsonObject data, Environment environment)
     {
         if(data != null)
         {
@@ -94,8 +94,6 @@ public class CharacterListQuery implements Query
 
             callback.getCallbackEvent().processEvent(); //Triggers the waiting events for processing.
         }
-        
-        callbacks.clear();
     }
 
 }

@@ -278,6 +278,7 @@ public class EventServerClient
         }
 
         subscription.putString("all", "false");
+        subscription.putArray("environments", new JsonArray());
         subscription.putArray("show", new JsonArray());
         subscription.putArray("hide", new JsonArray());
 

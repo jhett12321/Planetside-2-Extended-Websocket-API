@@ -13,7 +13,7 @@ public class MetagameEventQuery implements Query
     private final EventTracker eventTracker = EventTracker.getInstance();
 
     @Override
-    public void receiveData(JsonObject data)
+    public void receiveData(JsonObject data, Environment environment)
     {
         JsonArray eventArray = data.getArray("world_event_list");
 
@@ -53,7 +53,7 @@ public class MetagameEventQuery implements Query
 
                 String eventName = payload.getString("event_name");
 
-                eventTracker.getEventHandler().handleEvent(eventName, payload);
+                eventTracker.getEventHandler().handleEvent(eventName, payload, environment);
             }
         }
     }

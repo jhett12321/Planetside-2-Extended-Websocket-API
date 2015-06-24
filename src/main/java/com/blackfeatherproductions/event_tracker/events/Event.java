@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.events;
 
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 import org.vertx.java.core.json.JsonObject;
 
 public interface Event
@@ -10,7 +11,7 @@ public interface Event
      *
      * @param payload - The raw event payload
      */
-    public void preProcessEvent(JsonObject payload);
+    public void preProcessEvent(JsonObject payload, Environment environment);
 
     /**
      * This is where final processing of the event should be done. All required
@@ -19,4 +20,23 @@ public interface Event
      * subscription system.
      */
     void processEvent();
+    
+    /**
+     * 
+     * @return The environment (PC, PS4) of this event.
+     */
+    public Environment getEnvironment();
+    
+    
+    /**
+     * 
+     * @return A list of JsonArrays containing completed filter data as specified by the EventInfo annotation.
+     */
+    public JsonObject getFilterData();
+    
+    /**
+     * 
+     * @return The completed event payload of this event.
+     */
+    public JsonObject getEventData();
 }

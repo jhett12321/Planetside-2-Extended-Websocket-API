@@ -18,6 +18,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "MetagameEvent",
@@ -29,15 +30,42 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
         })
 public class MetagameEvent implements Event
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
+    //Raw Data
     private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+    
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         if (payload != null)
         {
             processEvent();
@@ -47,18 +75,14 @@ public class MetagameEvent implements Event
     @Override
     public void processEvent()
     {
-        JsonObject message = new JsonObject();
-        JsonObject eventData = new JsonObject();
-        JsonObject filterData = new JsonObject();
-
-        //Data - Shared
+        //Raw Data - Shared
         String event_name = payload.getString("event_name");
         String timestamp = payload.getString("timestamp");
 
         World world = World.getWorldByID(payload.getString("world_id"));
         WorldInfo worldData = dynamicDataManager.getWorldInfo(world);
 
-        //Data - To be resolved
+        //Raw Data - To be resolved
         String instance_id = null;
         String metagame_event_id = null;
         String facility_type_id = null;
@@ -69,7 +93,7 @@ public class MetagameEvent implements Event
 
         Zone zone = null;
 
-        //Data - FacilityControl
+        //Raw Data - FacilityControl
         if (event_name.equals("FacilityControl"))
         {
             Faction new_faction = Faction.getFactionByID(payload.getString("new_faction_id"));
@@ -126,7 +150,7 @@ public class MetagameEvent implements Event
             }
         }
 
-        //Data - MetagameEvent
+        //Raw Data - MetagameEvent
         else
         {
             MetagameEventType metagameEventType = MetagameEventType.getMetagameEventTypeByID(payload.getString("metagame_event_id"));
@@ -162,7 +186,7 @@ public class MetagameEvent implements Event
             }
         }
 
-        //Data - Territory Control
+        //Raw Data - Territory Control
         JsonObject controlInfo = Utils.calculateTerritoryControl(world, zone);
         String control_vs = controlInfo.getString("control_vs");
         String control_nc = controlInfo.getString("control_nc");
@@ -173,7 +197,7 @@ public class MetagameEvent implements Event
             domination = "1";
         }
 
-        //Payload
+        //Event Data
         boolean isDummy = payload.containsField("is_dummy") && payload.getString("is_dummy").equals("1");
 
         if (!isDummy)
@@ -192,7 +216,7 @@ public class MetagameEvent implements Event
             eventData.putString("zone_id", zone.getID());
             eventData.putString("world_id", world.getID());
 
-            //Filters		
+            //Filter Data		
             filterData.putArray("metagames", new JsonArray().addString(instance_id));
             filterData.putArray("metagame_event_types", new JsonArray().addString(metagame_event_id));
             filterData.putArray("facility_types", new JsonArray().addString(facility_type_id));
@@ -202,10 +226,7 @@ public class MetagameEvent implements Event
             filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 
             //Broadcast Event		
-            message.putObject("event_data", eventData);
-            message.putObject("filter_data", filterData);
-
-            eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+            eventTracker.getEventServer().broadcastEvent(this);
         }
     }
 }

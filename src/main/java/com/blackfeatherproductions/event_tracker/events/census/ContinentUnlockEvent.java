@@ -12,6 +12,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "ContinentUnlock",
@@ -23,15 +24,42 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
         })
 public class ContinentUnlockEvent implements Event
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
 
+    //Raw Data
     private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+    
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         if (payload != null)
         {
             processEvent();
@@ -41,7 +69,7 @@ public class ContinentUnlockEvent implements Event
     @Override
     public void processEvent()
     {
-        //Data
+        //Raw Data
         String vs_population = payload.getString("vs_population");
         String nc_population = payload.getString("nc_population");
         String tr_population = payload.getString("tr_population");
@@ -57,9 +85,7 @@ public class ContinentUnlockEvent implements Event
         dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(false);
         dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NS);
 
-        //Payload
-        JsonObject eventData = new JsonObject();
-
+        //Event Data
         eventData.putString("vs_population", vs_population);
         eventData.putString("nc_population", nc_population);
         eventData.putString("tr_population", tr_population);
@@ -71,19 +97,12 @@ public class ContinentUnlockEvent implements Event
         eventData.putString("zone_id", zone.getID());
         eventData.putString("world_id", world.getID());
 
-        //Filters
-        JsonObject filterData = new JsonObject();
-
+        //Filter Data
         filterData.putArray("factions", new JsonArray().addString(unlocked_by.getID()));
         filterData.putArray("zones", new JsonArray().addString(zone.getID()));
         filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 
         //Broadcast Event
-        JsonObject message = new JsonObject();
-
-        message.putObject("event_data", eventData);
-        message.putObject("filter_data", filterData);
-
-        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this);
     }
 }

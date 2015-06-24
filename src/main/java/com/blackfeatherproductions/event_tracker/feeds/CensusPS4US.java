@@ -21,7 +21,7 @@ import com.blackfeatherproductions.event_tracker.queries.Environment;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Census
+public class CensusPS4US
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final QueryManager queryManager = eventTracker.getQueryManager();
@@ -41,7 +41,7 @@ public class Census
     // Constructor
     //================================================================================
     
-    public Census()
+    public CensusPS4US()
     {
         Vertx vertx = eventTracker.getVertx();
 
@@ -61,7 +61,7 @@ public class Census
             @Override
             public void handle(Throwable arg0)
             {
-                eventTracker.getLogger().error("[PS2 PC] Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
+                eventTracker.getLogger().error("[PS2 PS4-US] Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
                 disconnectWebsocket();
                 arg0.printStackTrace();
             }
@@ -76,21 +76,21 @@ public class Census
                 //Connect the websocket if it is closed.
                 if (websocketConnectState.equals(WebsocketConnectState.CLOSED))
                 {
-                    eventTracker.getLogger().info("[PS2 PC] Reconnecting...");
+                    eventTracker.getLogger().info("[PS2 PS4-US] Reconnecting...");
                     connectWebsocket();
                 }
 
                 //If we have not received a heartbeat in the last 2 minutes, disconnect, then restart the connection
                 else if (!websocketConnectState.equals(WebsocketConnectState.CONNECTING) && lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 120000)
                 {
-                    eventTracker.getLogger().error("[PS2 PC] No hearbeat message received for > 5 minutes. Restarting websocket connection.");
+                    eventTracker.getLogger().error("[PS2 PS4-US] No hearbeat message received for > 5 minutes. Restarting websocket connection.");
                     disconnectWebsocket();
                 }
                 
                 //If the current connection attempt has lasted longer than a minute, cancel the attempt and try again.
                 else if(websocketConnectState.equals(WebsocketConnectState.CONNECTING) && startTime != 0 && (new Date().getTime()) - startTime > 60000)
                 {
-                    eventTracker.getLogger().error("[PS2 PC] Websocket Connection Timeout Reached. Retrying connection...");
+                    eventTracker.getLogger().error("[PS2 PS4-US] Websocket Connection Timeout Reached. Retrying connection...");
                     disconnectWebsocket();
                 }
             }
@@ -108,7 +108,7 @@ public class Census
         websocketConnectState = WebsocketConnectState.CONNECTING;
         startTime = new Date().getTime();
         
-        client.connectWebsocket("/streaming?environment=ps2&service-id=s:" + config.getSoeServiceID(), new Handler<WebSocket>()
+        client.connectWebsocket("/streaming?environment=ps2ps4us&service-id=s:" + config.getSoeServiceID(), new Handler<WebSocket>()
         {
             @Override
             public void handle(WebSocket ws)
@@ -128,16 +128,16 @@ public class Census
                             //We are now connected.
                             //Set our connection state to open.
                             websocketConnectState = WebsocketConnectState.OPEN;
-                            eventTracker.getLogger().info("[PS2 PC] Websocket Secure Connection established to push.planetside.com");
+                            eventTracker.getLogger().info("[PS2 PS4-US] Websocket Secure Connection established to push.planetside.com");
 
                             //Get recent character ID's for population.
-                            eventTracker.getLogger().info("[PS2 PC] Requesting seen Character IDs...");
+                            eventTracker.getLogger().info("[PS2 PS4-US] Requesting seen Character IDs...");
                             websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
                         }
 
                         else if (message.containsField("subscription"))
                         {
-                            eventTracker.getLogger().info("[PS2 PC] Census Confirmed event feed subscription:");
+                            eventTracker.getLogger().info("[PS2 PS4-US] Census Confirmed event feed subscription:");
                             eventTracker.getLogger().info(message.encodePrettily());
                         }
 
@@ -201,7 +201,7 @@ public class Census
                                 }
                                 default:
                                 {
-                                    eventTracker.getLogger().warn("[PS2 PC] Could not handle message!");
+                                    eventTracker.getLogger().warn("[PS2 PS4-US] Could not handle message!");
                                     eventTracker.getLogger().warn(message.encodePrettily());
                                     break;
                                 }
@@ -210,7 +210,7 @@ public class Census
 
                         else if (!message.containsField("send this for help"))
                         {
-                            eventTracker.getLogger().warn("[PS2 PC] Could not handle message!");
+                            eventTracker.getLogger().warn("[PS2 PS4-US] Could not handle message!");
                             eventTracker.getLogger().warn(message.encodePrettily());
                         }
                     }
@@ -221,7 +221,7 @@ public class Census
                     @Override
                     public void handle(Void arg0)
                     {
-                        eventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection was closed.");
+                        eventTracker.getLogger().error("[PS2 PS4-US] Websocket connection lost: The websocket connection was closed.");
                         disconnectWebsocket();
                     }
                 });
@@ -231,7 +231,7 @@ public class Census
                     @Override
                     public void handle(Void arg0)
                     {
-                        eventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection ended.");
+                        eventTracker.getLogger().error("[PS2 PS4-US] Websocket connection lost: The websocket connection ended.");
                         disconnectWebsocket();
                     }
                 });
@@ -248,7 +248,7 @@ public class Census
             {
                 websocket.close();
             }
-            catch(Exception e)
+            catch(IllegalStateException e)
             {
                 
             }
@@ -287,8 +287,8 @@ public class Census
         //This is the final init step. Process the character list.
         if (payload.containsField("recent_character_id_list"))
         {
-            eventTracker.getLogger().info("[PS2 PC] Character List Received!");
-            eventTracker.getLogger().info("[PS2 PC] Subscribing to all events...");
+            eventTracker.getLogger().info("[PS2 PS4-US] Character List Received!");
+            eventTracker.getLogger().info("[PS2 PS4-US] Subscribing to all events...");
 
             //Send subscription message
             websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
@@ -300,7 +300,7 @@ public class Census
                 characterPayload.putString("character_id", (String) recentCharacterIDList.get(i));
                 characterPayload.putString("event_name", "CharacterList");
 
-                eventTracker.getEventHandler().handleEvent("CharacterList", characterPayload, Environment.PC);
+                eventTracker.getEventHandler().handleEvent("CharacterList", characterPayload, Environment.PS4_US);
             }
         }
 
@@ -308,7 +308,7 @@ public class Census
         //Don't send this event if the world is not online, otherwise send it to the event manage for processing.
         else if (eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
         {
-            eventTracker.getEventHandler().handleEvent(eventName, payload, Environment.PC);
+            eventTracker.getEventHandler().handleEvent(eventName, payload, Environment.PS4_US);
         }
     }
     
@@ -333,7 +333,7 @@ public class Census
             {
 	    	//Data is (now) being received for this world.
                 //Query Census for World Data.
-                queryManager.queryWorld(worldID, Environment.PC);
+                queryManager.queryWorld(worldID, Environment.PS4_US);
             }
 
             else

@@ -18,6 +18,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "VehicleDestroy",
@@ -29,20 +30,45 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
         })
 public class VehicleDestroyEvent implements Event
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
     private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
     private final QueryManager queryManager = eventTracker.getQueryManager();
 
-    private JsonObject payload;
-
-    //Preprocess Info
+    //Raw Data
     private String attackerCharacterID;
     private String victimCharacterID;
+    private JsonObject payload;
+    
+    //Message Data
+    private JsonObject eventData = new JsonObject();
+    private JsonObject filterData = new JsonObject();
+    private Environment environment;
+    
+    @Override
+    public Environment getEnvironment()
+    {
+        return environment;
+    }
+    
+    @Override
+    public JsonObject getEventData()
+    {
+        return eventData;
+    }
 
     @Override
-    public void preProcessEvent(JsonObject payload)
+    public JsonObject getFilterData()
+    {
+        return filterData;
+    }
+
+    @Override
+    public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
+        this.environment = environment;
+        
         if (payload != null)
         {
             attackerCharacterID = payload.getString("attacker_character_id");
@@ -73,7 +99,7 @@ public class VehicleDestroyEvent implements Event
                     characterIDs.add(attackerCharacterID);
                 }
 
-                queryManager.queryCharacter(characterIDs, this);
+                queryManager.queryCharacter(characterIDs, environment, this);
             }
         }
     }
@@ -81,7 +107,7 @@ public class VehicleDestroyEvent implements Event
     @Override
     public void processEvent()
     {
-        //Data
+        //Raw Data
         CharacterInfo attacker_character = dynamicDataManager.getCharacterData(attackerCharacterID);
         String attacker_outfit_id = attacker_character.getOutfitID();
         String attacker_loadout_id = payload.getString("attacker_loadout_id");
@@ -100,9 +126,7 @@ public class VehicleDestroyEvent implements Event
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
 
-        //Payload
-        JsonObject eventData = new JsonObject();
-
+        //Event Data
         eventData.putString("attacker_character_id", attacker_character.getCharacterID());
         eventData.putString("attacker_character_name", attacker_character.getCharacterName());
         eventData.putString("attacker_outfit_id", attacker_outfit_id);
@@ -123,9 +147,7 @@ public class VehicleDestroyEvent implements Event
         eventData.putString("facility_id", facility_id);
         eventData.putString("world_id", world.getID());
 
-        //Filters
-        JsonObject filterData = new JsonObject();
-
+        //Filter Data
         filterData.putArray("characters", new JsonArray().addString(attacker_character.getCharacterID()).addString(victim_character.getCharacterID()));
         filterData.putArray("outfits", new JsonArray().addString(attacker_outfit_id).addString(victim_outfit_id));
         filterData.putArray("factions", new JsonArray().addString(attacker_faction.getID()).addString(victim_faction.getID()));
@@ -137,11 +159,6 @@ public class VehicleDestroyEvent implements Event
         filterData.putArray("worlds", new JsonArray().addString(world.getID()));
 
         //Broadcast Event
-        JsonObject message = new JsonObject();
-
-        message.putObject("event_data", eventData);
-        message.putObject("filter_data", filterData);
-
-        eventTracker.getEventServer().broadcastEvent(this.getClass(), message);
+        eventTracker.getEventServer().broadcastEvent(this);
     }
 }

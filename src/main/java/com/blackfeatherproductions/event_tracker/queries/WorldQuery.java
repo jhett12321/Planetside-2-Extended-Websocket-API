@@ -29,7 +29,7 @@ public class WorldQuery implements Query
     }
 
     @Override
-    public void receiveData(JsonObject data)
+    public void receiveData(JsonObject data, Environment environment)
     {
         WorldInfo worldInfo = dynamicDataManager.getWorldInfo(world);
 
@@ -98,7 +98,7 @@ public class WorldQuery implements Query
         }
 
         //Update Metagame Events
-        queryManager.queryWorldMetagameEvents(world.getID());
+        queryManager.queryWorldMetagameEvents(world.getID(), environment);
 
         worldInfo.setOnline(true);
     }
