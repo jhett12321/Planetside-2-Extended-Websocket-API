@@ -4,7 +4,6 @@ import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 public class QueuedEvent
 {

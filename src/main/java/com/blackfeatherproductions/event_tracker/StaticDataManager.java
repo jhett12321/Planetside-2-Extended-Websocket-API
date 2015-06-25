@@ -34,12 +34,26 @@ public class StaticDataManager
         World.worlds.put("1001", new World("1001", "Palos"));
         World.worlds.put("1002", new World("1002", "Crux"));
         World.worlds.put("1003", new World("1003", "Searhus"));
+        World.worlds.put("1004", new World("1004", "Future"));
+        World.worlds.put("1005", new World("1005", "Future"));
+        World.worlds.put("1006", new World("1006", "Future"));
+        World.worlds.put("1007", new World("1007", "Future"));
+        World.worlds.put("1008", new World("1008", "Future"));
+        World.worlds.put("1009", new World("1009", "Future"));
+        World.worlds.put("1010", new World("1010", "Future"));
         
         //PS4EU
         World.worlds.put("2000", new World("2000", "Ceres"));
         World.worlds.put("2001", new World("2001", "Lithcorp"));
         World.worlds.put("2002", new World("2002", "Rashnu"));
         World.worlds.put("2003", new World("2003", "Dahaka"));
+        World.worlds.put("2004", new World("2004", "Future"));
+        World.worlds.put("2005", new World("2005", "Future"));
+        World.worlds.put("2006", new World("2006", "Future"));
+        World.worlds.put("2007", new World("2007", "Future"));
+        World.worlds.put("2008", new World("2008", "Future"));
+        World.worlds.put("2009", new World("2009", "Future"));
+        World.worlds.put("2010", new World("2010", "Future"));
         
         //Zones
         Zone.UNKNOWN = new Zone("0", "Unknown", "INTERNAL: This is an unknown zone.");

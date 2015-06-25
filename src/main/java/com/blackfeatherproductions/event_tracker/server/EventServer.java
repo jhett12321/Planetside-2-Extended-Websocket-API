@@ -27,7 +27,6 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventType;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
 import com.blackfeatherproductions.event_tracker.server.actions.Action;
 import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
@@ -285,6 +284,7 @@ public class EventServer
 
         JsonObject eventFilterData = event.getFilterData();
         JsonObject eventData = event.getEventData();
+        eventData.putString("environment", event.getEnvironment().toString().toLowerCase());
 
         messageToSend.putObject("payload", eventData);
         messageToSend.putString("event_type", eventClass.getAnnotation(EventInfo.class).eventName());

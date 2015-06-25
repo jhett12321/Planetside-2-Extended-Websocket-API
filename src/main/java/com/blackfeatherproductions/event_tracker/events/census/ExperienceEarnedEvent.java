@@ -14,7 +14,7 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.events.EventType;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
+import com.blackfeatherproductions.event_tracker.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "ExperienceEarned",

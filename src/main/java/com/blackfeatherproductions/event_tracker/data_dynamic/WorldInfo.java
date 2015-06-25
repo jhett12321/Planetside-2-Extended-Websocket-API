@@ -8,7 +8,7 @@ import org.vertx.java.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
+import com.blackfeatherproductions.event_tracker.Environment;
 
 //This is the main class for world-centric data.
 //The DynamicDataManager allows the system to get the world instance.

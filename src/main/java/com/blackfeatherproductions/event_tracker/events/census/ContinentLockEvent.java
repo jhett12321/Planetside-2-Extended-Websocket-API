@@ -12,7 +12,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
+import com.blackfeatherproductions.event_tracker.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "ContinentLock",

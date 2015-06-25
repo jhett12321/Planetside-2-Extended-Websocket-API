@@ -1,4 +1,4 @@
-package com.blackfeatherproductions.event_tracker.queries;
+package com.blackfeatherproductions.event_tracker;
 
 public enum Environment
 {

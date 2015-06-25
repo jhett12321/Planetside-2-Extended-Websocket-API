@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
+import com.blackfeatherproductions.event_tracker.Environment;
 import org.vertx.java.core.json.JsonArray;
 import org.vertx.java.core.json.JsonObject;
 

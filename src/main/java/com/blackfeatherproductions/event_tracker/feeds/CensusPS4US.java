@@ -17,7 +17,7 @@ import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
+import com.blackfeatherproductions.event_tracker.Environment;
 import java.util.ArrayList;
 import java.util.List;
 

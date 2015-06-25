@@ -60,7 +60,7 @@ public class EventTracker extends Verticle
         //Feeds
         new Census();
         new CensusPS4US();
-        //new CensusPS4EU(); //EU Census REST Down.
+        new CensusPS4EU();
         new CensusRest();
     }
 

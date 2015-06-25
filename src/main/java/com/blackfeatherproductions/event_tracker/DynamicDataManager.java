@@ -14,7 +14,6 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 public class DynamicDataManager
 {

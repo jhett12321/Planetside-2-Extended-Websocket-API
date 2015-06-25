@@ -33,7 +33,6 @@ import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeE
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
 
 public class EventManager
 {

@@ -18,7 +18,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
+import com.blackfeatherproductions.event_tracker.Environment;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "MetagameEvent",
@@ -166,14 +166,18 @@ public class MetagameEvent implements Event
             {
                 MetagameEventInfo metagameEventInfo = worldData.getActiveMetagameEvent(instance_id);
 
-                start_time = metagameEventInfo.getStartTime();
-                end_time = timestamp;
-                status = "0";
+                //If this is a restart, metagameEventInfo will be null as we don't have a pre-existing metagame event.
+                if(metagameEventInfo != null)
+                {
+                    start_time = metagameEventInfo.getStartTime();
+                    end_time = timestamp;
+                    status = "0";
 
-                //Remove event from tracking list.
-                worldData.removeMetagameEvent(instance_id);
+                    //Remove event from tracking list.
+                    worldData.removeMetagameEvent(instance_id);
+                }
             }
-
+            
             //Alert Start (135->started, 136->restarted)
             if (payload.getString("metagame_event_state").equals("135") || payload.getString("metagame_event_state").equals("136"))
             {
