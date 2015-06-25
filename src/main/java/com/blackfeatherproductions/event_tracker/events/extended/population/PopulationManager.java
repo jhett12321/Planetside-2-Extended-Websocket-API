@@ -25,6 +25,7 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.queries.Query;
+import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
 
 public class PopulationManager implements Query
 {
@@ -37,85 +38,85 @@ public class PopulationManager implements Query
     
     private Query self = this;
 
-    public PopulationManager()
-    {
-        Vertx vertx = eventTracker.getVertx();
-        
-        for(Environment environment : Environment.values())
-        {
-            envOnlinePlayers.put(environment, new ConcurrentHashMap<String, OnlinePlayer>());
-            envCharactersToCheck.put(environment, new ArrayList<String>());
-        }
-
-        //Regularly sends events for population data.
-        vertx.setPeriodic(10000, new Handler<Long>()
-        {
-            @Override
-            public void handle(Long event)
-            {
-                generateEvents();
-            }
-        });
-
-        //Detects if players are no-longer online (i.e. we missed the logout event.)
-        vertx.setPeriodic(60000, new Handler<Long>()
-        {
-            @Override
-            public void handle(Long timerID)
-            {
-                //Check players have not logged off on all environments.
-                for(Entry<Environment, List<String>> charactersToCheckEntry : envCharactersToCheck.entrySet())
-                {
-                    Environment environment = charactersToCheckEntry.getKey();
-                    List<String> charactersToCheck = charactersToCheckEntry.getValue();
-                    
-                    //Remove characters that census failed to retrieve online statuses for (deleted characters, low BR, etc), or has not seen an event in 15 mins
-                    for (String characterID : charactersToCheck)
-                    {
-                        if (!dynamicDataManager.characterDataExists(characterID))
-                        {
-                            envOnlinePlayers.get(environment).remove(characterID);
-                        }
-                    }
-
-                    charactersToCheck.clear();
-
-                    Iterator<Map.Entry<String, OnlinePlayer>> iter = envOnlinePlayers.get(environment).entrySet().iterator();
-
-                    while (iter.hasNext())
-                    {
-                        Entry<String, OnlinePlayer> entry = iter.next();
-
-                        if ((new Date().getTime() - entry.getValue().getLastEvent().getTime()) / 1000 > 600)
-                        {
-                            charactersToCheck.add(entry.getKey());
-                        }
-                    }
-
-                    List<String> characters = new ArrayList<String>();
-
-                    for (String characterID : charactersToCheck)
-                    {
-                        characters.add(characterID);
-
-                        if (characters.size() >= 150)
-                        {
-                            queryManager.getCensusData("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                                environment, true, self);
-
-                            characters = new ArrayList<String>();
-                        }
-                    }
-
-                    if (!characters.isEmpty())
-                    {
-                        queryManager.getCensusData("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            environment, true, self);
-                    }
-                }
-            }
-        });
-    }
+//    public PopulationManager()
+//    {
+//        Vertx vertx = eventTracker.getVertx();
+//        
+//        for(Environment environment : Environment.values())
+//        {
+//            envOnlinePlayers.put(environment, new ConcurrentHashMap<String, OnlinePlayer>());
+//            envCharactersToCheck.put(environment, new ArrayList<String>());
+//        }
+//
+//        //Regularly sends events for population data.
+//        vertx.setPeriodic(10000, new Handler<Long>()
+//        {
+//            @Override
+//            public void handle(Long event)
+//            {
+//                generateEvents();
+//            }
+//        });
+//
+//        //Detects if players are no-longer online (i.e. we missed the logout event.)
+//        vertx.setPeriodic(60000, new Handler<Long>()
+//        {
+//            @Override
+//            public void handle(Long timerID)
+//            {
+//                //Check players have not logged off on all environments.
+//                for(Entry<Environment, List<String>> charactersToCheckEntry : envCharactersToCheck.entrySet())
+//                {
+//                    Environment environment = charactersToCheckEntry.getKey();
+//                    List<String> charactersToCheck = charactersToCheckEntry.getValue();
+//                    
+//                    //Remove characters that census failed to retrieve online statuses for (deleted characters, low BR, etc), or has not seen an event in 15 mins
+//                    for (String characterID : charactersToCheck)
+//                    {
+//                        if (!dynamicDataManager.characterDataExists(characterID))
+//                        {
+//                            envOnlinePlayers.get(environment).remove(characterID);
+//                        }
+//                    }
+//
+//                    charactersToCheck.clear();
+//
+//                    Iterator<Map.Entry<String, OnlinePlayer>> iter = envOnlinePlayers.get(environment).entrySet().iterator();
+//
+//                    while (iter.hasNext())
+//                    {
+//                        Entry<String, OnlinePlayer> entry = iter.next();
+//
+//                        if ((new Date().getTime() - entry.getValue().getLastEvent().getTime()) / 1000 > 600)
+//                        {
+//                            charactersToCheck.add(entry.getKey());
+//                        }
+//                    }
+//
+//                    List<String> characters = new ArrayList<String>();
+//
+//                    for (String characterID : charactersToCheck)
+//                    {
+//                        characters.add(characterID);
+//
+//                        if (characters.size() >= 150)
+//                        {
+//                            queryManager.queryCensus("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+//                                QueryPriority.LOW, environment, true, true, self);
+//
+//                            characters.clear();
+//                        }
+//                    }
+//
+//                    if (!characters.isEmpty())
+//                    {
+//                        queryManager.queryCensus("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+//                            QueryPriority.LOW, environment, true, true, self);
+//                    }
+//                }
+//            }
+//        });
+//    }
 
     private void generateEvents()
     {
@@ -229,81 +230,84 @@ public class PopulationManager implements Query
     @Override
     public void receiveData(JsonObject data, Environment environment)
     {
-        JsonArray characterList = data.getArray("character_list");
-
-        for (int i = 0; i < characterList.size(); i++)
+        if(data != null)
         {
-            //Update Character Info
-            JsonObject characterData = characterList.get(i);
+            JsonArray characterList = data.getArray("character_list");
 
-            String characterID = characterData.getString("character_id");
-            String characterName = characterData.getObject("name").getString("first");
-            String factionID = characterData.getString("faction_id");
-
-            String outfitID;
-            String zoneID;
-            String worldID;
-            Boolean online;
-
-            if (characterData.containsField("outfit"))
+            for (int i = 0; i < characterList.size(); i++)
             {
-                outfitID = characterData.getObject("outfit").getString("outfit_id");
-            }
-            else
-            {
-                outfitID = "0";
-            }
+                //Update Character Info
+                JsonObject characterData = characterList.get(i);
 
-            if (characterData.containsField("last_event"))
-            {
-                zoneID = characterData.getObject("last_event").getString("zone_id");
-            }
-            else
-            {
-                zoneID = "0";
-            }
+                String characterID = characterData.getString("character_id");
+                String characterName = characterData.getObject("name").getString("first");
+                String factionID = characterData.getString("faction_id");
 
-            if (characterData.containsField("world"))
-            {
-                worldID = characterData.getObject("world").getString("world_id");
-            }
-            else
-            {
-                worldID = "0";
-            }
+                String outfitID;
+                String zoneID;
+                String worldID;
+                Boolean online;
 
-            if (characterData.containsField("online"))
-            {
-                online = !characterData.getObject("online").getString("online_status").equals("0");
-            }
-            else
-            {
-                online = false;
-            }
-
-            CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
-
-            dynamicDataManager.addCharacterData(characterID, character);
-
-            //Verify Population Data.
-            if (dynamicDataManager.characterDataExists(characterID))
-            {
-                CharacterInfo characterInfo = dynamicDataManager.getCharacterData(characterID);
-
-                if (characterInfo.isOnline())
+                if (characterData.containsField("outfit"))
                 {
-                    envOnlinePlayers.get(environment).get(characterID).setLastEvent(new Date());
+                    outfitID = characterData.getObject("outfit").getString("outfit_id");
                 }
-
                 else
                 {
-                    //This player doesn't have valid online status data.
-                    //This player is no-longer online. Remove the player.
-                    envOnlinePlayers.get(environment).remove(characterID);
+                    outfitID = "0";
+                }
+
+                if (characterData.containsField("last_event"))
+                {
+                    zoneID = characterData.getObject("last_event").getString("zone_id");
+                }
+                else
+                {
+                    zoneID = "0";
+                }
+
+                if (characterData.containsField("world"))
+                {
+                    worldID = characterData.getObject("world").getString("world_id");
+                }
+                else
+                {
+                    worldID = "0";
+                }
+
+                if (characterData.containsField("online"))
+                {
+                    online = !characterData.getObject("online").getString("online_status").equals("0");
+                }
+                else
+                {
+                    online = false;
+                }
+
+                CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
+
+                dynamicDataManager.addCharacterData(characterID, character);
+
+                //Verify Population Data.
+                if (dynamicDataManager.characterDataExists(characterID))
+                {
+                    CharacterInfo characterInfo = dynamicDataManager.getCharacterData(characterID);
+
+                    if (characterInfo.isOnline())
+                    {
+                        envOnlinePlayers.get(environment).get(characterID).setLastEvent(new Date());
+                    }
+
+                    else
+                    {
+                        //This player doesn't have valid online status data.
+                        //This player is no-longer online. Remove the player.
+                        envOnlinePlayers.get(environment).remove(characterID);
+                    }
                 }
             }
-        }
 
-        generateEvents();
+            generateEvents();
+        }
     }
 }

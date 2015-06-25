@@ -128,7 +128,7 @@ public class EventManager
     private void registerEvents()
     {
         //Listeners
-        registerEvent(PopulationEventListener.class);
+        //registerEvent(PopulationEventListener.class);
         
         //Service Events
         registerEvent(ServiceStateChangeEvent.class);

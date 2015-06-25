@@ -1,6 +1,7 @@
 package com.blackfeatherproductions.event_tracker;
 
 import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.queries.CensusQuery;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -8,7 +9,6 @@ import java.util.Queue;
 
 import org.apache.commons.lang3.StringUtils;
 import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
 import org.vertx.java.core.buffer.Buffer;
 import org.vertx.java.core.http.HttpClient;
 import org.vertx.java.core.http.HttpClientResponse;
@@ -18,26 +18,34 @@ import org.vertx.java.core.logging.Logger;
 
 import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
-import com.blackfeatherproductions.event_tracker.queries.Environment;
 import com.blackfeatherproductions.event_tracker.queries.MetagameEventQuery;
 import com.blackfeatherproductions.event_tracker.queries.Query;
+import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
+import com.blackfeatherproductions.event_tracker.queries.QueryPriorityComparator;
 import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.PriorityQueue;
+import org.vertx.java.core.Vertx;
 
-//TODO Add all queries to a queue.
-//TODO Queries will have 25 attempts to succeed before failing, unless they are a "must return" data query.
 public class QueryManager
 {
+    //Utils
     private final EventTracker eventTracker = EventTracker.getInstance();
+    private final Vertx vertx = eventTracker.getVertx();
+    private final Logger logger = eventTracker.getLogger();
 
     private Integer failureCount = 0;
 
+    //Character Queries
     private Queue<CharacterQuery> queuedCharacterQueries = new LinkedList<CharacterQuery>();
     private Map<Environment, List<String>> envCharacters = new HashMap<Environment, List<String>>();
     private Map<Environment, List<CharacterQuery>> envCallbacks = new HashMap<Environment, List<CharacterQuery>>();
+    
+    //Queries
+    private final Queue<CensusQuery> queuedQueries = new PriorityQueue<CensusQuery>(10, new QueryPriorityComparator());
 
     public QueryManager()
     {
@@ -47,26 +55,27 @@ public class QueryManager
             envCallbacks.put(environment, new ArrayList<CharacterQuery>());
         }
         
-        //Character Queue Processor
+        //Query Processor
         eventTracker.getVertx().setPeriodic(1000, new Handler<Long>()
         {
             @Override
             public void handle(Long timerID)
             {
-                for (int i = 0; i < queuedCharacterQueries.size(); i++)
+                //Grab whatever is in the character queues, and split them into 150 character chunks.
+                CharacterQuery characterQuery;
+                while ((characterQuery = queuedCharacterQueries.poll()) != null)
                 {
-                    CharacterQuery characterQuery = queuedCharacterQueries.poll();
                     Environment environment = characterQuery.getEnvironment();
-
+                    
                     envCharacters.get(environment).addAll(characterQuery.getCharacterIDs());
                     envCallbacks.get(environment).add(characterQuery);
                     
                     if(envCharacters.get(characterQuery.getEnvironment()).size() >= 150)
                     {
-                        getCensusData("character?character_id=" + StringUtils.join(envCharacters.get(environment), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            environment, true, new CharacterListQuery(envCallbacks.get(environment)));
+                        queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(environment), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                            QueryPriority.LOWEST, environment, true, true, new CharacterListQuery(envCallbacks.get(environment)));
                         
-                        envCharacters.put(environment, new ArrayList<String>());
+                        envCharacters.get(environment).clear();
                         envCallbacks.put(environment, new ArrayList<CharacterQuery>());
                     }
                 }
@@ -75,37 +84,61 @@ public class QueryManager
                 {
                     if(!callbacks.getValue().isEmpty())
                     {
-                        getCensusData("character?character_id=" + StringUtils.join(envCharacters.get(callbacks.getKey()), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            callbacks.getKey(), true, new CharacterListQuery(callbacks.getValue()));
+                        queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(callbacks.getKey()), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                            QueryPriority.LOWEST, callbacks.getKey(), true, true, new CharacterListQuery(envCallbacks.get(callbacks.getKey())));
+                        
+                        envCharacters.get(callbacks.getKey()).clear();
+                        envCallbacks.put(callbacks.getKey(), new ArrayList<CharacterQuery>());
                     }
+                }
+                
+                //Process anything we have in the query queue.
+                for (int i = 0; i < queuedQueries.size(); i++)
+                {
+                    getCensusData(queuedQueries.poll());
                 }
             }
         });
     }
-
-    public void retryQuery(final String rawQuery, final Environment environment, final boolean allowNoData, final Query... callbacks)
+    
+    public void queryCharacter(List<String> characterIDs, Environment environment, Event callbackEvent)
     {
-        eventTracker.getVertx().setTimer(3000, new Handler<Long>()
-        {
-            public void handle(Long timerID)
-            {
-                getCensusData(rawQuery, environment, allowNoData, callbacks);
-            }
-        });
+        this.queuedCharacterQueries.add(new CharacterQuery(characterIDs, environment, callbackEvent));
     }
     
-    public void getCensusData(final String rawQuery, final Environment environment, final boolean allowNoData, final Query... callbacks)
+    public void queryCharacter(String characterID, Environment environment, Event callbackEvent)
     {
-        Vertx vertx = eventTracker.getVertx();
-        final Logger logger = eventTracker.getLogger();
+        this.queuedCharacterQueries.add(new CharacterQuery(characterID, environment, callbackEvent));
+    }
+    
+    public void queryWorld(String worldID, Environment environment)
+    {
+        queryCensus("map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_name'facility_type'facility_type_id",
+                QueryPriority.HIGHEST, environment, false, false, new WorldQuery(worldID)); //Make allow no data false again.
+    }
+    
+    public void queryWorldMetagameEvents(String worldID, Environment environment)
+    {
+        String timestamp = String.valueOf(new Date().getTime() / 1000 - 7201);
 
-        if (failureCount > eventTracker.getConfig().getMaxFailures() && allowNoData)
+        queryCensus("world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp,
+                QueryPriority.HIGH, environment, false, true, new MetagameEventQuery()); //Make allow no data false again.
+    }
+
+    public void queryCensus(String rawQuery, QueryPriority priority, Environment environment, boolean allowFailure, boolean allowNoData, Query... callbacks)
+    {
+        queuedQueries.add(new CensusQuery(rawQuery, priority, environment, allowFailure, allowNoData, callbacks));
+    }
+    
+    private void getCensusData(final CensusQuery censusQuery)
+    {
+        if (failureCount > eventTracker.getConfig().getMaxFailures() && censusQuery.isFailureAllowed())
         {
             logger.error("[Census REST] Census Failure Limit Reached. Dropping event.");
 
-            for (Query callback : callbacks)
+            for (Query callback : censusQuery.getCallbacks())
             {
-                callback.receiveData(null, environment);
+                callback.receiveData(null, censusQuery.getEnvironment());
             }
 
             failureCount = eventTracker.getConfig().getMaxFailures();
@@ -115,7 +148,7 @@ public class QueryManager
         HttpClient client = vertx.createHttpClient().setHost("census.daybreakgames.com");
         
         String queryPrefix = "";
-        switch(environment)
+        switch(censusQuery.getEnvironment())
         {
             case PC:
             {
@@ -135,15 +168,15 @@ public class QueryManager
             default:
             {
                 eventTracker.getLogger().warn("[Census REST] - An unsupported environment was sent for querying. Ignoring request...");
-                for (Query callback : callbacks)
+                for (Query callback : censusQuery.getCallbacks())
                 {
-                    callback.receiveData(null, environment);
+                    callback.receiveData(null, censusQuery.getEnvironment());
                 }
                 return;
             }
         }
         
-        final String query = "/s:" + eventTracker.getConfig().getSoeServiceID() + "/get/" + queryPrefix + "/" + rawQuery;
+        final String query = "/s:" + eventTracker.getConfig().getSoeServiceID() + "/get/" + queryPrefix + "/" + censusQuery.getRawQuery();
         
         client.exceptionHandler(new Handler<Throwable>()
         {
@@ -157,7 +190,7 @@ public class QueryManager
 
                 failureCount++;
 
-                retryQuery(rawQuery, environment, allowNoData, callbacks);
+                queuedQueries.add(censusQuery);
             }
         });
 
@@ -184,17 +217,28 @@ public class QueryManager
 
                                 failureCount++;
 
-                                retryQuery(rawQuery, environment, allowNoData, callbacks);
+                                queuedQueries.add(censusQuery);
                             }
                             
-                            else
+                            else if((data.getInteger("returned") > 0 && !censusQuery.isNoDataAllowed()) || censusQuery.isNoDataAllowed())
                             {
-                                for (Query callback : callbacks)
+                                for (Query callback : censusQuery.getCallbacks())
                                 {
-                                    callback.receiveData(data, environment);
+                                    callback.receiveData(data, censusQuery.getEnvironment());
                                 }
 
                                 failureCount = 0;
+                            }
+                            else
+                            {
+                                //No Data was returned
+                                logger.warn("[Census REST] - A census request returned no data. Retrying request...");
+                                logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
+                                logger.warn("Request: " + query);
+
+                                failureCount++;
+
+                                queuedQueries.add(censusQuery);
                             }
                         }
                         catch (DecodeException e)
@@ -207,33 +251,11 @@ public class QueryManager
 
                             failureCount++;
 
-                            retryQuery(rawQuery, environment, allowNoData, callbacks);
+                            queuedQueries.add(censusQuery);
                         }
                     }
                 });
             }
         });
-    }
-    
-    public void queryCharacter(List<String> characterIDs, Environment environment, Event callbackEvent)
-    {
-        this.queuedCharacterQueries.add(new CharacterQuery(characterIDs, environment, callbackEvent));
-    }
-    
-    public void queryCharacter(String characterID, Environment environment, Event callbackEvent)
-    {
-        this.queuedCharacterQueries.add(new CharacterQuery(characterID, environment, callbackEvent));
-    }
-    
-    public void queryWorld(String worldID, Environment environment)
-    {
-        getCensusData("map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_name'facility_type'facility_type_id", environment, true, new WorldQuery(worldID)); //Make allow no data false again.
-    }
-    
-    public void queryWorldMetagameEvents(String worldID, Environment environment)
-    {
-        String timestamp = String.valueOf(new Date().getTime() / 1000 - 7201);
-
-        getCensusData("world_event/?type=METAGAME&c:limit=100&c:lang=en&world_id=" + worldID + "&after=" + timestamp, environment, true, new MetagameEventQuery()); //TODO make allow no data false again
     }
 }

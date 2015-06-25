@@ -13,9 +13,9 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 public class CharacterListQuery implements Query
 {
     private final EventTracker eventTracker = EventTracker.getInstance();
-
     private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
-    private final List<CharacterQuery> callbacks;
+    
+    private List<CharacterQuery> callbacks;
 
     public CharacterListQuery(List<CharacterQuery> callbacks)
     {
@@ -95,6 +95,8 @@ public class CharacterListQuery implements Query
 
             callback.getCallbackEvent().processEvent(); //Triggers the waiting events for processing.
         }
+        
+        callbacks = null;
     }
 
 }
