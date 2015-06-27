@@ -14,7 +14,7 @@ public class EventTracker
 {
     //Vertx
     private static Vertx vertx = Vertx.vertx();
-    private static Logger logger = LoggerFactory.getLogger(io.vertx.core.logging.Log4jLogDelegateFactory.class);
+    private static Logger logger = LoggerFactory.getLogger(io.vertx.core.logging.JULLogDelegateFactory.class);
 
     //Data
     private static Config config;
