@@ -5,7 +5,6 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.OnlinePlayer;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 
 public class PopulationStore
@@ -17,6 +16,7 @@ public class PopulationStore
 
     protected PopulationStore()
     {
+        factionPopulations.put(Faction.NS, 0);
         factionPopulations.put(Faction.VS, 0);
         factionPopulations.put(Faction.NC, 0);
         factionPopulations.put(Faction.TR, 0);
@@ -24,46 +24,42 @@ public class PopulationStore
 
     protected void incrementPopulation(OnlinePlayer player)
     {
-        if (player != null)
+        Faction faction = player.getFaction();
+        String outfit = player.getOutfitID();
+        
+        totalPopulation++;
+        
+        if (factionPopulations.containsKey(faction))
         {
-            Faction faction = player.getFaction();
-            String outfit = player.getOutfitID();
-
-            if (factionPopulations.containsKey(faction))
-            {
-                factionPopulations.put(faction, factionPopulations.get(faction) + 1);
-                totalPopulation++;
-
-                if (!outfitPopulations.containsKey(outfit))
-                {
-                    outfitPopulations.put(outfit, 0);
-                }
-
-                outfitPopulations.put(outfit, outfitPopulations.get(outfit) + 1);
-            }
+            factionPopulations.put(faction, factionPopulations.get(faction) + 1);
         }
+        
+        if (!outfitPopulations.containsKey(outfit))
+        {
+            outfitPopulations.put(outfit, 0);
+        }
+
+        outfitPopulations.put(outfit, outfitPopulations.get(outfit) + 1);
     }
     
     protected void decrementPopulation(OnlinePlayer player)
     {
-        if (player != null)
+        Faction faction = player.getFaction();
+        String outfit = player.getOutfitID();
+        
+        totalPopulation--;
+        
+        if (factionPopulations.containsKey(faction))
         {
-            Faction faction = player.getFaction();
-            String outfit = player.getOutfitID();
-
-            if (factionPopulations.containsKey(faction))
-            {
-                factionPopulations.put(faction, factionPopulations.get(faction) - 1);
-                totalPopulation--;
-
-                if (!outfitPopulations.containsKey(outfit))
-                {
-                    outfitPopulations.put(outfit, 0);
-                }
-
-                outfitPopulations.put(outfit, outfitPopulations.get(outfit) - 1);
-            }
+            factionPopulations.put(faction, factionPopulations.get(faction) - 1);
         }
+        
+        if (!outfitPopulations.containsKey(outfit))
+        {
+            outfitPopulations.put(outfit, 0);
+        }
+
+        outfitPopulations.put(outfit, outfitPopulations.get(outfit) - 1);
     }
 
     public Integer getTotalPopulation()

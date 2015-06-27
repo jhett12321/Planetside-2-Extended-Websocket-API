@@ -261,6 +261,7 @@ public class PopulationManager implements Query
             totalPayload.put("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
             totalPayload.put("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
             totalPayload.put("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
+            totalPayload.put("population_unk", totalPopulation.getFactionPopulation(Faction.NS).toString());
 
             EventTracker.getEventHandler().handleEvent(eventName, totalPayload, environment);
 
@@ -273,6 +274,7 @@ public class PopulationManager implements Query
             worldPayload.put("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
             worldPayload.put("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
             worldPayload.put("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
+            worldPayload.put("population_unk", worldPopulation.getFactionPopulation(Faction.NS).toString());
             worldPayload.put("world_id", player.getWorld().getID());
 
             EventTracker.getEventHandler().handleEvent(eventName, worldPayload, environment);
@@ -297,6 +299,7 @@ public class PopulationManager implements Query
         zonePayload.put("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
         zonePayload.put("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
         zonePayload.put("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
+        zonePayload.put("population_unk", zonePopulation.getFactionPopulation(Faction.NS).toString());
         zonePayload.put("zone_id", player.getZone().getID());
         zonePayload.put("world_id", player.getWorld().getID());
 
