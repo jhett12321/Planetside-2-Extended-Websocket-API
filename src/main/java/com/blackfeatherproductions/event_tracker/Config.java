@@ -1,8 +1,10 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.Files;
 import java.util.Properties;
 
 public class Config
@@ -16,26 +18,32 @@ public class Config
     private Integer maxFailures;
 
     //Database Properties
-    @Deprecated
     private Integer dbConnectionLimit;
-    @Deprecated
     private String dbHost;
-    @Deprecated
     private String dbUser;
-    @Deprecated
     private String dbPassword;
-    @Deprecated
     private String dbName;
-
-    //API Database Properties
-    private Integer apiDbConnectionLimit;
-    private String apiDbHost;
-    private String apiDbUser;
-    private String apiDbPassword;
-    private String apiDbName;
 
     public Config()
     {
+        File properties = new File("eventTracker.properties");
+        
+        if(!properties.exists())
+        {
+            EventTracker.getLogger().warn("No Config Found! Generating new default config (eventTracker.properties).");
+            EventTracker.getLogger().warn("It is strongly recommended that you update your database info and DGC service ID's before continuing use.");
+            
+            InputStream defaultProperties = (getClass().getResourceAsStream("/defaults/eventTracker.properties"));
+            try
+            {
+                Files.copy(defaultProperties, properties.getAbsoluteFile().toPath());
+            }
+            catch (IOException ex)
+            {
+                ex.printStackTrace();
+            }
+        }
+        
         Properties prop = new Properties();
         InputStream input = null;
 
@@ -50,7 +58,6 @@ public class Config
 
             //Server Listen Port
             serverPort = Integer.valueOf(prop.getProperty("serverPort", "8080"));
-
             maxFailures = Integer.valueOf(prop.getProperty("maxFailures", "20"));
 
             //Database Properties
@@ -59,14 +66,6 @@ public class Config
             dbUser = prop.getProperty("dbUser", "eventTracker");
             dbPassword = prop.getProperty("dbPassword", "password");
             dbName = prop.getProperty("dbName", "ps2_events");
-
-            //API Database Properties
-            apiDbConnectionLimit = Integer.valueOf(prop.getProperty("apiDbConnectionLimit", "100"));
-            apiDbHost = prop.getProperty("apiDbHost", "127.0.0.1");
-            apiDbUser = prop.getProperty("apiDbUser", "api");
-            apiDbPassword = prop.getProperty("apiDbPassword", "password");
-            apiDbName = prop.getProperty("apiDbName", "api");
-
         }
 
         catch (IOException ex)
@@ -100,63 +99,33 @@ public class Config
         return soeServiceID;
     }
 
-    @Deprecated
-    public Integer getDbConnectionLimit()
-    {
-        return dbConnectionLimit;
-    }
-
-    @Deprecated
-    public String getDbHost()
-    {
-        return dbHost;
-    }
-
-    @Deprecated
-    public String getDbUser()
-    {
-        return dbUser;
-    }
-
-    @Deprecated
-    public String getDbPassword()
-    {
-        return dbPassword;
-    }
-
-    @Deprecated
-    public String getDbName()
-    {
-        return dbName;
-    }
-
     public Integer getMaxFailures()
     {
         return maxFailures;
     }
 
-    public Integer getApiDbConnectionLimit()
+    public Integer getDbConnectionLimit()
     {
-        return apiDbConnectionLimit;
+        return dbConnectionLimit;
     }
 
-    public String getApiDbHost()
+    public String getDbHost()
     {
-        return apiDbHost;
+        return dbHost;
     }
 
-    public String getApiDbUser()
+    public String getDbUser()
     {
-        return apiDbUser;
+        return dbUser;
     }
 
-    public String getApiDbPassword()
+    public String getDbPassword()
     {
-        return apiDbPassword;
+        return dbPassword;
     }
 
-    public String getApiDbName()
+    public String getDbName()
     {
-        return apiDbName;
+        return dbName;
     }
 }

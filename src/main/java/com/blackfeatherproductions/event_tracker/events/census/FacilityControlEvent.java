@@ -1,8 +1,5 @@
 package com.blackfeatherproductions.event_tracker.events.census;
 
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
@@ -16,6 +13,9 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.Environment;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 @EventInfo(eventType = EventType.EVENT,
         eventName = "FacilityControl",
         listenedEvents = "FacilityControl",
@@ -27,8 +27,7 @@ import com.blackfeatherproductions.event_tracker.Environment;
 public class FacilityControlEvent implements Event
 {
     //Utils
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
 
     //Raw Data
     private JsonObject payload;
@@ -99,34 +98,34 @@ public class FacilityControlEvent implements Event
         String control_tr = controlInfo.getString("control_tr");
 
         //Event Data
-        eventData.putString("facility_id", facility_id);
-        eventData.putString("facility_type_id", facility.getTypeID());
-        eventData.putString("outfit_id", outfit_id);
-        eventData.putString("duration_held", duration_held);
+        eventData.put("facility_id", facility_id);
+        eventData.put("facility_type_id", facility.getTypeID());
+        eventData.put("outfit_id", outfit_id);
+        eventData.put("duration_held", duration_held);
 
-        eventData.putString("new_faction_id", new_faction.getID());
-        eventData.putString("old_faction_id", old_faction.getID());
+        eventData.put("new_faction_id", new_faction.getID());
+        eventData.put("old_faction_id", old_faction.getID());
 
-        eventData.putString("is_capture", is_capture);
+        eventData.put("is_capture", is_capture);
 
-        eventData.putString("control_vs", control_vs);
-        eventData.putString("control_nc", control_nc);
-        eventData.putString("control_tr", control_tr);
+        eventData.put("control_vs", control_vs);
+        eventData.put("control_nc", control_nc);
+        eventData.put("control_tr", control_tr);
 
-        eventData.putString("timestamp", timestamp);
-        eventData.putString("zone_id", zone.getID());
-        eventData.putString("world_id", world.getID());
+        eventData.put("timestamp", timestamp);
+        eventData.put("zone_id", zone.getID());
+        eventData.put("world_id", world.getID());
 
         //Filter Data
-        filterData.putArray("facilities", new JsonArray().addString(facility_id));
-        filterData.putArray("facility_types", new JsonArray().addString(facility.getTypeID()));
-        filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-        filterData.putArray("factions", new JsonArray().addString(new_faction.getID()).addString(old_faction.getID()));
-        filterData.putArray("captures", new JsonArray().addString(is_capture));
-        filterData.putArray("zones", new JsonArray().addString(zone.getID()));
-        filterData.putArray("worlds", new JsonArray().addString(world.getID()));
+        filterData.put("facilities", new JsonArray().add(facility_id));
+        filterData.put("facility_types", new JsonArray().add(facility.getTypeID()));
+        filterData.put("outfits", new JsonArray().add(outfit_id));
+        filterData.put("factions", new JsonArray().add(new_faction.getID()).add(old_faction.getID()));
+        filterData.put("captures", new JsonArray().add(is_capture));
+        filterData.put("zones", new JsonArray().add(zone.getID()));
+        filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        eventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.getEventServer().broadcastEvent(this);
     }
 }

@@ -1,7 +1,5 @@
 package com.blackfeatherproductions.event_tracker.data_dynamic;
 
-import org.vertx.java.core.Handler;
-
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
@@ -9,16 +7,30 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class CharacterInfo
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
+    private String characterID;
+    private String characterName;
+    private String outfitID;
+    private Faction faction;
+    private Zone zone;
+    private World world;
+    private boolean online;
 
-    private final String characterID;
-    private final String characterName;
-    private final String outfitID;
-    private final Faction faction;
-    private final Zone zone;
-    private final World world;
-    private final boolean online;
+    public CharacterInfo(final String characterID)
+    {
+        this.characterID = characterID;
+        this.characterName = "";
+        this.faction = Faction.NS;
+        this.outfitID = "0";
+        this.zone = Zone.UNKNOWN;
+        this.world = World.UNKNOWN;
+        this.online = false;
 
+        EventTracker.getVertx().setTimer(300000, id ->
+        {
+            EventTracker.getDynamicDataManager().removeCharacter(characterID);
+        });
+    }
+    
     public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
     {
         this.characterID = characterID;
@@ -29,13 +41,9 @@ public class CharacterInfo
         this.world = World.getWorldByID(worldID);
         this.online = online;
 
-        eventTracker.getVertx().setTimer(60000, new Handler<Long>()
+        EventTracker.getVertx().setTimer(300000, id ->
         {
-            @Override
-            public void handle(Long timerID)
-            {
-                eventTracker.getDynamicDataManager().removeCharacter(characterID);
-            }
+            EventTracker.getDynamicDataManager().removeCharacter(characterID);
         });
     }
 
@@ -72,5 +80,35 @@ public class CharacterInfo
     public boolean isOnline()
     {
         return online;
+    }
+
+    public void setCharacterName(String characterName)
+    {
+        this.characterName = characterName;
+    }
+
+    public void setOutfitID(String outfitID)
+    {
+        this.outfitID = outfitID;
+    }
+
+    public void setFaction(Faction faction)
+    {
+        this.faction = faction;
+    }
+
+    public void setZone(Zone zone)
+    {
+        this.zone = zone;
+    }
+
+    public void setWorld(World world)
+    {
+        this.world = world;
+    }
+
+    public void setOnline(boolean online)
+    {
+        this.online = online;
     }
 }

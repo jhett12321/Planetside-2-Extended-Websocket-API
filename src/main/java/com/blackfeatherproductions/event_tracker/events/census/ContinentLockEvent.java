@@ -1,8 +1,5 @@
 package com.blackfeatherproductions.event_tracker.events.census;
 
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
@@ -13,6 +10,9 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.Environment;
+
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "ContinentLock",
@@ -25,8 +25,7 @@ import com.blackfeatherproductions.event_tracker.Environment;
 public class ContinentLockEvent implements Event
 {
     //Utils
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
 
     //Raw Data
     private JsonObject payload;
@@ -86,23 +85,23 @@ public class ContinentLockEvent implements Event
         dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(locked_by);
 
         //Event Data
-        eventData.putString("vs_population", vs_population);
-        eventData.putString("nc_population", nc_population);
-        eventData.putString("tr_population", tr_population);
+        eventData.put("vs_population", vs_population);
+        eventData.put("nc_population", nc_population);
+        eventData.put("tr_population", tr_population);
 
-        eventData.putString("locked_by", locked_by.getID());
-        eventData.putString("metagame_event_id", metagame_event_id);
+        eventData.put("locked_by", locked_by.getID());
+        eventData.put("metagame_event_id", metagame_event_id);
 
-        eventData.putString("timestamp", timestamp);
-        eventData.putString("zone_id", zone.getID());
-        eventData.putString("world_id", world.getID());
+        eventData.put("timestamp", timestamp);
+        eventData.put("zone_id", zone.getID());
+        eventData.put("world_id", world.getID());
 
         //Filter Data
-        filterData.putArray("factions", new JsonArray().addString(locked_by.getID()));
-        filterData.putArray("zones", new JsonArray().addString(zone.getID()));
-        filterData.putArray("worlds", new JsonArray().addString(world.getID()));
+        filterData.put("factions", new JsonArray().add(locked_by.getID()));
+        filterData.put("zones", new JsonArray().add(zone.getID()));
+        filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        eventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.getEventServer().broadcastEvent(this);
     }
 }

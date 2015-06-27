@@ -1,8 +1,5 @@
 package com.blackfeatherproductions.event_tracker.events.census;
 
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
@@ -20,6 +17,9 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.Environment;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 @EventInfo(eventType = EventType.EVENT,
         eventName = "MetagameEvent",
         listenedEvents = "MetagameEvent|FacilityControl",
@@ -31,8 +31,7 @@ import com.blackfeatherproductions.event_tracker.Environment;
 public class MetagameEvent implements Event
 {
     //Utils
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
 
     //Raw Data
     private JsonObject payload;
@@ -83,15 +82,15 @@ public class MetagameEvent implements Event
         WorldInfo worldData = dynamicDataManager.getWorldInfo(world);
 
         //Raw Data - To be resolved
-        String instance_id = null;
-        String metagame_event_id = null;
-        String facility_type_id = null;
+        String instance_id;
+        String metagame_event_id;
+        String facility_type_id;
         String start_time = "0";
         String end_time = "0";
         String status = null;
         String domination = "0";
 
-        Zone zone = null;
+        Zone zone;
 
         //Raw Data - FacilityControl
         if (event_name.equals("FacilityControl"))
@@ -141,10 +140,10 @@ public class MetagameEvent implements Event
                 FacilityInfo facilityInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(facility);
 
                 JsonObject facilityCaptured = new JsonObject();
-                facilityCaptured.putString("facility_id", facility.getID());
-                facilityCaptured.putString("facility_type_id", facility.getTypeID());
-                facilityCaptured.putString("owner", facilityInfo.getOwner().getID());
-                facilityCaptured.putString("zone_id", zone.getID());
+                facilityCaptured.put("facility_id", facility.getID());
+                facilityCaptured.put("facility_type_id", facility.getTypeID());
+                facilityCaptured.put("owner", facilityInfo.getOwner().getID());
+                facilityCaptured.put("zone_id", zone.getID());
 
                 dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility.getID())).setOwner(new_faction);
             }
@@ -202,35 +201,35 @@ public class MetagameEvent implements Event
         }
 
         //Event Data
-        boolean isDummy = payload.containsField("is_dummy") && payload.getString("is_dummy").equals("1");
+        boolean isDummy = payload.containsKey("is_dummy") && payload.getString("is_dummy").equals("1");
 
         if (!isDummy)
         {
-            eventData.putString("instance_id", instance_id);
-            eventData.putString("metagame_event_type_id", metagame_event_id);
-            eventData.putString("start_time", start_time);
-            eventData.putString("end_time", end_time);
-            eventData.putString("timestamp", timestamp);
-            eventData.putString("facility_type_id", facility_type_id);
-            eventData.putString("status", status);
-            eventData.putString("control_vs", control_vs);
-            eventData.putString("control_nc", control_nc);
-            eventData.putString("control_tr", control_tr);
-            eventData.putString("domination", domination);
-            eventData.putString("zone_id", zone.getID());
-            eventData.putString("world_id", world.getID());
+            eventData.put("instance_id", instance_id);
+            eventData.put("metagame_event_type_id", metagame_event_id);
+            eventData.put("start_time", start_time);
+            eventData.put("end_time", end_time);
+            eventData.put("timestamp", timestamp);
+            eventData.put("facility_type_id", facility_type_id);
+            eventData.put("status", status);
+            eventData.put("control_vs", control_vs);
+            eventData.put("control_nc", control_nc);
+            eventData.put("control_tr", control_tr);
+            eventData.put("domination", domination);
+            eventData.put("zone_id", zone.getID());
+            eventData.put("world_id", world.getID());
 
             //Filter Data		
-            filterData.putArray("metagames", new JsonArray().addString(instance_id));
-            filterData.putArray("metagame_event_types", new JsonArray().addString(metagame_event_id));
-            filterData.putArray("facility_types", new JsonArray().addString(facility_type_id));
-            filterData.putArray("statuses", new JsonArray().addString(status));
-            filterData.putArray("dominations", new JsonArray().addString(domination));
-            filterData.putArray("zones", new JsonArray().addString(zone.getID()));
-            filterData.putArray("worlds", new JsonArray().addString(world.getID()));
+            filterData.put("metagames", new JsonArray().add(instance_id));
+            filterData.put("metagame_event_types", new JsonArray().add(metagame_event_id));
+            filterData.put("facility_types", new JsonArray().add(facility_type_id));
+            filterData.put("statuses", new JsonArray().add(status));
+            filterData.put("dominations", new JsonArray().add(domination));
+            filterData.put("zones", new JsonArray().add(zone.getID()));
+            filterData.put("worlds", new JsonArray().add(world.getID()));
 
             //Broadcast Event		
-            eventTracker.getEventServer().broadcastEvent(this);
+            EventTracker.getEventServer().broadcastEvent(this);
         }
     }
 }

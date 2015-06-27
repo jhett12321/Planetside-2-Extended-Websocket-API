@@ -3,19 +3,17 @@ package com.blackfeatherproductions.event_tracker.data_dynamic;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.Environment;
 
+import io.vertx.core.json.JsonObject;
+
 //This is the main class for world-centric data.
 //The DynamicDataManager allows the system to get the world instance.
 public class WorldInfo
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
-
     private final World world;
 
     private final Map<Zone, ZoneInfo> zones = new HashMap<Zone, ZoneInfo>();
@@ -86,19 +84,19 @@ public class WorldInfo
 
             if (!online)
             {
-                eventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE.");
+                EventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE.");
             }
             else
             {
-                eventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online.");
+                EventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online.");
             }
 
             //Generate Events
             JsonObject payload = new JsonObject();
-            payload.putString("online", online ? "1" : "0");
-            payload.putString("world_id", world.getID());
+            payload.put("online", online ? "1" : "0");
+            payload.put("world_id", world.getID());
 
-            eventTracker.getEventHandler().handleEvent("ServiceStateChange", payload, Environment.WEBSOCKET_SERVICE);
+            EventTracker.getEventHandler().handleEvent("ServiceStateChange", payload, Environment.WEBSOCKET_SERVICE);
         }
     }
 }

@@ -7,13 +7,8 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
@@ -27,108 +22,49 @@ import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.queries.Query;
 import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
+import java.util.EnumMap;
+import java.util.concurrent.ConcurrentHashMap;
+
 public class PopulationManager implements Query
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = eventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = eventTracker.getQueryManager();
+    //Utils
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.getQueryManager();
 
-    public Map<Environment, Map<String, OnlinePlayer>> envOnlinePlayers = new ConcurrentHashMap<Environment, Map<String, OnlinePlayer>>();
-    private Map<Environment, List<String>> envCharactersToCheck = new HashMap<Environment, List<String>>();
+    //Online Characters
+    private Map<Environment, Map<String, OnlinePlayer>> envOnlinePlayers = new EnumMap<>(Environment.class);
     
+    //Characters that have passed the dirty stage.
+    private Map<Environment, List<String>> envCharactersToCheck = new EnumMap<>(Environment.class);
+    
+    //Population Data
+    private Map<Environment, PopulationStore> envTotalPopulations = new EnumMap<>(Environment.class);
+    private Map<Environment, Map<World, PopulationStore>> envWorldPopulations = new EnumMap<>(Environment.class);
+    private Map<Environment, Map<String, PopulationStore>> envZonePopulations = new EnumMap<>(Environment.class);
+    
+    //Instance used for query manager.
     private Query self = this;
 
-//    public PopulationManager()
-//    {
-//        Vertx vertx = eventTracker.getVertx();
-//        
-//        for(Environment environment : Environment.values())
-//        {
-//            envOnlinePlayers.put(environment, new ConcurrentHashMap<String, OnlinePlayer>());
-//            envCharactersToCheck.put(environment, new ArrayList<String>());
-//        }
-//
-//        //Regularly sends events for population data.
-//        vertx.setPeriodic(10000, new Handler<Long>()
-//        {
-//            @Override
-//            public void handle(Long event)
-//            {
-//                generateEvents();
-//            }
-//        });
-//
-//        //Detects if players are no-longer online (i.e. we missed the logout event.)
-//        vertx.setPeriodic(60000, new Handler<Long>()
-//        {
-//            @Override
-//            public void handle(Long timerID)
-//            {
-//                //Check players have not logged off on all environments.
-//                for(Entry<Environment, List<String>> charactersToCheckEntry : envCharactersToCheck.entrySet())
-//                {
-//                    Environment environment = charactersToCheckEntry.getKey();
-//                    List<String> charactersToCheck = charactersToCheckEntry.getValue();
-//                    
-//                    //Remove characters that census failed to retrieve online statuses for (deleted characters, low BR, etc), or has not seen an event in 15 mins
-//                    for (String characterID : charactersToCheck)
-//                    {
-//                        if (!dynamicDataManager.characterDataExists(characterID))
-//                        {
-//                            envOnlinePlayers.get(environment).remove(characterID);
-//                        }
-//                    }
-//
-//                    charactersToCheck.clear();
-//
-//                    Iterator<Map.Entry<String, OnlinePlayer>> iter = envOnlinePlayers.get(environment).entrySet().iterator();
-//
-//                    while (iter.hasNext())
-//                    {
-//                        Entry<String, OnlinePlayer> entry = iter.next();
-//
-//                        if ((new Date().getTime() - entry.getValue().getLastEvent().getTime()) / 1000 > 600)
-//                        {
-//                            charactersToCheck.add(entry.getKey());
-//                        }
-//                    }
-//
-//                    List<String> characters = new ArrayList<String>();
-//
-//                    for (String characterID : charactersToCheck)
-//                    {
-//                        characters.add(characterID);
-//
-//                        if (characters.size() >= 150)
-//                        {
-//                            queryManager.queryCensus("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-//                                QueryPriority.LOW, environment, true, true, self);
-//
-//                            characters.clear();
-//                        }
-//                    }
-//
-//                    if (!characters.isEmpty())
-//                    {
-//                        queryManager.queryCensus("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-//                            QueryPriority.LOW, environment, true, true, self);
-//                    }
-//                }
-//            }
-//        });
-//    }
-
-    private void generateEvents()
+    public PopulationManager()
     {
-        //Generate events for all environments
-        for(Entry<Environment, Map<String, OnlinePlayer>> onlinePlayersEntry : envOnlinePlayers.entrySet())
+        Vertx vertx = EventTracker.getVertx();
+        
+        //Create Population Stores
+        for(Environment environment : Environment.values())
         {
-            Environment environment = onlinePlayersEntry.getKey();
-            Map<String, OnlinePlayer> onlinePlayers = onlinePlayersEntry.getValue();
+            //Online Characters
+            envOnlinePlayers.put(environment, new ConcurrentHashMap<>());
             
-            PopulationStore totalPopulation = new PopulationStore();
-            Map<World, PopulationStore> worldPopulations = new HashMap<World, PopulationStore>();
-            Map<String, PopulationStore> zonePopulations = new HashMap<String, PopulationStore>();
+            //Total Population
+            envTotalPopulations.put(environment, new PopulationStore());
+            
+            //World & Zone Population
+            Map<World, PopulationStore> worldPopulations = new HashMap<>();
+            Map<String, PopulationStore> zonePopulations = new HashMap<>();
 
             for (World world : World.getAllWorlds())
             {
@@ -139,92 +75,243 @@ public class PopulationManager implements Query
                     zonePopulations.put(world.getID() + "_" + zone.getID(), new PopulationStore());
                 }
             }
+            
+            envWorldPopulations.put(environment, worldPopulations);
+            envZonePopulations.put(environment, zonePopulations);
+            
+            //Character Checking List
+            envCharactersToCheck.put(environment, new ArrayList<>());
+        }
 
-            //Count Players
-            for (OnlinePlayer player : onlinePlayers.values())
+        //Detects if players are no-longer online (i.e. we missed the logout event.)
+        vertx.setPeriodic(600000, id ->
+        {
+            //Check players have not logged off on all environments.
+            for(Entry<Environment, List<String>> charactersToCheckEntry : envCharactersToCheck.entrySet())
             {
-                Faction faction = player.getFaction();
-                String outfitID = player.getOutfitID();
-                String worldID = player.getWorld().getID();
-                String zoneID = player.getZone().getID();
+                Environment environment = charactersToCheckEntry.getKey();
+                List<String> charactersToCheck = charactersToCheckEntry.getValue();
 
-                worldPopulations.get(player.getWorld()).incrementPopulation(faction, outfitID);
-                zonePopulations.get(worldID + "_" + zoneID).incrementPopulation(faction, outfitID);
-
-                totalPopulation.incrementPopulation(faction, outfitID);
-            }
-
-            //Post Events
-            String eventName = "PopulationChange";
-
-            //Total Population
-            JsonObject totalPayload = new JsonObject();
-            totalPayload.putString("population_type", "total");
-            totalPayload.putString("population_total", totalPopulation.getTotalPopulation().toString());
-            totalPayload.putString("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
-            totalPayload.putString("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
-            totalPayload.putString("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
-
-            eventTracker.getEventHandler().handleEvent(eventName, totalPayload, environment);
-
-            //World Populations
-            for (World world : World.getValidWorlds())
-            {
-                JsonObject worldPayload = new JsonObject();
-                PopulationStore worldPopulation = worldPopulations.get(world);
-
-                worldPayload.putString("population_type", "world");
-                worldPayload.putString("population_total", worldPopulation.getTotalPopulation().toString());
-                worldPayload.putString("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
-                worldPayload.putString("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
-                worldPayload.putString("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
-                worldPayload.putString("world_id", world.getID());
-
-                eventTracker.getEventHandler().handleEvent(eventName, worldPayload, environment);
-
-                for (Entry<String, Integer> outfit : worldPopulation.getOutfitPopulations().entrySet())
+                //Remove characters that census failed to retrieve online statuses for (deleted characters, low BR, etc)
+                for (String characterID : charactersToCheck)
                 {
-                    JsonObject outfitPayload = new JsonObject();
-
-                    outfitPayload.putString("population_type", "outfit");
-                    outfitPayload.putString("population_total", outfit.getValue().toString());
-                    outfitPayload.putString("outfit_id", outfit.getKey());
-                    outfitPayload.putString("world_id", world.getID());
-
-                    eventTracker.getEventHandler().handleEvent(eventName, outfitPayload, environment);
-                }
-
-                for (Zone zone : Zone.getValidZones())
-                {
-                    JsonObject zonePayload = new JsonObject();
-
-                    PopulationStore zonePopulation = zonePopulations.get(world.getID() + "_" + zone.getID());
-
-                    zonePayload.putString("population_type", "zone");
-                    zonePayload.putString("population_total", zonePopulation.getTotalPopulation().toString());
-                    zonePayload.putString("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
-                    zonePayload.putString("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
-                    zonePayload.putString("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
-                    zonePayload.putString("zone_id", zone.getID());
-                    zonePayload.putString("world_id", world.getID());
-
-                    eventTracker.getEventHandler().handleEvent(eventName, zonePayload, environment);
-
-                    for (Entry<String, Integer> outfit : worldPopulation.getOutfitPopulations().entrySet())
+                    if (!dynamicDataManager.characterDataExists(characterID) || !dynamicDataManager.getCharacterData(characterID).isOnline())
                     {
-                        JsonObject outfitPayload = new JsonObject();
-
-                        outfitPayload.putString("population_type", "zone_outfit");
-                        outfitPayload.putString("population_total", outfit.getValue().toString());
-                        outfitPayload.putString("outfit_id", outfit.getKey());
-                        outfitPayload.putString("zone_id", zone.getID());
-                        outfitPayload.putString("world_id", world.getID());
-
-                        eventTracker.getEventHandler().handleEvent(eventName, outfitPayload, environment);
+                        characterOffline(environment, characterID);
                     }
                 }
+
+                charactersToCheck.clear();
+
+                Iterator<Map.Entry<String, OnlinePlayer>> iter = envOnlinePlayers.get(environment).entrySet().iterator();
+
+                while (iter.hasNext())
+                {
+                    Entry<String, OnlinePlayer> entry = iter.next();
+
+                    if ((new Date().getTime() - entry.getValue().getLastEvent().getTime()) / 1000 > 600)
+                    {
+                        charactersToCheck.add(entry.getKey());
+                    }
+                }
+
+                List<String> characters = new ArrayList<>();
+
+                for (String characterID : charactersToCheck)
+                {
+                    characters.add(characterID);
+
+                    if (characters.size() >= 150)
+                    {
+                        queryManager.queryCensus("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                            QueryPriority.LOW, environment, true, true, self);
+
+                        characters.clear();
+                    }
+                }
+
+                if (!characters.isEmpty())
+                {
+                    queryManager.queryCensus("character?character_id=" + StringUtils.join(characters, ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                        QueryPriority.LOW, environment, true, true, self);
+                }
+            }
+        });
+    }
+
+    public void characterOnline(Environment environment, String characterID, Faction faction, String outfitID, Zone zone, World world)
+    {
+        boolean modified = false;
+        boolean zoneChangeOnly = true;
+        
+        OnlinePlayer player;
+        
+        if (envOnlinePlayers.get(environment).containsKey(characterID))
+        {
+            player = envOnlinePlayers.get(environment).get(characterID);
+            player.setLastEvent(new Date());
+            
+            if(player.getFaction() != faction)
+            {
+                modified = true;
+                zoneChangeOnly = false;
+            }
+            
+            if(!player.getOutfitID().equals(outfitID))
+            {
+                modified = true;
+                zoneChangeOnly = false;
+            }
+            
+            if(player.getZone() != zone)
+            {
+                modified = true;
+            }
+            
+            if(player.getWorld() != world)
+            {
+                modified = true;
+                zoneChangeOnly = false;
             }
         }
+
+        else
+        {
+            //Create a new Online Character
+            player = new OnlinePlayer(faction, outfitID, zone, world);
+            envOnlinePlayers.get(environment).put(characterID, player);
+            
+            modified = true;
+            zoneChangeOnly = false;
+        }
+        
+        if(modified)
+        {
+            //Decrement the relating stores for old data.
+            if(!zoneChangeOnly)
+            {
+                //Total Populations
+                envTotalPopulations.get(environment).decrementPopulation(player);
+
+                //World Populations
+                envWorldPopulations.get(environment).get(player.getWorld()).decrementPopulation(player);
+            }
+            
+            //Zone Populations
+            envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID()).decrementPopulation(player);
+            
+            //Update player values
+            player.setFaction(faction);
+            player.setOutfitID(outfitID);
+            player.setZone(zone);
+            player.setWorld(world);
+            
+            //Increment the relating stores for this.
+            if(!zoneChangeOnly)
+            {
+                //Total Populations
+                envTotalPopulations.get(environment).incrementPopulation(player);
+
+                //World Populations
+                envWorldPopulations.get(environment).get(world).incrementPopulation(player);
+            }
+            
+            //Zone Populations
+            envZonePopulations.get(environment).get(world.getID() + "_" + zone.getID()).incrementPopulation(player);
+            
+            //Generate events
+            generateEvents(environment, player, zoneChangeOnly);
+        }
+    }
+    
+    public void characterOffline(Environment environment, String characterID)
+    {
+        if (envOnlinePlayers.get(environment).containsKey(characterID))
+        {
+            //Removes and gets our player from the online players list.
+            OnlinePlayer player = envOnlinePlayers.get(environment).remove(characterID);
+            
+            //Decrement the relating stores for this.
+            //Total Populations
+            envTotalPopulations.get(environment).decrementPopulation(player);
+            
+            //World Populations
+            envWorldPopulations.get(environment).get(player.getWorld()).decrementPopulation(player);
+            
+            //Zone Populations
+            envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID()).decrementPopulation(player);
+            
+            //Generate events
+            generateEvents(environment, player, false);
+        }
+    }
+    
+    private void generateEvents(Environment environment, OnlinePlayer player, boolean zoneChangeOnly)
+    {
+        String eventName = "PopulationChange";
+        
+        if(!zoneChangeOnly)
+        {
+            //Total Population
+            PopulationStore totalPopulation = envTotalPopulations.get(environment);
+
+            JsonObject totalPayload = new JsonObject();
+            totalPayload.put("population_type", "total");
+            totalPayload.put("population_total", totalPopulation.getTotalPopulation().toString());
+            totalPayload.put("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
+            totalPayload.put("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
+            totalPayload.put("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
+
+            EventTracker.getEventHandler().handleEvent(eventName, totalPayload, environment);
+
+            //World Populations
+            PopulationStore worldPopulation = envWorldPopulations.get(environment).get(player.getWorld());
+            JsonObject worldPayload = new JsonObject();
+
+            worldPayload.put("population_type", "world");
+            worldPayload.put("population_total", worldPopulation.getTotalPopulation().toString());
+            worldPayload.put("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
+            worldPayload.put("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
+            worldPayload.put("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
+            worldPayload.put("world_id", player.getWorld().getID());
+
+            EventTracker.getEventHandler().handleEvent(eventName, worldPayload, environment);
+            
+            //World Outfit
+            JsonObject outfitPayload = new JsonObject();
+
+            outfitPayload.put("population_type", "outfit");
+            outfitPayload.put("population_total", worldPopulation.getOutfitPopulation(player.getOutfitID()).toString());
+            outfitPayload.put("outfit_id", player.getOutfitID());
+            outfitPayload.put("world_id", player.getWorld().getID());
+
+            EventTracker.getEventHandler().handleEvent(eventName, outfitPayload, environment);
+        }
+        
+        //Zone Populations
+        PopulationStore zonePopulation = envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID());
+        JsonObject zonePayload = new JsonObject();
+
+        zonePayload.put("population_type", "zone");
+        zonePayload.put("population_total", zonePopulation.getTotalPopulation().toString());
+        zonePayload.put("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
+        zonePayload.put("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
+        zonePayload.put("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
+        zonePayload.put("zone_id", player.getZone().getID());
+        zonePayload.put("world_id", player.getWorld().getID());
+
+        EventTracker.getEventHandler().handleEvent(eventName, zonePayload, environment);
+
+        //Zone Outfit Populations
+        JsonObject outfitZonePayload = new JsonObject();
+
+        outfitZonePayload.put("population_type", "zone_outfit");
+        outfitZonePayload.put("population_total", zonePopulation.getOutfitPopulation(player.getOutfitID()).toString());
+        outfitZonePayload.put("outfit_id", player.getOutfitID());
+        outfitZonePayload.put("zone_id", player.getZone().getID());
+        outfitZonePayload.put("world_id", player.getWorld().getID());
+
+        EventTracker.getEventHandler().handleEvent(eventName, outfitZonePayload, environment);
     }
 
     @Override
@@ -232,61 +319,15 @@ public class PopulationManager implements Query
     {
         if(data != null)
         {
-            JsonArray characterList = data.getArray("character_list");
+            JsonArray characterList = data.getJsonArray("character_list");
 
             for (int i = 0; i < characterList.size(); i++)
             {
                 //Update Character Info
-                JsonObject characterData = characterList.get(i);
+                JsonObject characterData = characterList.getJsonObject(i);
 
                 String characterID = characterData.getString("character_id");
-                String characterName = characterData.getObject("name").getString("first");
-                String factionID = characterData.getString("faction_id");
-
-                String outfitID;
-                String zoneID;
-                String worldID;
-                Boolean online;
-
-                if (characterData.containsField("outfit"))
-                {
-                    outfitID = characterData.getObject("outfit").getString("outfit_id");
-                }
-                else
-                {
-                    outfitID = "0";
-                }
-
-                if (characterData.containsField("last_event"))
-                {
-                    zoneID = characterData.getObject("last_event").getString("zone_id");
-                }
-                else
-                {
-                    zoneID = "0";
-                }
-
-                if (characterData.containsField("world"))
-                {
-                    worldID = characterData.getObject("world").getString("world_id");
-                }
-                else
-                {
-                    worldID = "0";
-                }
-
-                if (characterData.containsField("online"))
-                {
-                    online = !characterData.getObject("online").getString("online_status").equals("0");
-                }
-                else
-                {
-                    online = false;
-                }
-
-                CharacterInfo character = new CharacterInfo(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
-
-                dynamicDataManager.addCharacterData(characterID, character);
+                dynamicDataManager.addCharacterData(characterID, characterData);
 
                 //Verify Population Data.
                 if (dynamicDataManager.characterDataExists(characterID))
@@ -295,19 +336,17 @@ public class PopulationManager implements Query
 
                     if (characterInfo.isOnline())
                     {
-                        envOnlinePlayers.get(environment).get(characterID).setLastEvent(new Date());
+                        characterOnline(environment, characterID, characterInfo.getFaction(), characterInfo.getOutfitID(), characterInfo.getZone(), characterInfo.getWorld());
                     }
 
                     else
                     {
                         //This player doesn't have valid online status data.
                         //This player is no-longer online. Remove the player.
-                        envOnlinePlayers.get(environment).remove(characterID);
+                        characterOffline(environment, characterID);
                     }
                 }
             }
-
-            generateEvents();
         }
     }
 }

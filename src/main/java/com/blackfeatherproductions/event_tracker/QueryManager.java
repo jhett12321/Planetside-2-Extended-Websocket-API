@@ -2,19 +2,13 @@ package com.blackfeatherproductions.event_tracker;
 
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.queries.CensusQuery;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
 import org.apache.commons.lang3.StringUtils;
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.buffer.Buffer;
-import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.http.HttpClientResponse;
-import org.vertx.java.core.json.DecodeException;
-import org.vertx.java.core.json.JsonObject;
-import org.vertx.java.core.logging.Logger;
 
 import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
 import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
@@ -23,32 +17,44 @@ import com.blackfeatherproductions.event_tracker.queries.Query;
 import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
 import com.blackfeatherproductions.event_tracker.queries.QueryPriorityComparator;
 import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
+
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.json.DecodeException;
+import io.vertx.core.json.JsonObject;
+import io.vertx.core.logging.Logger;
+
 import java.util.Date;
-import java.util.HashMap;
+import java.util.EnumMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
-import org.vertx.java.core.Vertx;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class QueryManager
 {
     //Utils
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final Vertx vertx = eventTracker.getVertx();
-    private final Logger logger = eventTracker.getLogger();
+    private final Vertx vertx = EventTracker.getVertx();
+    private final Logger logger = EventTracker.getLogger();
 
     private Integer failureCount = 0;
 
     //Character Queries
-    private Queue<CharacterQuery> queuedCharacterQueries = new LinkedList<CharacterQuery>();
-    private Map<Environment, List<String>> envCharacters = new HashMap<Environment, List<String>>();
-    private Map<Environment, List<CharacterQuery>> envCallbacks = new HashMap<Environment, List<CharacterQuery>>();
+    private Queue<CharacterQuery> queuedCharacterQueries = new LinkedList<>();
+    private Map<Environment, List<String>> envCharacters = new EnumMap<>(Environment.class);
+    private Map<Environment, List<CharacterQuery>> envCallbacks = new EnumMap<>(Environment.class);
     
     //Queries
-    private final Queue<CensusQuery> queuedQueries = new PriorityQueue<CensusQuery>(10, new QueryPriorityComparator());
+    private final Queue<CensusQuery> queuedQueries = new PriorityBlockingQueue<>(100, new QueryPriorityComparator());
+    
+    //Http Client
+    HttpClientOptions options = new HttpClientOptions().setDefaultHost("census.daybreakgames.com").setKeepAlive(true);
+    HttpClient client;
 
     public QueryManager()
     {
+        client = vertx.createHttpClient(options);
+        
         for(Environment environment : Environment.values())
         {
             envCharacters.put(environment, new ArrayList<String>());
@@ -56,47 +62,43 @@ public class QueryManager
         }
         
         //Query Processor
-        eventTracker.getVertx().setPeriodic(1000, new Handler<Long>()
+        EventTracker.getVertx().setPeriodic(1000, id ->
         {
-            @Override
-            public void handle(Long timerID)
+            //Grab whatever is in the character queues, and split them into 150 character chunks.
+            CharacterQuery characterQuery;
+            while ((characterQuery = queuedCharacterQueries.poll()) != null)
             {
-                //Grab whatever is in the character queues, and split them into 150 character chunks.
-                CharacterQuery characterQuery;
-                while ((characterQuery = queuedCharacterQueries.poll()) != null)
+                Environment environment = characterQuery.getEnvironment();
+
+                envCharacters.get(environment).addAll(characterQuery.getCharacterIDs());
+                envCallbacks.get(environment).add(characterQuery);
+
+                if(envCharacters.get(characterQuery.getEnvironment()).size() >= 150)
                 {
-                    Environment environment = characterQuery.getEnvironment();
-                    
-                    envCharacters.get(environment).addAll(characterQuery.getCharacterIDs());
-                    envCallbacks.get(environment).add(characterQuery);
-                    
-                    if(envCharacters.get(characterQuery.getEnvironment()).size() >= 150)
-                    {
-                        queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(environment), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            QueryPriority.LOWEST, environment, true, true, new CharacterListQuery(envCallbacks.get(environment)));
-                        
-                        envCharacters.get(environment).clear();
-                        envCallbacks.put(environment, new ArrayList<CharacterQuery>());
-                    }
+                    queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(environment), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                        QueryPriority.LOWEST, environment, true, true, new CharacterListQuery(envCallbacks.get(environment)));
+
+                    envCharacters.get(environment).clear();
+                    envCallbacks.put(environment, new ArrayList<CharacterQuery>());
                 }
-                
-                for(Entry<Environment, List<CharacterQuery>> callbacks : envCallbacks.entrySet())
+            }
+
+            for(Entry<Environment, List<CharacterQuery>> callbacks : envCallbacks.entrySet())
+            {
+                if(!callbacks.getValue().isEmpty())
                 {
-                    if(!callbacks.getValue().isEmpty())
-                    {
-                        queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(callbacks.getKey()), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
-                            QueryPriority.LOWEST, callbacks.getKey(), true, true, new CharacterListQuery(envCallbacks.get(callbacks.getKey())));
-                        
-                        envCharacters.get(callbacks.getKey()).clear();
-                        envCallbacks.put(callbacks.getKey(), new ArrayList<CharacterQuery>());
-                    }
+                    queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(callbacks.getKey()), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
+                        QueryPriority.LOWEST, callbacks.getKey(), true, true, new CharacterListQuery(envCallbacks.get(callbacks.getKey())));
+
+                    envCharacters.get(callbacks.getKey()).clear();
+                    envCallbacks.put(callbacks.getKey(), new ArrayList<CharacterQuery>());
                 }
-                
-                //Process anything we have in the query queue.
-                for (int i = 0; i < queuedQueries.size(); i++)
-                {
-                    getCensusData(queuedQueries.poll());
-                }
+            }
+
+            //Process anything we have in the query queue.
+            for (int i = 0; i < queuedQueries.size(); i++)
+            {
+                getCensusData(queuedQueries.poll());
             }
         });
     }
@@ -132,7 +134,7 @@ public class QueryManager
     
     private void getCensusData(final CensusQuery censusQuery)
     {
-        if (failureCount > eventTracker.getConfig().getMaxFailures() && censusQuery.isFailureAllowed())
+        if (failureCount > EventTracker.getConfig().getMaxFailures() && censusQuery.isFailureAllowed())
         {
             logger.error("[Census REST] Census Failure Limit Reached. Dropping event.");
 
@@ -141,13 +143,11 @@ public class QueryManager
                 callback.receiveData(null, censusQuery.getEnvironment());
             }
 
-            failureCount = eventTracker.getConfig().getMaxFailures();
+            failureCount = EventTracker.getConfig().getMaxFailures();
             return;
         }
-
-        HttpClient client = vertx.createHttpClient().setHost("census.daybreakgames.com");
         
-        String queryPrefix = "";
+        String queryPrefix;
         switch(censusQuery.getEnvironment())
         {
             case PC:
@@ -167,7 +167,7 @@ public class QueryManager
             }
             default:
             {
-                eventTracker.getLogger().warn("[Census REST] - An unsupported environment was sent for querying. Ignoring request...");
+                EventTracker.getLogger().warn("[Census REST] - An unsupported environment was sent for querying. Ignoring request...");
                 for (Query callback : censusQuery.getCallbacks())
                 {
                     callback.receiveData(null, censusQuery.getEnvironment());
@@ -176,86 +176,63 @@ public class QueryManager
             }
         }
         
-        final String query = "/s:" + eventTracker.getConfig().getSoeServiceID() + "/get/" + queryPrefix + "/" + censusQuery.getRawQuery();
-        
-        client.exceptionHandler(new Handler<Throwable>()
+        final String query = "/s:" + EventTracker.getConfig().getSoeServiceID() + "/get/" + queryPrefix + "/" + censusQuery.getRawQuery();
+
+        client.getNow(query, response ->
         {
-            @Override
-            public void handle(Throwable e)
+            response.bodyHandler(body ->
+            {
+                try
+                {
+                    JsonObject data = new JsonObject(body.toString());
+
+                    if(data.containsKey("returned") && ((data.getInteger("returned") > 0 && !censusQuery.isNoDataAllowed()) || censusQuery.isNoDataAllowed()))
+                    {
+                        for (Query callback : censusQuery.getCallbacks())
+                        {
+                            callback.receiveData(data, censusQuery.getEnvironment());
+                        }
+
+                        failureCount = 0;
+                    }
+
+                    else
+                    {
+                        //No Data was returned
+                        logger.warn("[Census REST] - A census request returned no data. Retrying request...");
+                        logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getConfig().getMaxFailures().toString());
+                        logger.warn("Request: " + query);
+
+                        failureCount++;
+
+                        queuedQueries.add(censusQuery);
+                    }
+                }
+                catch (DecodeException e)
+                {
+                    //No Valid JSON was returned
+                    logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
+                    logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getConfig().getMaxFailures().toString());
+                    logger.warn("Request: " + query);
+                    logger.warn(e.getMessage());
+
+                    failureCount++;
+
+                    queuedQueries.add(censusQuery);
+                }
+            });
+            
+            response.exceptionHandler(e ->
             {
                 logger.warn("[Census REST] - A census request resulted in an exception. Retrying request...");
-                logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
+                logger.warn("Failed Query " + failureCount.toString() + "/" + EventTracker.getConfig().getMaxFailures().toString());
                 logger.warn("Request: " + query);
                 logger.warn(e.getMessage());
 
                 failureCount++;
 
                 queuedQueries.add(censusQuery);
-            }
-        });
-
-        client.getNow(query, new Handler<HttpClientResponse>()
-        {
-            @Override
-            public void handle(HttpClientResponse resp)
-            {
-                resp.bodyHandler(new Handler<Buffer>()
-                {
-                    @Override
-                    public void handle(Buffer body)
-                    {
-                        try
-                        {
-                            JsonObject data = new JsonObject(body.toString());
-
-                            if(!data.containsField("returned"))
-                            {
-                                //No Data was returned
-                                logger.warn("[Census REST] - A census request returned no data. Retrying request...");
-                                logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
-                                logger.warn("Request: " + query);
-
-                                failureCount++;
-
-                                queuedQueries.add(censusQuery);
-                            }
-                            
-                            else if((data.getInteger("returned") > 0 && !censusQuery.isNoDataAllowed()) || censusQuery.isNoDataAllowed())
-                            {
-                                for (Query callback : censusQuery.getCallbacks())
-                                {
-                                    callback.receiveData(data, censusQuery.getEnvironment());
-                                }
-
-                                failureCount = 0;
-                            }
-                            else
-                            {
-                                //No Data was returned
-                                logger.warn("[Census REST] - A census request returned no data. Retrying request...");
-                                logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
-                                logger.warn("Request: " + query);
-
-                                failureCount++;
-
-                                queuedQueries.add(censusQuery);
-                            }
-                        }
-                        catch (DecodeException e)
-                        {
-                            //No Valid JSON was returned
-                            logger.warn("[Census REST] - A census request returned invalid JSON. Retrying request...");
-                            logger.warn("Failed Query " + failureCount.toString() + "/" + eventTracker.getConfig().getMaxFailures().toString());
-                            logger.warn("Request: " + query);
-                            logger.warn(e.getMessage());
-
-                            failureCount++;
-
-                            queuedQueries.add(censusQuery);
-                        }
-                    }
-                });
-            }
+            });
         });
     }
 }

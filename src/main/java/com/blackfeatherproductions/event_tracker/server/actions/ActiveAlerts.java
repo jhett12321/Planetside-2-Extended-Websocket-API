@@ -2,9 +2,6 @@ package com.blackfeatherproductions.event_tracker.server.actions;
 
 import java.util.Map.Entry;
 
-import org.vertx.java.core.http.ServerWebSocket;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
@@ -14,26 +11,29 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonObject;
+
 @ActionInfo(actionNames = "activeAlerts")
 public class ActiveAlerts implements Action
 {
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
 
     @Override
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
     {
         JsonObject response = new JsonObject();
-        response.putString("action", "activeAlerts");
+        response.put("action", "activeAlerts");
 
         JsonObject worlds = new JsonObject();
 
-        if (actionData.containsField("worlds"))
+        if (actionData.containsKey("worlds"))
         {
-            for (int i = 0; i < actionData.getArray("worlds").size(); i++)
+            for (int i = 0; i < actionData.getJsonArray("worlds").size(); i++)
             {
-                if (Utils.isValidWorld((String) actionData.getArray("worlds").get(i)))
+                if (Utils.isValidWorld(actionData.getJsonArray("worlds").getString(i)))
                 {
-                    World world = World.getWorldByID((String) actionData.getArray("worlds").get(i));
+                    World world = World.getWorldByID(actionData.getJsonArray("worlds").getString(i));
 
                     JsonObject metagameEvents = new JsonObject();
 
@@ -41,11 +41,11 @@ public class ActiveAlerts implements Action
                     {
                         JsonObject metagameEvent = new JsonObject();
 
-                        metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
-                        metagameEvent.putString("metagame_event_type_id", metagameEventInfo.getType().getID());
-                        metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
-                        metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
-                        metagameEvent.putString("facility_type_id", metagameEventInfo.getType().getFacilityTypeID());
+                        metagameEvent.put("instance_id", metagameEventInfo.getInstanceID());
+                        metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
+                        metagameEvent.put("start_time", metagameEventInfo.getStartTime());
+                        metagameEvent.put("end_time", metagameEventInfo.getEndTime());
+                        metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityTypeID());
 
                         JsonObject facilities = new JsonObject();
 
@@ -53,23 +53,22 @@ public class ActiveAlerts implements Action
                         {
                             JsonObject facility = new JsonObject();
 
-                            facility.putString("facility_id", facilityInfo.getKey().getID());
-                            facility.putString("facility_type_id", facilityInfo.getKey().getTypeID());
-                            facility.putString("owner", facilityInfo.getValue().getOwner().getID());
-                            facility.putString("zone_id", metagameEventInfo.getType().getZone().getID());
+                            facility.put("facility_id", facilityInfo.getKey().getID());
+                            facility.put("facility_type_id", facilityInfo.getKey().getTypeID());
+                            facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                            facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
 
-                            facilities.putObject(facilityInfo.getKey().getID(), facility);
+                            facilities.put(facilityInfo.getKey().getID(), facility);
                         }
 
-                        metagameEvent.putObject("facilities", facilities);
+                        metagameEvent.put("facilities", facilities);
 
-                        metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
+                        metagameEvents.put(metagameEventInfo.getInstanceID(), metagameEvent);
                     }
 
                     if (metagameEvents.size() > 0)
                     {
-
-                        worlds.putObject(world.getID(), metagameEvents);
+                        worlds.put(world.getID(), metagameEvents);
                     }
                 }
             }
@@ -84,10 +83,10 @@ public class ActiveAlerts implements Action
                 {
                     JsonObject metagameEvent = new JsonObject();
 
-                    metagameEvent.putString("instance_id", metagameEventInfo.getInstanceID());
-                    metagameEvent.putString("start_time", metagameEventInfo.getStartTime());
-                    metagameEvent.putString("end_time", metagameEventInfo.getEndTime());
-                    metagameEvent.putString("type_id", metagameEventInfo.getType().getFacilityTypeID());
+                    metagameEvent.put("instance_id", metagameEventInfo.getInstanceID());
+                    metagameEvent.put("start_time", metagameEventInfo.getStartTime());
+                    metagameEvent.put("end_time", metagameEventInfo.getEndTime());
+                    metagameEvent.put("type_id", metagameEventInfo.getType().getFacilityTypeID());
 
                     JsonObject facilities = new JsonObject();
 
@@ -95,27 +94,27 @@ public class ActiveAlerts implements Action
                     {
                         JsonObject facility = new JsonObject();
 
-                        facility.putString("facility_id", facilityInfo.getKey().getID());
-                        facility.putString("facility_type_id", facilityInfo.getKey().getTypeID());
-                        facility.putString("owner", facilityInfo.getValue().getOwner().getID());
-                        facility.putString("zone_id", metagameEventInfo.getType().getZone().getID());
+                        facility.put("facility_id", facilityInfo.getKey().getID());
+                        facility.put("facility_type_id", facilityInfo.getKey().getTypeID());
+                        facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                        facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
 
-                        facilities.putObject(facilityInfo.getKey().getID(), facility);
+                        facilities.put(facilityInfo.getKey().getID(), facility);
                     }
 
-                    metagameEvent.putObject("facilities", facilities);
+                    metagameEvent.put("facilities", facilities);
 
-                    metagameEvents.putObject(metagameEventInfo.getInstanceID(), metagameEvent);
+                    metagameEvents.put(metagameEventInfo.getInstanceID(), metagameEvent);
                 }
 
-                worlds.putObject(world.getKey().getID(), metagameEvents);
+                worlds.put(world.getKey().getID(), metagameEvents);
             }
         }
 
         //Send Client Response
-        response.putObject("worlds", worlds);
+        response.put("worlds", worlds);
 
-        clientConnection.writeTextFrame(response.encode());
+        clientConnection.writeFinalTextFrame(response.encode());
     }
 
 }

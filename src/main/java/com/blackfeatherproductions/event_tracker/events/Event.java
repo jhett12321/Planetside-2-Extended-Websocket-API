@@ -1,7 +1,8 @@
 package com.blackfeatherproductions.event_tracker.events;
 
 import com.blackfeatherproductions.event_tracker.Environment;
-import org.vertx.java.core.json.JsonObject;
+
+import io.vertx.core.json.JsonObject;
 
 public interface Event
 {
@@ -10,6 +11,7 @@ public interface Event
      * Manager, or simply continue with processing the event.
      *
      * @param payload - The raw event payload
+     * @param environment - The environment (PC, PS4) for this event.
      */
     public void preProcessEvent(JsonObject payload, Environment environment);
 

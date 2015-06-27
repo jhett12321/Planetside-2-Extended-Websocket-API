@@ -1,7 +1,7 @@
 package com.blackfeatherproductions.event_tracker.server.actions;
 
-import org.vertx.java.core.http.ServerWebSocket;
-import org.vertx.java.core.json.JsonObject;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonObject;
 
 public interface Action
 {

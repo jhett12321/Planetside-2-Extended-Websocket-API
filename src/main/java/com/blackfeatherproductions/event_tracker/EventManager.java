@@ -6,11 +6,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.PriorityQueue;
 import java.util.Queue;
+import java.util.concurrent.PriorityBlockingQueue;
 
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.json.JsonObject;
+import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
@@ -31,20 +30,18 @@ import com.blackfeatherproductions.event_tracker.events.census.SkillAddedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
-import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
+import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 
 public class EventManager
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
+    private final Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<>();
+    private final Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<>();
 
-    private final Map<EventInfo, Class<? extends Event>> events = new LinkedHashMap<EventInfo, Class<? extends Event>>();
-    private final Map<EventInfo, Class<? extends Event>> listeners = new LinkedHashMap<EventInfo, Class<? extends Event>>();
+    private final Queue<QueuedEvent> queuedEvents = new PriorityBlockingQueue<>(100, new EventPriorityComparator());
+    private final Queue<QueuedEvent> queuedListeners = new PriorityBlockingQueue<>(100, new EventPriorityComparator());
 
-    private final Queue<QueuedEvent> queuedEvents = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
-    private final Queue<QueuedEvent> queuedListeners = new PriorityQueue<QueuedEvent>(10, new EventPriorityComparator());
-
-    private final List<String> unknownEvents = new ArrayList<String>();
+    private final List<String> unknownEvents = new ArrayList<>();
 
     public EventManager()
     {
@@ -52,20 +49,16 @@ public class EventManager
         registerEvents();
         
         //Process Event Queue
-        eventTracker.getVertx().setPeriodic(100, new Handler<Long>()
+        EventTracker.getVertx().setPeriodic(100, id ->
         {
-            @Override
-            public void handle(Long timerID)
+            for (int i = 0; i < queuedListeners.size(); i++)
             {
-                for (int i = 0; i < queuedListeners.size(); i++)
-                {
-                    queuedListeners.poll().processEvent();
-                }
+                queuedListeners.poll().processEvent();
+            }
 
-                for (int i = 0; i < queuedEvents.size(); i++)
-                {
-                    queuedEvents.poll().processEvent();
-                }
+            for (int i = 0; i < queuedEvents.size(); i++)
+            {
+                queuedEvents.poll().processEvent();
             }
         });
     }
@@ -116,9 +109,9 @@ public class EventManager
 
             if (!eventHandled && !unknownEvents.contains(eventName))
             {
-                eventTracker.getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
-                eventTracker.getLogger().warn("Payload data:");
-                eventTracker.getLogger().warn(payload.encodePrettily());
+                EventTracker.getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
+                EventTracker.getLogger().warn("Payload data:");
+                EventTracker.getLogger().warn(payload.encodePrettily());
 
                 unknownEvents.add(eventName);
             }
@@ -128,7 +121,7 @@ public class EventManager
     private void registerEvents()
     {
         //Listeners
-        //registerEvent(PopulationEventListener.class);
+        registerEvent(PopulationEventListener.class);
         
         //Service Events
         registerEvent(ServiceStateChangeEvent.class);
@@ -167,7 +160,7 @@ public class EventManager
         EventInfo info = event.getAnnotation(EventInfo.class);
         if (info == null)
         {
-            eventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
+            EventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
         

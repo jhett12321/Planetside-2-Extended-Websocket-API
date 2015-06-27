@@ -2,14 +2,15 @@ package com.blackfeatherproductions.event_tracker;
 
 import java.util.Map.Entry;
 
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+
+import io.vertx.core.json.JsonObject;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.regex.Matcher;
@@ -17,11 +18,11 @@ import java.util.regex.Pattern;
 
 public class Utils
 {
-    private static final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private static final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
 
     public static List<String> getWorldIDsFromEndpointString(String endPointString)
     {
-        List<String> worldIDs = new ArrayList<String>();
+        List<String> worldIDs = new ArrayList<>();
         
         //Match all ID values we get from the endpoint message.
         Pattern p = Pattern.compile("[0-9]+");
@@ -38,7 +39,7 @@ public class Utils
 
     public static boolean isValidPayload(JsonObject payload)
     {
-        if (payload.containsField("zone_id"))
+        if (payload.containsKey("zone_id"))
         {
             if (!isValidZone(payload.getString("zone_id")))
             {
@@ -46,7 +47,7 @@ public class Utils
             }
         }
 
-        if (payload.containsField("attacker_character_id"))
+        if (payload.containsKey("attacker_character_id"))
         {
             if (!isValidCharacter(payload.getString("attacker_character_id")) && !isValidCharacter(payload.getString("character_id")))
             {
@@ -54,7 +55,7 @@ public class Utils
             }
         }
 
-        else if (payload.containsField("character_id"))
+        else if (payload.containsKey("character_id"))
         {
             if (!isValidCharacter(payload.getString("character_id")))
             {
@@ -73,12 +74,7 @@ public class Utils
      */
     public static boolean isValidZone(String zoneID)
     {
-        if (Zone.zones.containsKey(zoneID))
-        {
-            return true;
-        }
-
-        return false;
+        return Zone.zones.containsKey(zoneID);
     }
 
     /**
@@ -89,12 +85,7 @@ public class Utils
      */
     public static boolean isValidWorld(String worldID)
     {
-        if (World.worlds.containsKey(worldID))
-        {
-            return true;
-        }
-
-        return false;
+        return World.worlds.containsKey(worldID);
     }
 
     /**
@@ -105,12 +96,7 @@ public class Utils
      */
     public static boolean isValidCharacter(String characterID)
     {
-        if (characterID != null && characterID.length() == 19)
-        {
-            return true;
-        }
-
-        return false;
+        return characterID != null && characterID.length() == 19;
     }
 
     /**
@@ -185,10 +171,10 @@ public class Utils
 
         JsonObject controlInfo = new JsonObject();
 
-        controlInfo.putString("control_vs", controlVS.toString());
-        controlInfo.putString("control_nc", controlNC.toString());
-        controlInfo.putString("control_tr", controlTR.toString());
-        controlInfo.putString("majority_controller", majorityController.getID());
+        controlInfo.put("control_vs", controlVS.toString());
+        controlInfo.put("control_nc", controlNC.toString());
+        controlInfo.put("control_tr", controlTR.toString());
+        controlInfo.put("majority_controller", majorityController.getID());
 
         return controlInfo;
     }
@@ -263,10 +249,10 @@ public class Utils
 
         JsonObject controlInfo = new JsonObject();
 
-        controlInfo.putString("control_vs", controlVS.toString());
-        controlInfo.putString("control_nc", controlNC.toString());
-        controlInfo.putString("control_tr", controlTR.toString());
-        controlInfo.putString("majority_controller", majorityController.getID());
+        controlInfo.put("control_vs", controlVS.toString());
+        controlInfo.put("control_nc", controlNC.toString());
+        controlInfo.put("control_tr", controlTR.toString());
+        controlInfo.put("majority_controller", majorityController.getID());
 
         return controlInfo;
     }

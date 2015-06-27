@@ -1,7 +1,5 @@
 package com.blackfeatherproductions.event_tracker.events.service;
 
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
@@ -9,14 +7,14 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.Environment;
 
+import io.vertx.core.json.JsonObject;
+
 @EventInfo(eventType = EventType.SERVICE,
         eventName = "ServiceStateChange",
         listenedEvents = "ServiceStateChange",
         priority = EventPriority.HIGHEST)
 public class ServiceStateChangeEvent implements Event
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
-
     //Raw Data
     private JsonObject payload;
     
@@ -59,10 +57,10 @@ public class ServiceStateChangeEvent implements Event
     public void processEvent()
     {
         //Event Data
-        eventData.putString("online", payload.getString("online"));
-        eventData.putString("world_id", payload.getString("world_id"));
+        eventData.put("online", payload.getString("online"));
+        eventData.put("world_id", payload.getString("world_id"));
 
         //Broadcast Event
-        eventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.getEventServer().broadcastEvent(this);
     }
 }

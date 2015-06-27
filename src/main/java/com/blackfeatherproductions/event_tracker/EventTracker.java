@@ -1,44 +1,36 @@
 package com.blackfeatherproductions.event_tracker;
 
-import org.vertx.java.core.logging.Logger;
-import org.vertx.java.platform.Verticle;
-
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
 import com.blackfeatherproductions.event_tracker.feeds.Census;
 import com.blackfeatherproductions.event_tracker.feeds.CensusPS4EU;
 import com.blackfeatherproductions.event_tracker.feeds.CensusPS4US;
 import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.server.EventServer;
+import io.vertx.core.Vertx;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
 
-public class EventTracker extends Verticle
+public class EventTracker
 {
-    //Singleton
-    private static EventTracker instance;
-
     //Vertx
-    private Logger logger;
+    private static Vertx vertx = Vertx.vertx();
+    private static Logger logger = LoggerFactory.getLogger(io.vertx.core.logging.Log4jLogDelegateFactory.class);
 
     //Data
-    private Config config;
+    private static Config config;
 
     //Managers
-    private EventManager eventManager;
-    private DynamicDataManager dynamicDataManager;
-    private QueryManager queryManager;
-    private PopulationManager populationManager;
+    private static EventManager eventManager;
+    private static DynamicDataManager dynamicDataManager;
+    private static QueryManager queryManager;
+    private static PopulationManager populationManager;
 
     //Event Server
-    private EventServer eventServer;
+    private static EventServer eventServer;
 
-    @Override
-    public void start()
+    public static void main(String[] args)
     {
-        //Singleton
-        instance = this;
-
         //Logging
-        logger = container.logger();
-
         logger.info("Planetside 2 Extended Push API v" + MavenInfo.getVersion());
         logger.info("Starting up...");
 
@@ -63,43 +55,43 @@ public class EventTracker extends Verticle
         new CensusPS4EU();
         new CensusRest();
     }
-
-    public static EventTracker getInstance()
+    
+    public static Vertx getVertx()
     {
-        return instance;
+        return vertx;
     }
-
-    public QueryManager getQueryManager()
+    
+    public static QueryManager getQueryManager()
     {
         return queryManager;
     }
 
-    public DynamicDataManager getDynamicDataManager()
+    public static DynamicDataManager getDynamicDataManager()
     {
         return dynamicDataManager;
     }
 
-    public EventServer getEventServer()
+    public static EventServer getEventServer()
     {
         return eventServer;
     }
 
-    public Logger getLogger()
+    public static Logger getLogger()
     {
         return logger;
     }
 
-    public Config getConfig()
+    public static Config getConfig()
     {
         return config;
     }
 
-    public EventManager getEventHandler()
+    public static EventManager getEventHandler()
     {
         return eventManager;
     }
 
-    public PopulationManager getPopulationManager()
+    public static PopulationManager getPopulationManager()
     {
         return populationManager;
     }

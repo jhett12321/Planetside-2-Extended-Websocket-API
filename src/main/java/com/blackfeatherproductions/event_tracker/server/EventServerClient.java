@@ -1,12 +1,14 @@
 package com.blackfeatherproductions.event_tracker.server;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import org.vertx.java.core.http.ServerWebSocket;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.events.Event;
@@ -14,8 +16,6 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 
 public class EventServerClient
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
-
     //Connection
     private final ServerWebSocket clientConnection;
 
@@ -24,7 +24,7 @@ public class EventServerClient
     private final String name;
 
     //Subscriptions
-    private final Map<Class<? extends Event>, JsonObject> subscriptions = new HashMap<Class<? extends Event>, JsonObject>();
+    private final Map<Class<? extends Event>, JsonObject> subscriptions = new HashMap<>();
     private boolean subscribedToAll = false;
 
     public EventServerClient(ServerWebSocket connection, String apiKey, String name)
@@ -107,7 +107,7 @@ public class EventServerClient
 
         else if (eventName != null)
         {
-            clientConnection.writeTextFrame("{\"error\": \"unknownEvent\", \"message\": \"There is no Event Type by that name. Please check your syntax, and try again.\"}");
+            clientConnection.writeFinalTextFrame("{\"error\": \"unknownEvent\", \"message\": \"There is no Event Type by that name. Please check your syntax, and try again.\"}");
         }
 
         JsonObject returnSubscriptions = new JsonObject();
@@ -116,70 +116,70 @@ public class EventServerClient
 
         for (Entry<Class<? extends Event>, JsonObject> subscription : subscriptions.entrySet())
         {
-            for (Entry<String, Object> element : subscription.getValue().toMap().entrySet())
+            for (Entry<String, Object> element : subscription.getValue())
             {
                 String property = element.getKey();
 
-                if ((!property.equals("all") && !property.equals("worlds") && subscription.getValue().getArray(property).size() > 0)
+                if ((!property.equals("all") && !property.equals("worlds") && subscription.getValue().getJsonArray(property).size() > 0)
                         || (property.equals("all") && subscription.getValue().getString(property).equals("true"))
-                        || (property.equals("worlds") && subscription.getValue().getObject(property).size() > 0))
+                        || (property.equals("worlds") && subscription.getValue().getJsonObject(property).size() > 0))
                 {
-                    returnObject.putObject(subscription.getKey().getAnnotation(EventInfo.class).eventName(), subscription.getValue());
+                    returnObject.put(subscription.getKey().getAnnotation(EventInfo.class).eventName(), subscription.getValue());
                     break;
                 }
             }
         }
 
-        returnSubscriptions.putObject("subscriptions", returnObject);
-        returnSubscriptions.putString("action", action);
+        returnSubscriptions.put("subscriptions", returnObject);
+        returnSubscriptions.put("action", action);
 
-        clientConnection.writeTextFrame(returnSubscriptions.encode());
+        clientConnection.writeFinalTextFrame(returnSubscriptions.encode());
     }
 
     private void subscribe(JsonObject messageFilters, JsonObject subscription)
     {
-        for (String property : messageFilters.toMap().keySet())
+        for (String property : messageFilters.fieldNames())
         {
-            if (subscription.containsField(property))
+            if (subscription.containsKey(property))
             {
                 if (property.equals("all"))
                 {
                     if (messageFilters.getString(property).equals("true"))
                     {
-                        subscription.putString(property, "true");
+                        subscription.put(property, "true");
                     }
                 }
 
-                else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
+                else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsKey("worlds") && property.equals("zones")))
                 {
-                    for (int i = 0; i < messageFilters.getArray(property).size(); i++)
+                    for (int i = 0; i < messageFilters.getJsonArray(property).size(); i++)
                     {
-                        if (!subscription.getArray(property).contains(messageFilters.getArray(property).get(i)))
+                        if (!subscription.getJsonArray(property).contains(messageFilters.getJsonArray(property).getString(i)))
                         {
-                            subscription.getArray(property).add(messageFilters.getArray(property).get(i));
+                            subscription.getJsonArray(property).add(messageFilters.getJsonArray(property).getString(i));
                         }
                     }
                 }
 
                 else if (property.equals("worlds"))
                 {
-                    for (int i = 0; i < messageFilters.getArray(property).size(); i++)
+                    for (int i = 0; i < messageFilters.getJsonArray(property).size(); i++)
                     {
-                        if (!subscription.getObject(property).containsField((String) messageFilters.getArray(property).get(i)))
+                        if (!subscription.getJsonObject(property).containsKey(messageFilters.getJsonArray(property).getString(i)))
                         {
                             JsonObject worldObject = new JsonObject();
-                            worldObject.putArray("zones", new JsonArray());
+                            worldObject.put("zones", new JsonArray());
 
-                            subscription.getObject(property).putObject((String) messageFilters.getArray(property).get(i), worldObject);
+                            subscription.getJsonObject(property).put(messageFilters.getJsonArray(property).getString(i), worldObject);
                         }
 
-                        if (messageFilters.containsField("zones"))
+                        if (messageFilters.containsKey("zones"))
                         {
-                            for (int j = 0; j < messageFilters.getArray("zones").size(); j++)
+                            for (int j = 0; j < messageFilters.getJsonArray("zones").size(); j++)
                             {
-                                if (!subscription.getObject(property).getObject((String) messageFilters.getArray(property).get(i)).getArray("zones").contains(messageFilters.getArray("zones").get(j)))
+                                if (!subscription.getJsonObject(property).getJsonObject(messageFilters.getJsonArray(property).getString(i)).getJsonArray("zones").contains(messageFilters.getJsonArray("zones").getString(j)))
                                 {
-                                    subscription.getObject(property).getObject((String) messageFilters.getArray(property).get(i)).getArray("zones").add(messageFilters.getArray("zones").get(j));
+                                    subscription.getJsonObject(property).getJsonObject(messageFilters.getJsonArray(property).getString(i)).getJsonArray("zones").add(messageFilters.getJsonArray("zones").getString(j));
                                 }
                             }
                         }
@@ -191,58 +191,58 @@ public class EventServerClient
 
     private void unsubscribe(JsonObject messageFilters, JsonObject subscription)
     {
-        for (String property : messageFilters.toMap().keySet())
+        for (String property : messageFilters.fieldNames())
         {
-            if (subscription.containsField(property))
+            if (subscription.containsKey(property))
             {
                 if (property.equals("all"))
                 {
-                    subscription.putString(property, "false");
+                    subscription.put(property, "false");
                 }
 
-                else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsField("worlds") && property.equals("zones")))
+                else if (!property.equals("worlds") && !property.equals("zones") || (!messageFilters.containsKey("worlds") && property.equals("zones")))
                 {
                     JsonArray filteredArray = new JsonArray();
 
-                    for (int i = 0; i < subscription.getArray(property).size(); i++)
+                    for (int i = 0; i < subscription.getJsonArray(property).size(); i++)
                     {
-                        if (!messageFilters.getArray(property).contains(subscription.getArray(property).get(i)))
+                        if (!messageFilters.getJsonArray(property).contains(subscription.getJsonArray(property).getString(i)))
                         {
-                            filteredArray.add(messageFilters.getArray(property).get(i));
+                            filteredArray.add(messageFilters.getJsonArray(property).getString(i));
                         }
                     }
 
-                    subscription.putArray(property, filteredArray);
+                    subscription.put(property, filteredArray);
                 }
 
                 else if (property.equals("worlds"))
                 {
                     JsonObject filteredObject = new JsonObject();
 
-                    for (Entry<String, Object> world : subscription.getObject(property).toMap().entrySet())
+                    for (Entry<String, Object> world : subscription.getJsonObject(property))
                     {
-                        if (!messageFilters.getArray(property).contains(world.getKey()))
+                        if (!messageFilters.getJsonArray(property).contains(world.getKey()))
                         {
                             JsonObject worldObject = new JsonObject();
                             JsonArray zoneArray = new JsonArray();
-                            worldObject.putArray("zones", zoneArray);
+                            worldObject.put("zones", zoneArray);
 
-                            filteredObject.putObject(world.getKey(), worldObject);
+                            filteredObject.put(world.getKey(), worldObject);
                         }
 
-                        if (subscription.containsField("zones"))
+                        if (subscription.containsKey("zones"))
                         {
-                            for (int i = 0; i < subscription.getArray("zones").size(); i++)
+                            for (int i = 0; i < subscription.getJsonArray("zones").size(); i++)
                             {
-                                if (!messageFilters.getArray("zones").contains(subscription.getArray("zones").get(i)))
+                                if (!messageFilters.getJsonArray("zones").contains(subscription.getJsonArray("zones").getString(i)))
                                 {
-                                    filteredObject.getObject(world.getKey()).getArray("zones").add(subscription.getArray("zones").get(i));
+                                    filteredObject.getJsonObject(world.getKey()).getJsonArray("zones").add(subscription.getJsonArray("zones").getString(i));
                                 }
                             }
                         }
                     }
 
-                    subscription.putObject(property, filteredObject);
+                    subscription.put(property, filteredObject);
                 }
             }
         }
@@ -252,7 +252,7 @@ public class EventServerClient
     {
         this.subscriptions.clear();
 
-        for (Class<? extends Event> event : eventTracker.getEventHandler().getRegisteredEvents())
+        for (Class<? extends Event> event : EventTracker.getEventHandler().getRegisteredEvents())
         {
             //Add blank subscription to this client;
             subscriptions.put(event, getBlankSubscription(event));
@@ -269,18 +269,18 @@ public class EventServerClient
             //Event Specific Filters
             for (String filter : info.filters())
             {
-                subscription.putArray(filter, new JsonArray());
+                subscription.put(filter, new JsonArray());
             }
 
             //Global Filters
-            subscription.putObject("worlds", new JsonObject());
-            subscription.putArray("useAND", new JsonArray());
+            subscription.put("worlds", new JsonObject());
+            subscription.put("useAND", new JsonArray());
         }
 
-        subscription.putString("all", "false");
-        subscription.putArray("environments", new JsonArray());
-        subscription.putArray("show", new JsonArray());
-        subscription.putArray("hide", new JsonArray());
+        subscription.put("all", "false");
+        subscription.put("environments", new JsonArray());
+        subscription.put("show", new JsonArray());
+        subscription.put("hide", new JsonArray());
 
         return subscription;
     }
@@ -291,9 +291,9 @@ public class EventServerClient
      */
     private void parseMessageFilters(JsonObject messageFilters)
     {
-        for (String property : messageFilters.toMap().keySet())
+        for (String property : messageFilters.fieldNames())
         {
-            Object rawData = messageFilters.getField(property);
+            Object rawData = messageFilters.getValue(property);
             
             //The all property is always a string
             if (property.equals("all"))
@@ -302,11 +302,11 @@ public class EventServerClient
                 
                 if(rawData instanceof JsonArray)
                 {
-                    parsedProperty = ((JsonArray) rawData).get(0);
+                    parsedProperty = ((JsonArray) rawData).getString(0);
                 }
                 else if(rawData instanceof JsonObject)
                 {
-                    parsedProperty = ((JsonObject) rawData).getFieldNames().iterator().next();
+                    parsedProperty = ((JsonObject) rawData).fieldNames().iterator().next();
                 }
                 else if(rawData instanceof Boolean)
                 {
@@ -322,8 +322,8 @@ public class EventServerClient
                     parsedProperty = "true";
                 }
                 
-                messageFilters.removeField(property);
-                messageFilters.putString(property, parsedProperty);
+                messageFilters.remove(property);
+                messageFilters.put(property, parsedProperty);
             }
             
             //Everything else should be an array.
@@ -337,7 +337,8 @@ public class EventServerClient
                 }
                 else if(rawData instanceof JsonObject)
                 {
-                    parsedProperty.addArray(((JsonObject) rawData).asArray());
+                    List<String> fieldNames = new ArrayList<>(((JsonObject) rawData).fieldNames());
+                    parsedProperty.add(new JsonArray(fieldNames));
                 }
                 else if(rawData instanceof Boolean)
                 {
@@ -348,8 +349,8 @@ public class EventServerClient
                     parsedProperty = (JsonArray) rawData;
                 }
                 
-                messageFilters.removeField(property);
-                messageFilters.putArray(property, parsedProperty);
+                messageFilters.remove(property);
+                messageFilters.put(property, parsedProperty);
             }
         }
     }

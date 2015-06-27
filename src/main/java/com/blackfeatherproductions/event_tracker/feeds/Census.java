@@ -3,14 +3,6 @@ package com.blackfeatherproductions.event_tracker.feeds;
 import java.util.Date;
 import java.util.Map.Entry;
 
-import org.vertx.java.core.Handler;
-import org.vertx.java.core.Vertx;
-import org.vertx.java.core.buffer.Buffer;
-import org.vertx.java.core.http.HttpClient;
-import org.vertx.java.core.http.WebSocket;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
@@ -18,15 +10,31 @@ import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.Environment;
+
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpClient;
+import io.vertx.core.http.HttpClientOptions;
+import io.vertx.core.http.WebSocket;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Census
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final QueryManager queryManager = eventTracker.getQueryManager();
-    private final Config config = eventTracker.getConfig();
+    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final Config config = EventTracker.getConfig();
 
+    //Client/Websocket
+    HttpClientOptions options = new HttpClientOptions()
+            .setDefaultHost("push.planetside2.com")
+            .setDefaultPort(443)
+            .setSsl(true)
+            .setMaxWebsocketFrameSize(1000000)
+            .setReceiveBufferSize(1000000)
+            .setSendBufferSize(1000000)
+            .setKeepAlive(true);
     private final HttpClient client;
     private WebSocket websocket;
     
@@ -35,7 +43,7 @@ public class Census
     private long lastHeartbeat = 0;
     private long startTime = 0;
     
-    private List<World> managedWorlds = new ArrayList<World>(); //Worlds managed by this feed.
+    private List<World> managedWorlds = new ArrayList<>(); //Worlds managed by this feed.
 
     //================================================================================
     // Constructor
@@ -43,56 +51,32 @@ public class Census
     
     public Census()
     {
-        Vertx vertx = eventTracker.getVertx();
+        Vertx vertx = EventTracker.getVertx();
 
-        client = vertx.createHttpClient();
-
-        //Websocket & Client Attributes
-        client.setHost("push.planetside2.com");
-        client.setPort(443);
-        client.setSSL(true);
-        client.setMaxWebSocketFrameSize(1000000);
-        client.setReceiveBufferSize(1000000);
-        client.setSendBufferSize(1000000);
-        
-        //Disconnects the websocket if we receive an exception.
-        client.exceptionHandler(new Handler<Throwable>()
-        {
-            @Override
-            public void handle(Throwable arg0)
-            {
-                eventTracker.getLogger().error("[PS2 PC] Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
-                disconnectWebsocket();
-                arg0.printStackTrace();
-            }
-        });
+        client = vertx.createHttpClient(options);
 
         //Reconnects the websocket if it is not online, or is not responding.
-        vertx.setPeriodic(10000, new Handler<Long>()
+        vertx.setPeriodic(10000, id ->
         {
-            @Override
-            public void handle(Long timerID)
+            //Connect the websocket if it is closed.
+            if (websocketConnectState.equals(WebsocketConnectState.CLOSED))
             {
-                //Connect the websocket if it is closed.
-                if (websocketConnectState.equals(WebsocketConnectState.CLOSED))
-                {
-                    eventTracker.getLogger().info("[PS2 PC] Reconnecting...");
-                    connectWebsocket();
-                }
+                EventTracker.getLogger().info("[PS2 PC] Reconnecting...");
+                connectWebsocket();
+            }
 
-                //If we have not received a heartbeat in the last 2 minutes, disconnect, then restart the connection
-                else if (!websocketConnectState.equals(WebsocketConnectState.CONNECTING) && lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 120000)
-                {
-                    eventTracker.getLogger().error("[PS2 PC] No hearbeat message received for > 5 minutes. Restarting websocket connection.");
-                    disconnectWebsocket();
-                }
-                
-                //If the current connection attempt has lasted longer than a minute, cancel the attempt and try again.
-                else if(websocketConnectState.equals(WebsocketConnectState.CONNECTING) && startTime != 0 && (new Date().getTime()) - startTime > 60000)
-                {
-                    eventTracker.getLogger().error("[PS2 PC] Websocket Connection Timeout Reached. Retrying connection...");
-                    disconnectWebsocket();
-                }
+            //If we have not received a heartbeat in the last 2 minutes, disconnect, then restart the connection
+            else if (!websocketConnectState.equals(WebsocketConnectState.CONNECTING) && lastHeartbeat != 0 && (new Date().getTime()) - lastHeartbeat > 120000)
+            {
+                EventTracker.getLogger().error("[PS2 PC] No hearbeat message received for > 5 minutes. Restarting websocket connection.");
+                disconnectWebsocket();
+            }
+
+            //If the current connection attempt has lasted longer than a minute, cancel the attempt and try again.
+            else if(websocketConnectState.equals(WebsocketConnectState.CONNECTING) && startTime != 0 && (new Date().getTime()) - startTime > 60000)
+            {
+                EventTracker.getLogger().error("[PS2 PC] Websocket Connection Timeout Reached. Retrying connection...");
+                disconnectWebsocket();
             }
         });
 
@@ -103,139 +87,133 @@ public class Census
     // Websocket Connection Management
     //================================================================================
     
-    public void connectWebsocket()
+    private void connectWebsocket()
     {
         websocketConnectState = WebsocketConnectState.CONNECTING;
         startTime = new Date().getTime();
         
-        client.connectWebsocket("/streaming?environment=ps2&service-id=s:" + config.getSoeServiceID(), new Handler<WebSocket>()
+        client.websocket("/streaming?environment=ps2&service-id=s:" + config.getSoeServiceID(), ws ->
         {
-            @Override
-            public void handle(WebSocket ws)
+            websocket = ws;
+            websocket.handler(data ->
             {
-                websocket = ws;
-                websocket.dataHandler(new Handler<Buffer>()
+                //We received a valid message from census.
+                JsonObject message = new JsonObject(data.toString());
+                String serviceType = message.getString("type");
+
+                if (message.containsKey("connected") && message.getString("connected").equals("true"))
                 {
-                    @Override
-                    public void handle(Buffer data)
+                    //We are now connected.
+                    //Set our connection state to open.
+                    websocketConnectState = WebsocketConnectState.OPEN;
+                    EventTracker.getLogger().info("[PS2 PC] Websocket Secure Connection established to push.planetside.com");
+
+                    //Get recent character ID's for population.
+                    EventTracker.getLogger().info("[PS2 PC] Requesting seen Character IDs...");
+                    websocket.writeFinalTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
+                }
+
+                else if (message.containsKey("subscription"))
+                {
+                    EventTracker.getLogger().info("[PS2 PC] Census Confirmed event feed subscription:");
+                    EventTracker.getLogger().info(message.encodePrettily());
+                }
+
+                else if (serviceType != null)
+                {
+                    switch (serviceType)
                     {
-                        //We received a valid message from census.
-                        JsonObject message = new JsonObject(data.toString());
-                        String serviceType = message.getString("type");
-
-                        if (message.containsField("connected") && message.getString("connected").equals("true"))
+                        case "serviceStateChanged":
                         {
-                            //We are now connected.
-                            //Set our connection state to open.
-                            websocketConnectState = WebsocketConnectState.OPEN;
-                            eventTracker.getLogger().info("[PS2 PC] Websocket Secure Connection established to push.planetside.com");
-
-                            //Get recent character ID's for population.
-                            eventTracker.getLogger().info("[PS2 PC] Requesting seen Character IDs...");
-                            websocket.writeTextFrame("{\"service\":\"event\", \"action\":\"recentCharacterIds\"}");
-                        }
-
-                        else if (message.containsField("subscription"))
-                        {
-                            eventTracker.getLogger().info("[PS2 PC] Census Confirmed event feed subscription:");
-                            eventTracker.getLogger().info(message.encodePrettily());
-                        }
-
-                        else if (serviceType != null)
-                        {
-                            switch (serviceType)
+                            if (message.getString("online").equals("true"))
                             {
-                                case "serviceStateChanged":
+                                for(String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
                                 {
-                                    if (message.getString("online").equals("true"))
-                                    {
-                                        for(String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
-                                        {
-                                            updateEndpointStatus(worldID, true);
-                                        }
-                                    }
-
-                                    else
-                                    {
-                                        for(String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
-                                        {
-                                            updateEndpointStatus(worldID, false);
-                                        }
-                                    }
-                                    
-                                    break;
-                                }
-                                case "heartbeat":
-                                {
-                                    lastHeartbeat = new Date().getTime();
-                                    JsonObject onlineList = message.getObject("online");
-                                    
-                                    for (Entry<String, Object> endpoint : onlineList.toMap().entrySet())
-                                    {
-                                        if (endpoint.getValue().equals("true"))
-                                        {
-                                            for(String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
-                                            {
-                                                updateEndpointStatus(worldID, true);
-                                            }
-                                        }
-
-                                        else
-                                        {
-                                            for(String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
-                                            {
-                                                updateEndpointStatus(worldID, false);
-                                            }
-                                        }
-                                    }
-                                    
-                                    break;
-                                }
-                                case "serviceMessage":
-                                {
-                                    JsonObject payload = message.getObject("payload");
-                                    String eventName = payload.getString("event_name");
-                                    
-                                    processServiceMessage(payload, eventName);
-                                    break;
-                                }
-                                default:
-                                {
-                                    eventTracker.getLogger().warn("[PS2 PC] Could not handle message!");
-                                    eventTracker.getLogger().warn(message.encodePrettily());
-                                    break;
+                                    updateEndpointStatus(worldID, true);
                                 }
                             }
-                        }
 
-                        else if (!message.containsField("send this for help"))
+                            else
+                            {
+                                for(String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
+                                {
+                                    updateEndpointStatus(worldID, false);
+                                }
+                            }
+
+                            break;
+                        }
+                        case "heartbeat":
                         {
-                            eventTracker.getLogger().warn("[PS2 PC] Could not handle message!");
-                            eventTracker.getLogger().warn(message.encodePrettily());
+                            lastHeartbeat = new Date().getTime();
+                            JsonObject onlineList = message.getJsonObject("online");
+
+                            for (Entry<String, Object> endpoint : onlineList)
+                            {
+                                if (endpoint.getValue().equals("true"))
+                                {
+                                    for(String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
+                                    {
+                                        updateEndpointStatus(worldID, true);
+                                    }
+                                }
+
+                                else
+                                {
+                                    for(String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
+                                    {
+                                        updateEndpointStatus(worldID, false);
+                                    }
+                                }
+                            }
+
+                            break;
+                        }
+                        case "serviceMessage":
+                        {
+                            JsonObject payload = message.getJsonObject("payload");
+                            String eventName = payload.getString("event_name");
+
+                            processServiceMessage(payload, eventName);
+                            break;
+                        }
+                        default:
+                        {
+                            EventTracker.getLogger().warn("[PS2 PC] Could not handle message!");
+                            EventTracker.getLogger().warn(message.encodePrettily());
+                            break;
                         }
                     }
-                });
+                }
 
-                websocket.closeHandler(new Handler<Void>()
+                else if (!message.containsKey("send this for help"))
                 {
-                    @Override
-                    public void handle(Void arg0)
-                    {
-                        eventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection was closed.");
-                        disconnectWebsocket();
-                    }
-                });
+                    EventTracker.getLogger().warn("[PS2 PC] Could not handle message!");
+                    EventTracker.getLogger().warn(message.encodePrettily());
+                }
+            });
 
-                websocket.endHandler(new Handler<Void>()
-                {
-                    @Override
-                    public void handle(Void arg0)
-                    {
-                        eventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection ended.");
-                        disconnectWebsocket();
-                    }
-                });
-            }
+            //Disconnects/Reconnects the websocket when the connection closes.
+            websocket.closeHandler(v ->
+            {
+                EventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection was closed.");
+                disconnectWebsocket();
+            });
+
+            //Disconnects/Reconnects the websocket when the connection "gracefully" ends.
+            websocket.endHandler(v ->
+            {
+                EventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection ended.");
+                disconnectWebsocket();
+            });
+            
+            //Disconnects/Reconnects the websocket if we receive an exception.
+            websocket.exceptionHandler(e ->
+            {
+                EventTracker.getLogger().error("[PS2 PC] Websocket connection lost: A fatal connection exception occured. (See below for stack trace)");
+                disconnectWebsocket();
+                e.printStackTrace();
+            });
         });
     }
     
@@ -264,7 +242,7 @@ public class Census
         //Update endpoints if they are not already offline.
         if(managedWorlds.isEmpty())
         {
-            for (WorldInfo world : eventTracker.getDynamicDataManager().getAllWorldInfo().values())
+            for (WorldInfo world : EventTracker.getDynamicDataManager().getAllWorldInfo().values())
             {
                 world.setOnline(false);
             }
@@ -273,7 +251,7 @@ public class Census
         {
             for(World world : managedWorlds)
             {
-                eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
+                EventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
             }
         }
     }
@@ -285,30 +263,30 @@ public class Census
     private void processServiceMessage(JsonObject payload, String eventName)
     {
         //This is the final init step. Process the character list.
-        if (payload.containsField("recent_character_id_list"))
+        if (payload.containsKey("recent_character_id_list"))
         {
-            eventTracker.getLogger().info("[PS2 PC] Character List Received!");
-            eventTracker.getLogger().info("[PS2 PC] Subscribing to all events...");
+            EventTracker.getLogger().info("[PS2 PC] Character List Received!");
+            EventTracker.getLogger().info("[PS2 PC] Subscribing to all events...");
 
             //Send subscription message
-            websocket.writeTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
+            websocket.writeFinalTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
 
-            JsonArray recentCharacterIDList = payload.getArray("recent_character_id_list");
+            JsonArray recentCharacterIDList = payload.getJsonArray("recent_character_id_list");
             for (int i = 0; i < recentCharacterIDList.size(); i++)
             {
                 JsonObject characterPayload = new JsonObject();
-                characterPayload.putString("character_id", (String) recentCharacterIDList.get(i));
-                characterPayload.putString("event_name", "CharacterList");
+                characterPayload.put("character_id", recentCharacterIDList.getString(i));
+                characterPayload.put("event_name", "CharacterList");
 
-                eventTracker.getEventHandler().handleEvent("CharacterList", characterPayload, Environment.PC);
+                EventTracker.getEventHandler().handleEvent("CharacterList", characterPayload, Environment.PC);
             }
         }
 
         //This is a regular event.
         //Don't send this event if the world is not online, otherwise send it to the event manage for processing.
-        else if (eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
+        else if (EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(payload.getString("world_id"))).isOnline())
         {
-            eventTracker.getEventHandler().handleEvent(eventName, payload, Environment.PC);
+            EventTracker.getEventHandler().handleEvent(eventName, payload, Environment.PC);
         }
     }
     
@@ -322,9 +300,9 @@ public class Census
             managedWorlds.add(world);
         }
 
-        if (eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)) != null)
+        if (EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)) != null)
         {
-            currentServerStatus = eventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)).isOnline();
+            currentServerStatus = EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)).isOnline();
         }
 
         if (!currentServerStatus.equals(newValue))
@@ -339,7 +317,7 @@ public class Census
             else
             {
                 //No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
-                eventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
+                EventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
             }
         }
     }

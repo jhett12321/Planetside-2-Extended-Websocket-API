@@ -1,7 +1,5 @@
 package com.blackfeatherproductions.event_tracker.events.extended;
 
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
@@ -9,15 +7,14 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.Environment;
 
+import io.vertx.core.json.JsonObject;
+
 @EventInfo(eventType = EventType.EVENT,
         eventName = "PlanetsideTime",
         listenedEvents = "PlanetsideTime",
         priority = EventPriority.NORMAL)
 public class PlanetsideTimeEvent implements Event
 {
-    //Utils
-    private final EventTracker eventTracker = EventTracker.getInstance();
-
     //Raw Data
     private JsonObject payload;
     
@@ -60,10 +57,10 @@ public class PlanetsideTimeEvent implements Event
     public void processEvent()
     {
         //Event Specific Data
-        eventData.putString("old_time", payload.getString("old_time"));
-        eventData.putString("new_time", payload.getString("new_time"));
-        eventData.putString("diff", payload.getString("diff"));
+        eventData.put("old_time", payload.getString("old_time"));
+        eventData.put("new_time", payload.getString("new_time"));
+        eventData.put("diff", payload.getString("diff"));
 
-        eventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.getEventServer().broadcastEvent(this);
     }
 }

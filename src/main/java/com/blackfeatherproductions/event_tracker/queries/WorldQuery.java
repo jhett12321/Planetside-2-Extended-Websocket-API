@@ -1,8 +1,6 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
 import com.blackfeatherproductions.event_tracker.Environment;
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
@@ -15,12 +13,13 @@ import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 public class WorldQuery implements Query
 {
-    private final EventTracker eventTracker = EventTracker.getInstance();
-
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getInstance().getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.getQueryManager();
 
     private final World world;
 
@@ -34,27 +33,27 @@ public class WorldQuery implements Query
     {
         WorldInfo worldInfo = dynamicDataManager.getWorldInfo(world);
 
-        JsonArray map_list = data.getArray("map_list");
+        JsonArray map_list = data.getJsonArray("map_list");
 
         for (int i = 0; i < map_list.size(); i++)
         {
-            JsonObject data_zone = data.getArray("map_list").get(i);
+            JsonObject data_zone = data.getJsonArray("map_list").getJsonObject(i);
 
             Zone zone = Zone.getZoneByID(data_zone.getString("ZoneId"));
 
             ZoneInfo zoneInfo = worldInfo.getZoneInfo(zone);
 
-            JsonArray data_facilities = data_zone.getObject("Regions").getArray("Row");
+            JsonArray data_facilities = data_zone.getJsonObject("Regions").getJsonArray("Row");
 
             for (int j = 0; j < data_facilities.size(); j++)
             {
-                JsonObject data_facility = data_facilities.get(j);
+                JsonObject data_facility = data_facilities.getJsonObject(j);
 
-                JsonObject data_facility_info = data_facility.getObject("RowData");
+                JsonObject data_facility_info = data_facility.getJsonObject("RowData");
 
                 Faction owner = Faction.getFactionByID(data_facility_info.getString("FactionId"));
 
-                JsonObject data_static_facility_info = data_facility_info.getObject("map_region");
+                JsonObject data_static_facility_info = data_facility_info.getJsonObject("map_region");
 
                 String facility_id = data_static_facility_info.getString("facility_id");
                 String facility_name = data_static_facility_info.getString("facility_name");

@@ -1,10 +1,5 @@
 package com.blackfeatherproductions.event_tracker.server.actions;
 
-import java.util.Map.Entry;
-
-import org.vertx.java.core.http.ServerWebSocket;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.Utils;
@@ -13,26 +8,31 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonObject;
+
+import java.util.Map.Entry;
+
 @ActionInfo(actionNames = "zoneStatus")
 public class ZoneStatus implements Action
 {
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
 
     @Override
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
     {
         JsonObject response = new JsonObject();
-        response.putString("action", "zoneStatus");
+        response.put("action", "zoneStatus");
 
         JsonObject worlds = new JsonObject();
 
-        if (actionData.containsField("worlds"))
+        if (actionData.containsKey("worlds"))
         {
-            for (int i = 0; i < actionData.getArray("worlds").size(); i++)
+            for (int i = 0; i < actionData.getJsonArray("worlds").size(); i++)
             {
-                if (Utils.isValidWorld((String) actionData.getArray("worlds").get(i)))
+                if (Utils.isValidWorld(actionData.getJsonArray("worlds").getString(i)))
                 {
-                    World world = World.getWorldByID((String) actionData.getArray("worlds").get(i));
+                    World world = World.getWorldByID(actionData.getJsonArray("worlds").getString(i));
 
                     JsonObject worldObj = new JsonObject();
                     JsonObject zones = new JsonObject();
@@ -47,20 +47,20 @@ public class ZoneStatus implements Action
                             locked = "1";
                         }
 
-                        zone.putString("locked", locked);
-                        zone.putString("locked_by", zoneInfo.getValue().getLockingFaction().getID());
+                        zone.put("locked", locked);
+                        zone.put("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
                         JsonObject controlInfo = Utils.calculateTerritoryControl(world, zoneInfo.getKey());
 
-                        zone.putString("control_vs", controlInfo.getString("control_vs"));
-                        zone.putString("control_nc", controlInfo.getString("control_nc"));
-                        zone.putString("control_tr", controlInfo.getString("control_tr"));
+                        zone.put("control_vs", controlInfo.getString("control_vs"));
+                        zone.put("control_nc", controlInfo.getString("control_nc"));
+                        zone.put("control_tr", controlInfo.getString("control_tr"));
 
-                        zones.putObject(zoneInfo.getKey().getID(), zone);
+                        zones.put(zoneInfo.getKey().getID(), zone);
                     }
 
-                    worldObj.putObject("zones", zones);
-                    worlds.putObject(world.getID(), worldObj);
+                    worldObj.put("zones", zones);
+                    worlds.put(world.getID(), worldObj);
                 }
             }
         }
@@ -81,26 +81,26 @@ public class ZoneStatus implements Action
                         locked = "1";
                     }
 
-                    zone.putString("locked", locked);
-                    zone.putString("locked_by", zoneInfo.getValue().getLockingFaction().getID());
+                    zone.put("locked", locked);
+                    zone.put("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
                     JsonObject controlInfo = Utils.calculateTerritoryControl(world.getKey(), zoneInfo.getKey());
 
-                    zone.putString("control_vs", controlInfo.getString("control_vs"));
-                    zone.putString("control_nc", controlInfo.getString("control_nc"));
-                    zone.putString("control_tr", controlInfo.getString("control_tr"));
+                    zone.put("control_vs", controlInfo.getString("control_vs"));
+                    zone.put("control_nc", controlInfo.getString("control_nc"));
+                    zone.put("control_tr", controlInfo.getString("control_tr"));
 
-                    zones.putObject(zoneInfo.getKey().getID(), zone);
+                    zones.put(zoneInfo.getKey().getID(), zone);
                 }
 
-                worldObj.putObject("zones", zones);
-                worlds.putObject(world.getKey().getID(), worldObj);
+                worldObj.put("zones", zones);
+                worlds.put(world.getKey().getID(), worldObj);
             }
         }
 
         //Send Client Response
-        response.putObject("worlds", worlds);
+        response.put("worlds", worlds);
 
-        clientConnection.writeTextFrame(response.encode());
+        clientConnection.writeFinalTextFrame(response.encode());
     }
 }

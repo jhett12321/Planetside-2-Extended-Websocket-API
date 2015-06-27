@@ -1,8 +1,5 @@
 package com.blackfeatherproductions.event_tracker.events.census;
 
-import org.vertx.java.core.json.JsonArray;
-import org.vertx.java.core.json.JsonObject;
-
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
@@ -15,6 +12,9 @@ import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.Environment;
 
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 @EventInfo(eventType = EventType.EVENT,
         eventName = "Login",
         listenedEvents = "PlayerLogin|PlayerLogout",
@@ -26,9 +26,8 @@ import com.blackfeatherproductions.event_tracker.Environment;
 public class LoginEvent implements Event
 {
     //Utils
-    private final EventTracker eventTracker = EventTracker.getInstance();
-    private final DynamicDataManager dynamicDataManager = EventTracker.getInstance().getDynamicDataManager();
-    private final QueryManager queryManager = eventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.getQueryManager();
 
     //Raw Data
     private JsonObject payload;
@@ -99,22 +98,22 @@ public class LoginEvent implements Event
         World world = World.getWorldByID(payload.getString("world_id"));
 
         //Event Data
-        eventData.putString("character_id", character.getCharacterID());
-        eventData.putString("character_name", character.getCharacterName());
-        eventData.putString("outfit_id", outfit_id);
-        eventData.putString("faction_id", faction.getID());
-        eventData.putString("is_login", is_login);
-        eventData.putString("timestamp", timestamp);
-        eventData.putString("world_id", world.getID());
+        eventData.put("character_id", character.getCharacterID());
+        eventData.put("character_name", character.getCharacterName());
+        eventData.put("outfit_id", outfit_id);
+        eventData.put("faction_id", faction.getID());
+        eventData.put("is_login", is_login);
+        eventData.put("timestamp", timestamp);
+        eventData.put("world_id", world.getID());
 
         //Filter Data
-        filterData.putArray("characters", new JsonArray().addString(character.getCharacterID()));
-        filterData.putArray("outfits", new JsonArray().addString(outfit_id));
-        filterData.putArray("factions", new JsonArray().addString(faction.getID()));
-        filterData.putArray("login_types", new JsonArray().addString(is_login));
-        filterData.putArray("worlds", new JsonArray().addString(world.getID()));
+        filterData.put("characters", new JsonArray().add(character.getCharacterID()));
+        filterData.put("outfits", new JsonArray().add(outfit_id));
+        filterData.put("factions", new JsonArray().add(faction.getID()));
+        filterData.put("login_types", new JsonArray().add(is_login));
+        filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        eventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.getEventServer().broadcastEvent(this);
     }
 }
