@@ -55,7 +55,7 @@ public class World
             }
         }
 
-        return null;
+        return World.UNKNOWN;
     }
 
     public static Collection<World> getAllWorlds()

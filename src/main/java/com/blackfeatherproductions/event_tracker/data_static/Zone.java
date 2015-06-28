@@ -43,7 +43,14 @@ public class Zone
 
     public static Zone getZoneByID(String id)
     {
-        return zones.get(id);
+        if(zones.containsKey(id))
+        {
+            return zones.get(id);
+        }
+        else
+        {
+            return Zone.UNKNOWN;
+        }
     }
 
     public static Zone getZoneByName(String name)
@@ -55,8 +62,8 @@ public class Zone
                 return zone;
             }
         }
-
-        return null;
+        
+        return Zone.UNKNOWN;
     }
 
     public static Collection<Zone> getAllZones()

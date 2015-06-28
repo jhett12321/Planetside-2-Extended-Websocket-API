@@ -406,7 +406,7 @@ public class EventServer
                 {
                     JsonObject filteredPayload = messageToSend.getJsonObject("payload");
 
-                    for (String field : eventData.fieldNames())
+                    for (String field : eventData.copy().fieldNames())
                     {
                         if (subscription.getJsonArray("hide").contains(field))
                         {

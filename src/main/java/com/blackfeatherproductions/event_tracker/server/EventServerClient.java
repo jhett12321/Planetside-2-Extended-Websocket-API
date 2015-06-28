@@ -291,11 +291,12 @@ public class EventServerClient
      *
      * @param messageFilters
      */
-    private void parseMessageFilters(JsonObject messageFilters)
+    private static void parseMessageFilters(JsonObject messageFilters)
     {
-        for (String property : messageFilters.fieldNames())
+        for (Entry<String, Object> objectEntry : messageFilters.copy())
         {
-            Object rawData = messageFilters.getValue(property);
+            String property = objectEntry.getKey();
+            Object rawData = objectEntry.getValue();
 
             //The all property is always a string
             if (property.equals("all"))
