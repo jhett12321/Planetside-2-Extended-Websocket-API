@@ -1,14 +1,15 @@
 package com.blackfeatherproductions.event_tracker;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.logging.Logger;
+import io.vertx.core.logging.LoggerFactory;
+
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
 import com.blackfeatherproductions.event_tracker.feeds.Census;
 import com.blackfeatherproductions.event_tracker.feeds.CensusPS4EU;
 import com.blackfeatherproductions.event_tracker.feeds.CensusPS4US;
 import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.server.EventServer;
-import io.vertx.core.Vertx;
-import io.vertx.core.logging.Logger;
-import io.vertx.core.logging.LoggerFactory;
 
 public class EventTracker
 {

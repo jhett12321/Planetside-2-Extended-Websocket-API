@@ -12,6 +12,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
+
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.MavenInfo;
@@ -25,11 +30,6 @@ import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
 import com.blackfeatherproductions.event_tracker.server.actions.FacilityStatus;
 import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
-
-import io.vertx.core.Vertx;
-import io.vertx.core.http.ServerWebSocket;
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 //TODO Make bad JSON more verbose for clients, and not throw exceptions.
 //TODO Refactor "useAND" to "exclusive mode"

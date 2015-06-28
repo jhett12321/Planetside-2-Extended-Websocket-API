@@ -1,15 +1,9 @@
 package com.blackfeatherproductions.event_tracker.feeds;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Map.Entry;
-
-import com.blackfeatherproductions.event_tracker.Config;
-import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.QueryManager;
-import com.blackfeatherproductions.event_tracker.Utils;
-import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
-import com.blackfeatherproductions.event_tracker.data_static.World;
-import com.blackfeatherproductions.event_tracker.Environment;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -18,8 +12,13 @@ import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.blackfeatherproductions.event_tracker.Config;
+import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.QueryManager;
+import com.blackfeatherproductions.event_tracker.Utils;
+import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
+import com.blackfeatherproductions.event_tracker.data_static.World;
 
 public class Census
 {

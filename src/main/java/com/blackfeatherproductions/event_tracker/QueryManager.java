@@ -1,21 +1,14 @@
 package com.blackfeatherproductions.event_tracker;
 
-import com.blackfeatherproductions.event_tracker.events.Event;
-import com.blackfeatherproductions.event_tracker.queries.CensusQuery;
-
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Queue;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
-import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
-import com.blackfeatherproductions.event_tracker.queries.MetagameEventQuery;
-import com.blackfeatherproductions.event_tracker.queries.Query;
-import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
-import com.blackfeatherproductions.event_tracker.queries.QueryPriorityComparator;
-import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
@@ -24,12 +17,17 @@ import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.JsonObject;
 import io.vertx.core.logging.Logger;
 
-import java.util.Date;
-import java.util.EnumMap;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.PriorityBlockingQueue;
+import org.apache.commons.lang3.StringUtils;
+
+import com.blackfeatherproductions.event_tracker.events.Event;
+import com.blackfeatherproductions.event_tracker.queries.CensusQuery;
+import com.blackfeatherproductions.event_tracker.queries.CharacterListQuery;
+import com.blackfeatherproductions.event_tracker.queries.CharacterQuery;
+import com.blackfeatherproductions.event_tracker.queries.MetagameEventQuery;
+import com.blackfeatherproductions.event_tracker.queries.Query;
+import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
+import com.blackfeatherproductions.event_tracker.queries.QueryPriorityComparator;
+import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 
 public class QueryManager
 {

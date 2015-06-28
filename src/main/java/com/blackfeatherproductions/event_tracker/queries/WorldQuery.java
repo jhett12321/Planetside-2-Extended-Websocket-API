@@ -1,8 +1,10 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
-import com.blackfeatherproductions.event_tracker.Environment;
+import io.vertx.core.json.JsonArray;
+import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.Utils;
@@ -12,9 +14,6 @@ import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
-
-import io.vertx.core.json.JsonArray;
-import io.vertx.core.json.JsonObject;
 
 public class WorldQuery implements Query
 {

@@ -1,10 +1,9 @@
 package com.blackfeatherproductions.event_tracker.events.extended.population;
 
-import com.blackfeatherproductions.event_tracker.data_dynamic.OnlinePlayer;
-
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.blackfeatherproductions.event_tracker.data_dynamic.OnlinePlayer;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 
 public class PopulationStore

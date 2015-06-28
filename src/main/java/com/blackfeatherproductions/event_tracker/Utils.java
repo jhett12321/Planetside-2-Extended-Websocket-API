@@ -1,6 +1,12 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
@@ -8,13 +14,6 @@ import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
-
-import io.vertx.core.json.JsonObject;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Utils
 {

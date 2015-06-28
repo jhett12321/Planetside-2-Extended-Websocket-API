@@ -1,14 +1,13 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
-import com.blackfeatherproductions.event_tracker.Environment;
-
 import java.util.List;
-
-import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.EventTracker;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+
+import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class CharacterListQuery implements Query
 {

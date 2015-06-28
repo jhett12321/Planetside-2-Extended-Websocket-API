@@ -1,8 +1,8 @@
 package com.blackfeatherproductions.event_tracker.events;
 
-import com.blackfeatherproductions.event_tracker.Environment;
-
 import io.vertx.core.json.JsonObject;
+
+import com.blackfeatherproductions.event_tracker.Environment;
 
 public interface Event
 {

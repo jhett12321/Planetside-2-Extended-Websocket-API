@@ -1,10 +1,11 @@
 package com.blackfeatherproductions.event_tracker.data_static;
 
-import com.blackfeatherproductions.event_tracker.EventTracker;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class World
 {

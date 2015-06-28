@@ -3,7 +3,10 @@ package com.blackfeatherproductions.event_tracker.events.listeners;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.vertx.core.json.JsonObject;
+
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
+import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.Utils;
@@ -16,9 +19,6 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
-import com.blackfeatherproductions.event_tracker.Environment;
-
-import io.vertx.core.json.JsonObject;
 
 @EventInfo(eventType = EventType.LISTENER,
         eventName = "PopulationEventListener",

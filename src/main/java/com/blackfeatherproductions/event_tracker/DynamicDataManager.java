@@ -6,15 +6,15 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
+import io.vertx.core.Vertx;
+import io.vertx.core.json.JsonObject;
+
 import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
-
-import io.vertx.core.Vertx;
-import io.vertx.core.json.JsonObject;
 
 public class DynamicDataManager
 {
