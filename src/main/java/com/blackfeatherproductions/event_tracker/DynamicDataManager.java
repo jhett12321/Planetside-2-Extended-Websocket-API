@@ -73,7 +73,7 @@ public class DynamicDataManager
     {
         CharacterInfo characterInfo;
 
-        if(characters.containsKey(characterID))
+        if (characters.containsKey(characterID))
         {
             characterInfo = characters.get(characterID);
         }
@@ -81,8 +81,8 @@ public class DynamicDataManager
         {
             characterInfo = new CharacterInfo(characterID);
         }
-        
-        if(characterData != null)
+
+        if (characterData != null)
         {
             String characterName = "";
             String factionID = "0";
@@ -90,8 +90,8 @@ public class DynamicDataManager
             String zoneID = "0";
             String worldID = "0";
             boolean online = true;
-            
-            if(characterData.containsKey("name"))
+
+            if (characterData.containsKey("name"))
             {
                 characterName = characterData.getJsonObject("name").getString("first");
             }
@@ -100,7 +100,7 @@ public class DynamicDataManager
             {
                 factionID = characterData.getString("faction_id");
             }
-            
+
             if (characterData.containsKey("outfit"))
             {
                 outfitID = characterData.getJsonObject("outfit").getString("outfit_id");
@@ -120,7 +120,7 @@ public class DynamicDataManager
             {
                 online = !characterData.getJsonObject("online").getString("online_status").equals("0");
             }
-            
+
             characterInfo.setCharacterName(characterName);
             characterInfo.setFaction(Faction.getFactionByID(factionID));
             characterInfo.setOutfitID(outfitID);
@@ -128,7 +128,7 @@ public class DynamicDataManager
             characterInfo.setWorld(World.getWorldByID(worldID));
             characterInfo.setOnline(online);
         }
-        
+
         characters.put(characterID, characterInfo);
     }
 

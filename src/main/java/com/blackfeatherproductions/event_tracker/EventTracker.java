@@ -55,12 +55,12 @@ public class EventTracker
         new CensusPS4EU();
         new CensusRest();
     }
-    
+
     public static Vertx getVertx()
     {
         return vertx;
     }
-    
+
     public static QueryManager getQueryManager()
     {
         return queryManager;

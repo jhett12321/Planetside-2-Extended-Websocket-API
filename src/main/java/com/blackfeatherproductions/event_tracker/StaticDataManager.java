@@ -20,7 +20,7 @@ public class StaticDataManager
         //Worlds
         World.UNKNOWN = new World("0", "Unknown");
         World.worlds.put("0", World.UNKNOWN);
-        
+
         //PC
         World.worlds.put("1", new World("1", "Connery"));
         World.worlds.put("10", new World("10", "Miller"));
@@ -28,7 +28,7 @@ public class StaticDataManager
         World.worlds.put("17", new World("17", "Emerald"));
         World.worlds.put("19", new World("19", "Jaeger"));
         World.worlds.put("25", new World("25", "Briggs"));
-        
+
         //PS4US
         World.worlds.put("1000", new World("1000", "Genudine"));
         World.worlds.put("1001", new World("1001", "Palos"));
@@ -41,7 +41,7 @@ public class StaticDataManager
         World.worlds.put("1008", new World("1008", "Future"));
         World.worlds.put("1009", new World("1009", "Future"));
         World.worlds.put("1010", new World("1010", "Future"));
-        
+
         //PS4EU
         World.worlds.put("2000", new World("2000", "Ceres"));
         World.worlds.put("2001", new World("2001", "Lithcorp"));
@@ -54,7 +54,7 @@ public class StaticDataManager
         World.worlds.put("2008", new World("2008", "Future"));
         World.worlds.put("2009", new World("2009", "Future"));
         World.worlds.put("2010", new World("2010", "Future"));
-        
+
         //Zones
         Zone.UNKNOWN = new Zone("0", "Unknown", "INTERNAL: This is an unknown zone.");
         Zone.INDAR = new Zone("2", "Indar", "The arid continent of Indar is home to an assortment of biomes. Grassy savannas, rocky canyons, and the open plains of the seabed provide unique challenges to soldiers.");

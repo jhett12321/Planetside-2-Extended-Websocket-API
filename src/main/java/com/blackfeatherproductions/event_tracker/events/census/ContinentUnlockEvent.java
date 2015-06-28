@@ -29,18 +29,18 @@ public class ContinentUnlockEvent implements Event
 
     //Raw Data
     private JsonObject payload;
-    
+
     //Message Data
     private JsonObject eventData = new JsonObject();
     private JsonObject filterData = new JsonObject();
     private Environment environment;
-    
+
     @Override
     public Environment getEnvironment()
     {
         return environment;
     }
-    
+
     @Override
     public JsonObject getEventData()
     {
@@ -52,13 +52,13 @@ public class ContinentUnlockEvent implements Event
     {
         return filterData;
     }
-    
+
     @Override
     public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
         this.environment = environment;
-        
+
         if (payload != null)
         {
             processEvent();

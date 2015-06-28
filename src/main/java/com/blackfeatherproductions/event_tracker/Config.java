@@ -27,12 +27,12 @@ public class Config
     public Config()
     {
         File properties = new File("eventTracker.properties");
-        
-        if(!properties.exists())
+
+        if (!properties.exists())
         {
             EventTracker.getLogger().warn("No Config Found! Generating new default config (eventTracker.properties).");
             EventTracker.getLogger().warn("It is strongly recommended that you update your database info and DGC service ID's before continuing use.");
-            
+
             InputStream defaultProperties = (getClass().getResourceAsStream("/defaults/eventTracker.properties"));
             try
             {
@@ -43,7 +43,7 @@ public class Config
                 ex.printStackTrace();
             }
         }
-        
+
         Properties prop = new Properties();
         InputStream input = null;
 

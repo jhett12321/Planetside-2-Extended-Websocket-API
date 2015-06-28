@@ -13,7 +13,7 @@ import io.vertx.core.json.JsonObject;
 public class CharacterListQuery implements Query
 {
     private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    
+
     private List<CharacterQuery> callbacks;
 
     public CharacterListQuery(List<CharacterQuery> callbacks)
@@ -24,7 +24,7 @@ public class CharacterListQuery implements Query
     @Override
     public void receiveData(JsonObject data, Environment environment)
     {
-        if(data != null)
+        if (data != null)
         {
             JsonArray characterList = data.getJsonArray("character_list");
 

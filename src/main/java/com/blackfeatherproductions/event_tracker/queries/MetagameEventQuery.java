@@ -15,7 +15,7 @@ public class MetagameEventQuery implements Query
     @Override
     public void receiveData(JsonObject data, Environment environment)
     {
-        if(data != null)
+        if (data != null)
         {
             JsonArray eventArray = data.getJsonArray("world_event_list");
 

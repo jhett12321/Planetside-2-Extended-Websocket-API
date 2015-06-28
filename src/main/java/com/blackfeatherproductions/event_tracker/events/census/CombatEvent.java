@@ -43,13 +43,13 @@ public class CombatEvent implements Event
     private JsonObject eventData = new JsonObject();
     private JsonObject filterData = new JsonObject();
     private Environment environment;
-    
+
     @Override
     public Environment getEnvironment()
     {
         return environment;
     }
-    
+
     @Override
     public JsonObject getEventData()
     {
@@ -61,13 +61,13 @@ public class CombatEvent implements Event
     {
         return filterData;
     }
-    
+
     @Override
     public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
         this.environment = environment;
-        
+
         if (payload != null)
         {
             attackerCharacterID = payload.getString("attacker_character_id");
@@ -105,7 +105,7 @@ public class CombatEvent implements Event
 
     @Override
     public void processEvent()
-    {   
+    {
         //Raw Data
         CharacterInfo attacker_character = dynamicDataManager.getCharacterData(attackerCharacterID);
         String attacker_outfit_id = attacker_character.getOutfitID();

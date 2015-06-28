@@ -270,32 +270,32 @@ public class EventServer
         for (Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
         {
             Boolean sendMessage = null;
-            
+
             EventType eventType = eventClass.getAnnotation(EventInfo.class).eventType();
-            
-            if(eventType.equals(EventType.SERVICE))
+
+            if (eventType.equals(EventType.SERVICE))
             {
                 sendMessage = true;
             }
-            
-            else if(eventType.equals(EventType.EVENT))
+
+            else if (eventType.equals(EventType.EVENT))
             {
                 //Get Subscription for provided event
                 JsonObject subscription = connection.getValue().getSubscription(eventClass);
-                
+
                 if (subscription.getString("all").equals("true"))
                 {
                     sendMessage = true;
                 }
-                
+
                 JsonArray envSubscription = subscription.getJsonArray("environments");
-                if(envSubscription.size() > 0)
+                if (envSubscription.size() > 0)
                 {
                     sendMessage = false;
-                    
-                    for(int i=0; i< envSubscription.size(); i++)
+
+                    for (int i = 0; i < envSubscription.size(); i++)
                     {
-                        if(event.getEnvironment().toString().equalsIgnoreCase(envSubscription.getString(i)))
+                        if (event.getEnvironment().toString().equalsIgnoreCase(envSubscription.getString(i)))
                         {
                             sendMessage = true;
                         }
@@ -320,18 +320,18 @@ public class EventServer
                                     {
                                         JsonArray subscriptionZoneData = subscriptionValue.getJsonObject(filterData.getString(0)).getJsonArray("zones");
                                         JsonArray zoneData = eventFilterData.getJsonArray("zones");
-                                        
-                                        if(subscriptionZoneData == null || subscriptionZoneData.size() == 0 || subscriptionZoneData.contains(zoneData.getString(0)))
+
+                                        if (subscriptionZoneData == null || subscriptionZoneData.size() == 0 || subscriptionZoneData.contains(zoneData.getString(0)))
                                         {
                                             sendMessage = true;
                                         }
-                                        
+
                                         else
                                         {
                                             sendMessage = false;
                                         }
                                     }
-                                    
+
                                     else
                                     {
                                         sendMessage = false;
@@ -386,7 +386,7 @@ public class EventServer
                         }
                     }
                 }
-                
+
                 if (subscription.getJsonArray("show").size() > 0)
                 {
                     JsonObject filteredPayload = new JsonObject();
@@ -417,8 +417,8 @@ public class EventServer
                     messageToSend.put("payload", filteredPayload);
                 }
             }
-            
-            if(sendMessage != null && sendMessage)
+
+            if (sendMessage != null && sendMessage)
             {
                 connection.getKey().writeFinalTextFrame(messageToSend.encode());
             }

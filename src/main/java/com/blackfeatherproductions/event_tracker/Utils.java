@@ -23,17 +23,17 @@ public class Utils
     public static List<String> getWorldIDsFromEndpointString(String endPointString)
     {
         List<String> worldIDs = new ArrayList<>();
-        
+
         //Match all ID values we get from the endpoint message.
         Pattern p = Pattern.compile("[0-9]+");
         Matcher m = p.matcher(endPointString);
-        
+
         while (m.find())
         {
             String worldID = m.group();
             worldIDs.add(worldID);
         }
-        
+
         return worldIDs;
     }
 
@@ -70,6 +70,7 @@ public class Utils
      * Checks if the given Zone ID is valid.
      *
      * @param zoneID The zone ID whose validity needs to be checked.
+     *
      * @return true if this Zone ID is valid.
      */
     public static boolean isValidZone(String zoneID)
@@ -81,6 +82,7 @@ public class Utils
      * Checks if the given World ID is valid.
      *
      * @param worldID The world ID whose validity needs to be checked.
+     *
      * @return true if this World ID is valid.
      */
     public static boolean isValidWorld(String worldID)
@@ -92,6 +94,7 @@ public class Utils
      * Checks if the given Character ID is valid.
      *
      * @param characterID The character ID whose validity needs to be checked.
+     *
      * @return true if this character ID is valid.
      */
     public static boolean isValidCharacter(String characterID)
@@ -104,6 +107,7 @@ public class Utils
      *
      * @param world The World to calculate territory control for.
      * @param zone The World's zone to calculate territory control for.
+     *
      * @return A JsonObject containing string values for territory control, and
      * the majority controller (if any).
      */
@@ -183,6 +187,7 @@ public class Utils
      * Calculates Territory Control for the given world
      *
      * @param world The world ID to calculate territory control.
+     *
      * @return A JsonObject containing string values for territory control, and
      * the majority controller (if any).
      */

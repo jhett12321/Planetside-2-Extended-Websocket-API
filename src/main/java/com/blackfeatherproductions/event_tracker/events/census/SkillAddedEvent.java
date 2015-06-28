@@ -33,18 +33,18 @@ public class SkillAddedEvent implements Event
     //Raw Data
     private JsonObject payload;
     private String characterID;
-    
+
     //Message Data
     private JsonObject eventData = new JsonObject();
     private JsonObject filterData = new JsonObject();
     private Environment environment;
-    
+
     @Override
     public Environment getEnvironment()
     {
         return environment;
     }
-    
+
     @Override
     public JsonObject getEventData()
     {
@@ -62,7 +62,7 @@ public class SkillAddedEvent implements Event
     {
         this.payload = payload;
         this.environment = environment;
-        
+
         if (payload != null)
         {
             characterID = payload.getString("character_id");

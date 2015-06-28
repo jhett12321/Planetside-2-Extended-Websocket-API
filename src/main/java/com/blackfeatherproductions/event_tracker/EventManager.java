@@ -47,7 +47,7 @@ public class EventManager
     {
         //Register events/listeners available for processing.
         registerEvents();
-        
+
         //Process Event Queue
         EventTracker.getVertx().setPeriodic(100, id ->
         {
@@ -117,15 +117,15 @@ public class EventManager
             }
         }
     }
-    
+
     private void registerEvents()
     {
         //Listeners
         registerEvent(PopulationEventListener.class);
-        
+
         //Service Events
         registerEvent(ServiceStateChangeEvent.class);
-        
+
         //Census Events
         registerEvent(AchievementEarnedEvent.class);
         registerEvent(BattleRankEvent.class);
@@ -141,7 +141,7 @@ public class EventManager
         registerEvent(PlayerFacilityControlEvent.class);
         registerEvent(SkillAddedEvent.class);
         registerEvent(VehicleDestroyEvent.class);
-        
+
         //Extended Events
         registerEvent(PopulationChangeEvent.class);
         registerEvent(PlanetsideTimeEvent.class);
@@ -163,8 +163,8 @@ public class EventManager
             EventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
-        
-        switch(info.eventType())
+
+        switch (info.eventType())
         {
             case SERVICE:
             case EVENT:

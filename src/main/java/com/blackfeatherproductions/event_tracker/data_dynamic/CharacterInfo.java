@@ -30,7 +30,7 @@ public class CharacterInfo
             EventTracker.getDynamicDataManager().removeCharacter(characterID);
         });
     }
-    
+
     public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
     {
         this.characterID = characterID;

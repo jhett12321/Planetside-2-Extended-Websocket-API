@@ -33,7 +33,7 @@ public class World
 
     public static World getWorldByID(String id)
     {
-        if(!worlds.containsKey(id))
+        if (!worlds.containsKey(id))
         {
             EventTracker.getLogger().warn("World ID " + id + "does not exist! Returning unknown world.");
             return World.UNKNOWN;

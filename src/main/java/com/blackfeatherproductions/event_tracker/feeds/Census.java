@@ -37,18 +37,17 @@ public class Census
             .setKeepAlive(true);
     private final HttpClient client;
     private WebSocket websocket;
-    
+
     //Connection Stuff
     private WebsocketConnectState websocketConnectState = WebsocketConnectState.CLOSED;
     private long lastHeartbeat = 0;
     private long startTime = 0;
-    
+
     private List<World> managedWorlds = new ArrayList<>(); //Worlds managed by this feed.
 
     //================================================================================
     // Constructor
     //================================================================================
-    
     public Census()
     {
         Vertx vertx = EventTracker.getVertx();
@@ -73,7 +72,7 @@ public class Census
             }
 
             //If the current connection attempt has lasted longer than a minute, cancel the attempt and try again.
-            else if(websocketConnectState.equals(WebsocketConnectState.CONNECTING) && startTime != 0 && (new Date().getTime()) - startTime > 60000)
+            else if (websocketConnectState.equals(WebsocketConnectState.CONNECTING) && startTime != 0 && (new Date().getTime()) - startTime > 60000)
             {
                 EventTracker.getLogger().error("[PS2 PC] Websocket Connection Timeout Reached. Retrying connection...");
                 disconnectWebsocket();
@@ -82,16 +81,15 @@ public class Census
 
         connectWebsocket();
     }
-    
+
     //================================================================================
     // Websocket Connection Management
     //================================================================================
-    
     private void connectWebsocket()
     {
         websocketConnectState = WebsocketConnectState.CONNECTING;
         startTime = new Date().getTime();
-        
+
         client.websocket("/streaming?environment=ps2&service-id=s:" + config.getSoeServiceID(), ws ->
         {
             websocket = ws;
@@ -127,7 +125,7 @@ public class Census
                         {
                             if (message.getString("online").equals("true"))
                             {
-                                for(String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
+                                for (String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
                                 {
                                     updateEndpointStatus(worldID, true);
                                 }
@@ -135,7 +133,7 @@ public class Census
 
                             else
                             {
-                                for(String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
+                                for (String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
                                 {
                                     updateEndpointStatus(worldID, false);
                                 }
@@ -152,7 +150,7 @@ public class Census
                             {
                                 if (endpoint.getValue().equals("true"))
                                 {
-                                    for(String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
+                                    for (String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
                                     {
                                         updateEndpointStatus(worldID, true);
                                     }
@@ -160,7 +158,7 @@ public class Census
 
                                 else
                                 {
-                                    for(String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
+                                    for (String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
                                     {
                                         updateEndpointStatus(worldID, false);
                                     }
@@ -206,7 +204,7 @@ public class Census
                 EventTracker.getLogger().error("[PS2 PC] Websocket connection lost: The websocket connection ended.");
                 disconnectWebsocket();
             });
-            
+
             //Disconnects/Reconnects the websocket if we receive an exception.
             websocket.exceptionHandler(e ->
             {
@@ -216,31 +214,31 @@ public class Census
             });
         });
     }
-    
+
     private void disconnectWebsocket()
     {
         //Close the websocket if not already, and set it to null to free unused memory.
-        if(websocket != null)
+        if (websocket != null)
         {
             try
             {
                 websocket.close();
             }
-            catch(Exception e)
+            catch (Exception e)
             {
-                
+
             }
             finally
             {
                 websocket = null;
             }
         }
-        
+
         //Set the connection state to closed
         websocketConnectState = WebsocketConnectState.CLOSED;
 
         //Update endpoints if they are not already offline.
-        if(managedWorlds.isEmpty())
+        if (managedWorlds.isEmpty())
         {
             for (WorldInfo world : EventTracker.getDynamicDataManager().getAllWorldInfo().values())
             {
@@ -249,17 +247,16 @@ public class Census
         }
         else
         {
-            for(World world : managedWorlds)
+            for (World world : managedWorlds)
             {
                 EventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
             }
         }
     }
-    
+
     //================================================================================
     // Message Management
     //================================================================================
-
     private void processServiceMessage(JsonObject payload, String eventName)
     {
         //This is the final init step. Process the character list.
@@ -289,13 +286,13 @@ public class Census
             EventTracker.getEventHandler().handleEvent(eventName, payload, Environment.PC);
         }
     }
-    
+
     private void updateEndpointStatus(String worldID, Boolean newValue)
     {
         Boolean currentServerStatus = false;
         World world = World.getWorldByID(worldID);
-        
-        if(!managedWorlds.contains(world))
+
+        if (!managedWorlds.contains(world))
         {
             managedWorlds.add(world);
         }
@@ -309,7 +306,7 @@ public class Census
         {
             if (newValue)
             {
-	    	//Data is (now) being received for this world.
+                //Data is (now) being received for this world.
                 //Query Census for World Data.
                 queryManager.queryWorld(worldID, Environment.PC);
             }

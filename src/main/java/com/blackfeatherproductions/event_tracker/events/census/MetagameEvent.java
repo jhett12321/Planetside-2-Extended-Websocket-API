@@ -35,18 +35,18 @@ public class MetagameEvent implements Event
 
     //Raw Data
     private JsonObject payload;
-    
+
     //Message Data
     private JsonObject eventData = new JsonObject();
     private JsonObject filterData = new JsonObject();
     private Environment environment;
-    
+
     @Override
     public Environment getEnvironment()
     {
         return environment;
     }
-    
+
     @Override
     public JsonObject getEventData()
     {
@@ -58,13 +58,13 @@ public class MetagameEvent implements Event
     {
         return filterData;
     }
-    
+
     @Override
     public void preProcessEvent(JsonObject payload, Environment environment)
     {
         this.payload = payload;
         this.environment = environment;
-        
+
         if (payload != null)
         {
             processEvent();
@@ -170,23 +170,23 @@ public class MetagameEvent implements Event
                 status_name = "ended";
 
                 //If this is a restart, metagameEventInfo will be null as we don't have a pre-existing metagame event.
-                if(metagameEventInfo != null)
+                if (metagameEventInfo != null)
                 {
                     start_time = metagameEventInfo.getStartTime();
                     end_time = timestamp;
-                    
+
                     //Remove event from tracking list.
                     worldData.removeMetagameEvent(instance_id);
                 }
             }
-            
+
             //Alert Start (135->started, 136->restarted)
             if (payload.getString("metagame_event_state").equals("135") || payload.getString("metagame_event_state").equals("136"))
             {
                 start_time = timestamp;
                 end_time = String.valueOf((Integer.parseInt(timestamp) + 7200));
-                
-                if(payload.getString("metagame_event_state").equals("136"))
+
+                if (payload.getString("metagame_event_state").equals("136"))
                 {
                     status = "3";
                     status_name = "restarted";

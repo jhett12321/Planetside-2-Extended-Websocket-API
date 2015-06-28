@@ -26,14 +26,14 @@ public class PopulationStore
     {
         Faction faction = player.getFaction();
         String outfit = player.getOutfitID();
-        
+
         totalPopulation++;
-        
+
         if (factionPopulations.containsKey(faction))
         {
             factionPopulations.put(faction, factionPopulations.get(faction) + 1);
         }
-        
+
         if (!outfitPopulations.containsKey(outfit))
         {
             outfitPopulations.put(outfit, 0);
@@ -41,19 +41,19 @@ public class PopulationStore
 
         outfitPopulations.put(outfit, outfitPopulations.get(outfit) + 1);
     }
-    
+
     protected void decrementPopulation(OnlinePlayer player)
     {
         Faction faction = player.getFaction();
         String outfit = player.getOutfitID();
-        
+
         totalPopulation--;
-        
+
         if (factionPopulations.containsKey(faction))
         {
             factionPopulations.put(faction, factionPopulations.get(faction) - 1);
         }
-        
+
         if (!outfitPopulations.containsKey(outfit))
         {
             outfitPopulations.put(outfit, 0);

@@ -35,7 +35,7 @@ public class CharacterQuery
     {
         return characterIDs;
     }
-    
+
     public Environment getEnvironment()
     {
         return environment;

@@ -20,7 +20,6 @@ import com.blackfeatherproductions.event_tracker.Environment;
 
 import io.vertx.core.json.JsonObject;
 
-
 @EventInfo(eventType = EventType.LISTENER,
         eventName = "PopulationEventListener",
         listenedEvents = "CharacterList|AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
@@ -36,18 +35,18 @@ public class PopulationEventListener implements Event
     private String attackerCharacterID;
     private String characterID;
     private JsonObject payload;
-    
+
     //Message Data
     private JsonObject eventData = null;
     private JsonObject filterData = null;
     private Environment environment;
-    
+
     @Override
     public Environment getEnvironment()
     {
         return environment;
     }
-    
+
     @Override
     public JsonObject getEventData()
     {
@@ -158,7 +157,7 @@ public class PopulationEventListener implements Event
             }
 
             World world;
-            
+
             if (payload.containsKey("world_id"))
             {
                 world = World.getWorldByID(payload.getString("world_id"));
@@ -180,7 +179,7 @@ public class PopulationEventListener implements Event
         String outfitID = attacker_character.getOutfitID();
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
-        
+
         populationManager.characterOnline(environment, attackerCharacterID, faction, outfitID, zone, world);
     }
 }

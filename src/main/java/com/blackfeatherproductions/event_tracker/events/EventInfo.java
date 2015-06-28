@@ -7,12 +7,15 @@ import java.lang.annotation.RetentionPolicy;
 public @interface EventInfo
 {
     public EventType eventType();
-    
+
     public String eventName();
 
     public String listenedEvents();
 
-    public String[] filters() default {"no_filtering"};
+    public String[] filters() default 
+    {
+        "no_filtering"
+    };
 
     public EventPriority priority();
 }
