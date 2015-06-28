@@ -15,45 +15,48 @@ public class MetagameEventQuery implements Query
     @Override
     public void receiveData(JsonObject data, Environment environment)
     {
-        JsonArray eventArray = data.getJsonArray("world_event_list");
-
-        List<String> finishedEvents = new ArrayList<>();
-
-        for (int i = 0; i < eventArray.size(); i++)
+        if(data != null)
         {
-            JsonObject event = eventArray.getJsonObject(i);
+            JsonArray eventArray = data.getJsonArray("world_event_list");
 
-            String eventState = event.getString("metagame_event_state");
-            String instanceID = event.getString("instance_id");
+            List<String> finishedEvents = new ArrayList<>();
 
-            if (eventState.equals("137") || eventState.equals("138"))
+            for (int i = 0; i < eventArray.size(); i++)
             {
-                finishedEvents.add(instanceID);
+                JsonObject event = eventArray.getJsonObject(i);
+
+                String eventState = event.getString("metagame_event_state");
+                String instanceID = event.getString("instance_id");
+
+                if (eventState.equals("137") || eventState.equals("138"))
+                {
+                    finishedEvents.add(instanceID);
+                }
             }
-        }
 
-        for (int i = 0; i < eventArray.size(); i++)
-        {
-            JsonObject event = eventArray.getJsonObject(i);
-
-            String eventState = event.getString("metagame_event_state");
-            String instanceID = event.getString("instance_id");
-
-            if ((eventState.equals("135") || eventState.equals("136")) && !finishedEvents.contains(instanceID))
+            for (int i = 0; i < eventArray.size(); i++)
             {
-                //Process Dummy Event Message
-                JsonObject payload = new JsonObject();
-                payload.put("event_name", "MetagameEvent");
-                payload.put("instance_id", instanceID);
-                payload.put("metagame_event_id", event.getString("metagame_event_id"));
-                payload.put("metagame_event_state", eventState);
-                payload.put("timestamp", event.getString("timestamp"));
-                payload.put("world_id", event.getString("world_id"));
-                payload.put("is_dummy", "1");
+                JsonObject event = eventArray.getJsonObject(i);
 
-                String eventName = payload.getString("event_name");
+                String eventState = event.getString("metagame_event_state");
+                String instanceID = event.getString("instance_id");
 
-                EventTracker.getEventHandler().handleEvent(eventName, payload, environment);
+                if ((eventState.equals("135") || eventState.equals("136")) && !finishedEvents.contains(instanceID))
+                {
+                    //Process Dummy Event Message
+                    JsonObject payload = new JsonObject();
+                    payload.put("event_name", "MetagameEvent");
+                    payload.put("instance_id", instanceID);
+                    payload.put("metagame_event_id", event.getString("metagame_event_id"));
+                    payload.put("metagame_event_state", eventState);
+                    payload.put("timestamp", event.getString("timestamp"));
+                    payload.put("world_id", event.getString("world_id"));
+                    payload.put("is_dummy", "1");
+
+                    String eventName = payload.getString("event_name");
+
+                    EventTracker.getEventHandler().handleEvent(eventName, payload, environment);
+                }
             }
         }
     }

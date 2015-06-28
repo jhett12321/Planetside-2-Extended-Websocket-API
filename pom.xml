@@ -5,7 +5,7 @@
 
   <groupId>com.blackfeatherproductions</groupId>
   <artifactId>EventTracker</artifactId>
-  <version>1.4.1</version>
+  <version>1.4.2</version>
   <name>Planetside 2 Extended Push API</name>
 
   <properties>

@@ -88,6 +88,7 @@ public class MetagameEvent implements Event
         String start_time = "0";
         String end_time = "0";
         String status = null;
+        String status_name = null;
         String domination = "0";
 
         Zone zone;
@@ -133,6 +134,7 @@ public class MetagameEvent implements Event
                 start_time = metagameEventInfo.getStartTime();
                 end_time = metagameEventInfo.getEndTime();
                 status = "2";
+                status_name = "facility_update";
                 domination = "0";
 
                 //Facility Captured Object
@@ -164,14 +166,15 @@ public class MetagameEvent implements Event
             if (payload.getString("metagame_event_state").equals("138") || payload.getString("metagame_event_state").equals("137") || payload.getString("metagame_event_state").equals("136"))
             {
                 MetagameEventInfo metagameEventInfo = worldData.getActiveMetagameEvent(instance_id);
+                status = "0";
+                status_name = "ended";
 
                 //If this is a restart, metagameEventInfo will be null as we don't have a pre-existing metagame event.
                 if(metagameEventInfo != null)
                 {
                     start_time = metagameEventInfo.getStartTime();
                     end_time = timestamp;
-                    status = "0";
-
+                    
                     //Remove event from tracking list.
                     worldData.removeMetagameEvent(instance_id);
                 }
@@ -182,7 +185,17 @@ public class MetagameEvent implements Event
             {
                 start_time = timestamp;
                 end_time = String.valueOf((Integer.parseInt(timestamp) + 7200));
-                status = "1";
+                
+                if(payload.getString("metagame_event_state").equals("136"))
+                {
+                    status = "3";
+                    status_name = "restarted";
+                }
+                else
+                {
+                    status = "1";
+                    status_name = "started";
+                }
 
                 //Create a new Metagame Event
                 worldData.addMetagameEvent(instance_id, new MetagameEventInfo(instance_id, metagameEventType, start_time, end_time));
@@ -212,6 +225,7 @@ public class MetagameEvent implements Event
             eventData.put("timestamp", timestamp);
             eventData.put("facility_type_id", facility_type_id);
             eventData.put("status", status);
+            eventData.put("status_name", status_name);
             eventData.put("control_vs", control_vs);
             eventData.put("control_nc", control_nc);
             eventData.put("control_tr", control_tr);

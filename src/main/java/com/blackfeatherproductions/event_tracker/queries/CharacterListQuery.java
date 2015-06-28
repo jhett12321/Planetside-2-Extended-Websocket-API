@@ -52,8 +52,6 @@ public class CharacterListQuery implements Query
 
             callback.getCallbackEvent().processEvent(); //Triggers the waiting events for processing.
         }
-        
-        callbacks = null;
     }
 
 }

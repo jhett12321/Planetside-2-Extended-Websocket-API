@@ -1,24 +1,29 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
 import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class CensusQuery
 {
     private final String rawQuery;
     private final Environment environment;
     private final boolean allowNoData;
-    private final Query[] callbacks;
+    private final Query callback;
     private final QueryPriority priority;
     private final boolean allowFailure;
     
-    public CensusQuery(String rawQuery, QueryPriority priority, Environment environment, boolean allowFailure, boolean allowNoData, Query... callbacks)
+    private int failureCount = 0;
+    private boolean completed = false;
+    
+    public CensusQuery(String rawQuery, QueryPriority priority, Environment environment, boolean allowFailure, boolean allowNoData, Query callback)
     {
         this.rawQuery = rawQuery;
         this.priority = priority;
         this.environment = environment;
         this.allowFailure = allowFailure;
         this.allowNoData = allowNoData;
-        this.callbacks = callbacks;
+        
+        this.callback = callback;
     }
     
     public String getRawQuery()
@@ -36,9 +41,10 @@ public class CensusQuery
         return allowNoData;
     }
     
-    public Query[] getCallbacks()
+    public Query getCallback()
     {
-        return callbacks;
+        completed = true;
+        return callback;
     }
     
     public QueryPriority getPriority()
@@ -49,5 +55,30 @@ public class CensusQuery
     public boolean isFailureAllowed()
     {
         return allowFailure;
+    }
+    
+    public int getFailureCount()
+    {
+        return failureCount;
+    }
+
+    public void incrementFailureCount()
+    {
+        this.failureCount++;
+        
+        if(failureCount > EventTracker.getConfig().getMaxFailures())
+        {
+            failureCount = EventTracker.getConfig().getMaxFailures();
+        }
+    }
+    
+    public void setFailureCount(int failureCount)
+    {
+        this.failureCount = failureCount;
+    }
+
+    public boolean isCompleted()
+    {
+        return completed;
     }
 }
