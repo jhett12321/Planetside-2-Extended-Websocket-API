@@ -167,7 +167,7 @@ public class QueryManager
             }
             default:
             {
-                EventTracker.getLogger().warn("[Census REST] - An unsupported environment was sent for querying. Ignoring request...");
+                EventTracker.getLogger().warn("[Census REST] - An unsupported environment was sent for querying. Ignoring query...");
                 censusQuery.getCallback().receiveData(null, censusQuery.getEnvironment());
                 
                 return;
@@ -192,7 +192,7 @@ public class QueryManager
                     if(data.containsKey("error"))
                     {
                         logger.warn("[Census REST] Census reported an error when attempting query.");
-                        logger.warn("[Census REST] Request: " + query);
+                        logger.warn("[Census REST] Query: " + query);
                         logger.warn("[Census REST] Error: " + data.getString("error"));
 
                         censusQueryFailed(censusQuery);
@@ -206,8 +206,8 @@ public class QueryManager
                     else
                     {
                         //No Data was returned
-                        logger.warn("[Census REST] - A census request returned no data. Retrying request...");
-                        logger.warn("Request: " + query);
+                        logger.warn("[Census REST] - A census query returned no data.");
+                        logger.warn("Query: " + query);
 
                         censusQueryFailed(censusQuery);
                     }
@@ -215,8 +215,8 @@ public class QueryManager
                 catch (DecodeException e)
                 {
                     //No Valid JSON was returned
-                    logger.warn("[Census REST] A census request returned invalid JSON. Retrying request...");
-                    logger.warn("[Census REST] Request: " + query);
+                    logger.warn("[Census REST] A census query returned invalid JSON.");
+                    logger.warn("[Census REST] Query: " + query);
                     logger.warn("[Census REST] Exception: " + e.getMessage());
 
                     censusQueryFailed(censusQuery);
@@ -225,11 +225,11 @@ public class QueryManager
             
             response.exceptionHandler(e ->
             {
-                //This is just warning us that we tried to use a connection that was closed. This will still create a new connection, and do the request anyway, so just ignore it.
+                //This is just warning us that we tried to use a connection that was closed. This will still create a new connection, and do the query anyway, so just ignore it.
                 if(!e.getMessage().equalsIgnoreCase("Connection was closed"))
                 {
-                    logger.warn("[Census REST] A census request resulted in an exception.");
-                    logger.warn("[Census REST] Request: " + query);
+                    logger.warn("[Census REST] A census query resulted in an exception.");
+                    logger.warn("[Census REST] Query: " + query);
                     logger.warn("[Census REST] Exception: " + e.getMessage());
                 
                     censusQueryFailed(censusQuery);
@@ -242,7 +242,7 @@ public class QueryManager
     {
         if (censusQuery.getFailureCount() >= EventTracker.getConfig().getMaxFailures() && censusQuery.isFailureAllowed())
         {
-            logger.error("[Census REST] Census Failure Limit Reached. Dropping event.");
+            logger.error("[Census REST] Census Failure Limit Reached. Dropping query.");
 
             censusQuery.getCallback().receiveData(null, censusQuery.getEnvironment());
             censusQuery.setFailureCount(EventTracker.getConfig().getMaxFailures());
@@ -250,11 +250,11 @@ public class QueryManager
         
         else
         {
-            logger.warn("[Census REST] Retrying request...");
+            logger.warn("[Census REST] Retrying query...");
             censusQuery.incrementFailureCount();
             queuedQueries.add(censusQuery);
+            
+            logger.warn("[Census REST] Failed Query " + String.valueOf(censusQuery.getFailureCount()) + "/" + EventTracker.getConfig().getMaxFailures().toString());
         }
-        
-        logger.warn("[Census REST] Failed Query " + String.valueOf(censusQuery.getFailureCount()) + "/" + EventTracker.getConfig().getMaxFailures().toString());
     }
 }
