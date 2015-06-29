@@ -251,6 +251,9 @@ public class CensusPS4EU
                 EventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
             }
         }
+        
+        //Notify the population manager that we are now offline
+        EventTracker.getPopulationManager().updateEnvironmentStatus(Environment.PS4_EU, false);
     }
 
     //================================================================================
@@ -262,20 +265,13 @@ public class CensusPS4EU
         if (payload.containsKey("recent_character_id_list"))
         {
             EventTracker.getLogger().info("[PS2 PS4-EU] Character List Received!");
+            
+            EventTracker.getEventHandler().handleEvent("CharacterList", payload, Environment.PS4_EU);
+            
             EventTracker.getLogger().info("[PS2 PS4-EU] Subscribing to all events...");
 
             //Send subscription message
             websocket.writeFinalTextFrame("{\"service\": \"event\",\"action\": \"subscribe\",\"characters\": [\"all\"],\"worlds\": [\"all\"],\"eventNames\": [\"all\"]}");
-
-            JsonArray recentCharacterIDList = payload.getJsonArray("recent_character_id_list");
-            for (int i = 0; i < recentCharacterIDList.size(); i++)
-            {
-                JsonObject characterPayload = new JsonObject();
-                characterPayload.put("character_id", recentCharacterIDList.getString(i));
-                characterPayload.put("event_name", "CharacterList");
-
-                EventTracker.getEventHandler().handleEvent("CharacterList", characterPayload, Environment.PS4_EU);
-            }
         }
 
         //This is a regular event.

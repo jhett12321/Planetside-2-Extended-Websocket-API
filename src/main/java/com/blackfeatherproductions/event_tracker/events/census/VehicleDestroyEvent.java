@@ -124,6 +124,19 @@ public class VehicleDestroyEvent implements Event
         String facility_id = payload.getString("facility_id");
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
+        
+        //Update Character Data
+        if(attacker_character.getFaction() != attacker_faction)
+        {
+            attacker_character.setFaction(attacker_faction);
+            attacker_character.update();
+        }
+        
+        if(victim_character.getFaction() != victim_faction)
+        {
+            victim_character.setFaction(victim_faction);
+            victim_character.update();
+        }
 
         //Event Data
         eventData.put("attacker_character_id", attacker_character.getCharacterID());

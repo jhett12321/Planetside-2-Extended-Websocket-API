@@ -7,10 +7,10 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.http.ServerWebSocket;
@@ -48,10 +48,10 @@ public class EventServer
     private final String dbUrl;
 
     //Actions
-    private final Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<ActionInfo, Class<? extends Action>>();
+    private final Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<>();
 
     //Client Info
-    public final Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<ServerWebSocket, EventServerClient>();
+    public final Map<ServerWebSocket, EventServerClient> clientConnections = new HashMap<>();
 
     public EventServer()
     {
@@ -66,7 +66,7 @@ public class EventServer
 
         vertx.createHttpServer().websocketHandler(clientConnection ->
         {
-            Map<String, String> queryPairs = new LinkedHashMap<String, String>();
+            Map<String, String> queryPairs = new LinkedHashMap<>();
 
             String query = clientConnection.query();
             String[] pairs = query.split("&");
@@ -91,13 +91,19 @@ public class EventServer
                 clientConnection.closeHandler(v ->
                 {
                     clientConnections.remove(clientConnection);
-                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
+                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Closed) API Key: " + apiKey);
                 });
-
+                
+                clientConnection.endHandler(v ->
+                {
+                    clientConnections.remove(clientConnection);
+                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Ended) API Key: " + apiKey);
+                });
+                
                 clientConnection.exceptionHandler(e ->
                 {
                     clientConnections.remove(clientConnection);
-                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. API Key: " + apiKey);
+                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Exception) API Key: " + apiKey);
                 });
 
                 clientConnection.handler(data ->
@@ -262,6 +268,9 @@ public class EventServer
 
         JsonObject eventFilterData = event.getFilterData();
         JsonObject eventData = event.getEventData();
+        
+        //Put the event's environment into the filter data
+        eventFilterData.put("environments", new JsonArray().add(event.getEnvironment().toString().toLowerCase()));
 
         messageToSend.put("payload", eventData);
         messageToSend.put("event_type", eventClass.getAnnotation(EventInfo.class).eventName());
@@ -288,20 +297,6 @@ public class EventServer
                     sendMessage = true;
                 }
 
-                JsonArray envSubscription = subscription.getJsonArray("environments");
-                if (envSubscription.size() > 0)
-                {
-                    sendMessage = false;
-
-                    for (int i = 0; i < envSubscription.size(); i++)
-                    {
-                        if (event.getEnvironment().toString().equalsIgnoreCase(envSubscription.getString(i)))
-                        {
-                            sendMessage = true;
-                        }
-                    }
-                }
-
                 else
                 {
                     for (String subscriptionProperty : subscription.fieldNames())
@@ -321,7 +316,7 @@ public class EventServer
                                         JsonArray subscriptionZoneData = subscriptionValue.getJsonObject(filterData.getString(0)).getJsonArray("zones");
                                         JsonArray zoneData = eventFilterData.getJsonArray("zones");
 
-                                        if (subscriptionZoneData == null || subscriptionZoneData.size() == 0 || subscriptionZoneData.contains(zoneData.getString(0)))
+                                        if (subscriptionZoneData == null || subscriptionZoneData.isEmpty() || subscriptionZoneData.contains(zoneData.getString(0)))
                                         {
                                             sendMessage = true;
                                         }
@@ -420,7 +415,15 @@ public class EventServer
 
             if (sendMessage != null && sendMessage)
             {
-                connection.getKey().writeFinalTextFrame(messageToSend.encode());
+                if(!connection.getKey().writeQueueFull())
+                {
+                    connection.getKey().writeFinalTextFrame(messageToSend.encode());
+                }
+                else
+                {
+                    EventTracker.getLogger().warn("Client " + connection.getValue().getName() + " (" + connection.getValue().getApiKey() + ") currently has a full write queue! Disconnecting user.");
+                    connection.getKey().close();
+                }
             }
         }
     }

@@ -127,6 +127,7 @@ public class DynamicDataManager
             characterInfo.setZone(Zone.getZoneByID(zoneID));
             characterInfo.setWorld(World.getWorldByID(worldID));
             characterInfo.setOnline(online);
+            characterInfo.update();
         }
 
         characters.put(characterID, characterInfo);

@@ -1,5 +1,7 @@
 package com.blackfeatherproductions.event_tracker.data_dynamic;
 
+import java.util.Date;
+
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
@@ -14,6 +16,7 @@ public class CharacterInfo
     private Zone zone;
     private World world;
     private boolean online;
+    private Date updateTime;
 
     public CharacterInfo(final String characterID)
     {
@@ -24,10 +27,15 @@ public class CharacterInfo
         this.zone = Zone.UNKNOWN;
         this.world = World.UNKNOWN;
         this.online = false;
+        this.updateTime = new Date();
 
-        EventTracker.getVertx().setTimer(300000, id ->
+        EventTracker.getVertx().setPeriodic(60000, id ->
         {
-            EventTracker.getDynamicDataManager().removeCharacter(characterID);
+            //Player cached data expires after 5 minutes.
+            if(new Date().getTime() - updateTime.getTime() >= 300000)
+            {
+                EventTracker.getDynamicDataManager().removeCharacter(characterID);
+            }
         });
     }
 
@@ -41,9 +49,13 @@ public class CharacterInfo
         this.world = World.getWorldByID(worldID);
         this.online = online;
 
-        EventTracker.getVertx().setTimer(300000, id ->
+        EventTracker.getVertx().setPeriodic(60000, id ->
         {
-            EventTracker.getDynamicDataManager().removeCharacter(characterID);
+            //Player cached data expires after 5 minutes.
+            if(new Date().getTime() - updateTime.getTime() >= 300000)
+            {
+                EventTracker.getDynamicDataManager().removeCharacter(characterID);
+            }
         });
     }
 
@@ -110,5 +122,10 @@ public class CharacterInfo
     public void setOnline(boolean online)
     {
         this.online = online;
+    }
+    
+    public void update()
+    {
+        this.updateTime = new Date();
     }
 }

@@ -83,16 +83,24 @@ public class ExperienceEarnedEvent implements Event
     public void processEvent()
     {
         //Raw Data
-        String amount = payload.getString("amount");
         CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
         String outfit_id = character.getOutfitID();
-        Faction faction = character.getFaction();
-        String experience_id = payload.getString("experience_id");
         String loadout_id = payload.getString("loadout_id");
+        Faction faction = Faction.getFactionByLoadoutID(loadout_id);
+        
+        String amount = payload.getString("amount");
+        String experience_id = payload.getString("experience_id");
         String other_id = payload.getString("other_id");
         String timestamp = payload.getString("timestamp");
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
+        
+        //Update character data
+        if(character.getFaction() != faction)
+        {
+            character.setFaction(faction);
+            character.update();
+        }
 
         //Event Data
         eventData.put("amount", amount);

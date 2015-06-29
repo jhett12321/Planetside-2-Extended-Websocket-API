@@ -45,6 +45,9 @@ public class PopulationManager implements Query
     private Map<Environment, PopulationStore> envTotalPopulations = new EnumMap<>(Environment.class);
     private Map<Environment, Map<World, PopulationStore>> envWorldPopulations = new EnumMap<>(Environment.class);
     private Map<Environment, Map<String, PopulationStore>> envZonePopulations = new EnumMap<>(Environment.class);
+    
+    //Event Lockouts (Used when feeds are offline)
+    private Map<Environment, Boolean> envOnline = new EnumMap<>(Environment.class);
 
     //Instance used for query manager.
     private Query self = this;
@@ -56,6 +59,9 @@ public class PopulationManager implements Query
         //Create Population Stores
         for (Environment environment : Environment.values())
         {
+            //Environment statuses
+            envOnline.put(environment, false);
+            
             //Online Characters
             envOnlinePlayers.put(environment, new ConcurrentHashMap<>());
 
@@ -138,6 +144,11 @@ public class PopulationManager implements Query
             }
         });
     }
+    
+    public void updateEnvironmentStatus(Environment environment, boolean online)
+    {
+        envOnline.put(environment, online);
+    }
 
     public void characterOnline(Environment environment, String characterID, Faction faction, String outfitID, Zone zone, World world)
     {
@@ -173,6 +184,28 @@ public class PopulationManager implements Query
                 modified = true;
                 zoneChangeOnly = false;
             }
+            
+            if (modified)
+            {
+                //Decrement the relating stores for old data.
+                if (!zoneChangeOnly)
+                {
+                    //Total Populations
+                    envTotalPopulations.get(environment).decrementPopulation(player);
+
+                    //World Populations
+                    envWorldPopulations.get(environment).get(player.getWorld()).decrementPopulation(player);
+                }
+
+                //Zone Populations
+                envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID()).decrementPopulation(player);
+                
+                //Update player values
+                player.setFaction(faction);
+                player.setOutfitID(outfitID);
+                player.setZone(zone);
+                player.setWorld(world);
+            }
         }
 
         else
@@ -187,25 +220,6 @@ public class PopulationManager implements Query
 
         if (modified)
         {
-            //Decrement the relating stores for old data.
-            if (!zoneChangeOnly)
-            {
-                //Total Populations
-                envTotalPopulations.get(environment).decrementPopulation(player);
-
-                //World Populations
-                envWorldPopulations.get(environment).get(player.getWorld()).decrementPopulation(player);
-            }
-
-            //Zone Populations
-            envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID()).decrementPopulation(player);
-
-            //Update player values
-            player.setFaction(faction);
-            player.setOutfitID(outfitID);
-            player.setZone(zone);
-            player.setWorld(world);
-
             //Increment the relating stores for this.
             if (!zoneChangeOnly)
             {
@@ -248,73 +262,76 @@ public class PopulationManager implements Query
 
     private void generateEvents(Environment environment, OnlinePlayer player, boolean zoneChangeOnly)
     {
-        String eventName = "PopulationChange";
-
-        if (!zoneChangeOnly)
+        if(envOnline.get(environment))
         {
-            //Total Population
-            PopulationStore totalPopulation = envTotalPopulations.get(environment);
+            String eventName = "PopulationChange";
 
-            JsonObject totalPayload = new JsonObject();
-            totalPayload.put("population_type", "total");
-            totalPayload.put("population_total", totalPopulation.getTotalPopulation().toString());
-            totalPayload.put("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
-            totalPayload.put("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
-            totalPayload.put("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
-            totalPayload.put("population_unk", totalPopulation.getFactionPopulation(Faction.NS).toString());
+            if (!zoneChangeOnly)
+            {
+                //Total Population
+                PopulationStore totalPopulation = envTotalPopulations.get(environment);
 
-            EventTracker.getEventHandler().handleEvent(eventName, totalPayload, environment);
+                JsonObject totalPayload = new JsonObject();
+                totalPayload.put("population_type", "total");
+                totalPayload.put("population_total", totalPopulation.getTotalPopulation().toString());
+                totalPayload.put("population_vs", totalPopulation.getFactionPopulation(Faction.VS).toString());
+                totalPayload.put("population_nc", totalPopulation.getFactionPopulation(Faction.NC).toString());
+                totalPayload.put("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
+                totalPayload.put("population_unk", totalPopulation.getFactionPopulation(Faction.NS).toString());
 
-            //World Populations
-            PopulationStore worldPopulation = envWorldPopulations.get(environment).get(player.getWorld());
-            JsonObject worldPayload = new JsonObject();
+                EventTracker.getEventHandler().handleEvent(eventName, totalPayload, environment);
 
-            worldPayload.put("population_type", "world");
-            worldPayload.put("population_total", worldPopulation.getTotalPopulation().toString());
-            worldPayload.put("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
-            worldPayload.put("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
-            worldPayload.put("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
-            worldPayload.put("population_unk", worldPopulation.getFactionPopulation(Faction.NS).toString());
-            worldPayload.put("world_id", player.getWorld().getID());
+                //World Populations
+                PopulationStore worldPopulation = envWorldPopulations.get(environment).get(player.getWorld());
+                JsonObject worldPayload = new JsonObject();
 
-            EventTracker.getEventHandler().handleEvent(eventName, worldPayload, environment);
+                worldPayload.put("population_type", "world");
+                worldPayload.put("population_total", worldPopulation.getTotalPopulation().toString());
+                worldPayload.put("population_vs", worldPopulation.getFactionPopulation(Faction.VS).toString());
+                worldPayload.put("population_nc", worldPopulation.getFactionPopulation(Faction.NC).toString());
+                worldPayload.put("population_tr", worldPopulation.getFactionPopulation(Faction.TR).toString());
+                worldPayload.put("population_unk", worldPopulation.getFactionPopulation(Faction.NS).toString());
+                worldPayload.put("world_id", player.getWorld().getID());
 
-            //World Outfit
-            JsonObject outfitPayload = new JsonObject();
+                EventTracker.getEventHandler().handleEvent(eventName, worldPayload, environment);
 
-            outfitPayload.put("population_type", "outfit");
-            outfitPayload.put("population_total", worldPopulation.getOutfitPopulation(player.getOutfitID()).toString());
-            outfitPayload.put("outfit_id", player.getOutfitID());
-            outfitPayload.put("world_id", player.getWorld().getID());
+                //World Outfit
+                JsonObject outfitPayload = new JsonObject();
 
-            EventTracker.getEventHandler().handleEvent(eventName, outfitPayload, environment);
+                outfitPayload.put("population_type", "outfit");
+                outfitPayload.put("population_total", worldPopulation.getOutfitPopulation(player.getOutfitID()).toString());
+                outfitPayload.put("outfit_id", player.getOutfitID());
+                outfitPayload.put("world_id", player.getWorld().getID());
+
+                EventTracker.getEventHandler().handleEvent(eventName, outfitPayload, environment);
+            }
+
+            //Zone Populations
+            PopulationStore zonePopulation = envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID());
+            JsonObject zonePayload = new JsonObject();
+
+            zonePayload.put("population_type", "zone");
+            zonePayload.put("population_total", zonePopulation.getTotalPopulation().toString());
+            zonePayload.put("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
+            zonePayload.put("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
+            zonePayload.put("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
+            zonePayload.put("population_unk", zonePopulation.getFactionPopulation(Faction.NS).toString());
+            zonePayload.put("zone_id", player.getZone().getID());
+            zonePayload.put("world_id", player.getWorld().getID());
+
+            EventTracker.getEventHandler().handleEvent(eventName, zonePayload, environment);
+
+            //Zone Outfit Populations
+            JsonObject outfitZonePayload = new JsonObject();
+
+            outfitZonePayload.put("population_type", "zone_outfit");
+            outfitZonePayload.put("population_total", zonePopulation.getOutfitPopulation(player.getOutfitID()).toString());
+            outfitZonePayload.put("outfit_id", player.getOutfitID());
+            outfitZonePayload.put("zone_id", player.getZone().getID());
+            outfitZonePayload.put("world_id", player.getWorld().getID());
+
+            EventTracker.getEventHandler().handleEvent(eventName, outfitZonePayload, environment);
         }
-
-        //Zone Populations
-        PopulationStore zonePopulation = envZonePopulations.get(environment).get(player.getWorld().getID() + "_" + player.getZone().getID());
-        JsonObject zonePayload = new JsonObject();
-
-        zonePayload.put("population_type", "zone");
-        zonePayload.put("population_total", zonePopulation.getTotalPopulation().toString());
-        zonePayload.put("population_vs", zonePopulation.getFactionPopulation(Faction.VS).toString());
-        zonePayload.put("population_nc", zonePopulation.getFactionPopulation(Faction.NC).toString());
-        zonePayload.put("population_tr", zonePopulation.getFactionPopulation(Faction.TR).toString());
-        zonePayload.put("population_unk", zonePopulation.getFactionPopulation(Faction.NS).toString());
-        zonePayload.put("zone_id", player.getZone().getID());
-        zonePayload.put("world_id", player.getWorld().getID());
-
-        EventTracker.getEventHandler().handleEvent(eventName, zonePayload, environment);
-
-        //Zone Outfit Populations
-        JsonObject outfitZonePayload = new JsonObject();
-
-        outfitZonePayload.put("population_type", "zone_outfit");
-        outfitZonePayload.put("population_total", zonePopulation.getOutfitPopulation(player.getOutfitID()).toString());
-        outfitZonePayload.put("outfit_id", player.getOutfitID());
-        outfitZonePayload.put("zone_id", player.getZone().getID());
-        outfitZonePayload.put("world_id", player.getWorld().getID());
-
-        EventTracker.getEventHandler().handleEvent(eventName, outfitZonePayload, environment);
     }
 
     @Override

@@ -30,6 +30,7 @@ import com.blackfeatherproductions.event_tracker.events.census.SkillAddedEvent;
 import com.blackfeatherproductions.event_tracker.events.census.VehicleDestroyEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PlanetsideTimeEvent;
 import com.blackfeatherproductions.event_tracker.events.extended.PopulationChangeEvent;
+import com.blackfeatherproductions.event_tracker.events.listeners.PopulationCharacterListListener;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
 
@@ -122,6 +123,7 @@ public class EventManager
     {
         //Listeners
         registerEvent(PopulationEventListener.class);
+        registerEvent(PopulationCharacterListListener.class);
 
         //Service Events
         registerEvent(ServiceStateChangeEvent.class);

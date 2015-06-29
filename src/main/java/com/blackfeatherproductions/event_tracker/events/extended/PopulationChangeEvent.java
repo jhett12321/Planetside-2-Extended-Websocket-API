@@ -71,6 +71,7 @@ public class PopulationChangeEvent implements Event
             eventData.put("population_vs", payload.getString("population_vs"));
             eventData.put("population_nc", payload.getString("population_nc"));
             eventData.put("population_tr", payload.getString("population_tr"));
+            eventData.put("population_unk", payload.getString("population_unk"));
         }
 
         if (populationType.equals("outfit") || populationType.equals("zone_outfit"))

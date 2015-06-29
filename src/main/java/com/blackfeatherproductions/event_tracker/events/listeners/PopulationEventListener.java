@@ -22,7 +22,7 @@ import com.blackfeatherproductions.event_tracker.events.extended.population.Popu
 
 @EventInfo(eventType = EventType.LISTENER,
         eventName = "PopulationEventListener",
-        listenedEvents = "CharacterList|AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
+        listenedEvents = "AchievementEarned|BattleRankUp|Death|DirectiveCompleted|PlayerLogin|PlayerLogout|VehicleDestroy",
         priority = EventPriority.NORMAL)
 public class PopulationEventListener implements Event
 {
