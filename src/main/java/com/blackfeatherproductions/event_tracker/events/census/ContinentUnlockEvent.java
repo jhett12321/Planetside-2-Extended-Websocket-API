@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -26,6 +27,7 @@ public class ContinentUnlockEvent implements Event
 {
     //Utils
     private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.getQueryManager();
 
     //Raw Data
     private JsonObject payload;
@@ -83,6 +85,10 @@ public class ContinentUnlockEvent implements Event
         //Update Internal Data
         dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(false);
         dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NS);
+        
+        //Re-sync territory control
+        //TODO remove if no-longer required
+        queryManager.queryWorld(world.getID(), environment);
 
         //Event Data
         eventData.put("vs_population", vs_population);
