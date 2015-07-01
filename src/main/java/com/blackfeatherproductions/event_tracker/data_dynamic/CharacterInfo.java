@@ -2,7 +2,6 @@ package com.blackfeatherproductions.event_tracker.data_dynamic;
 
 import java.util.Date;
 
-import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -28,15 +27,6 @@ public class CharacterInfo
         this.world = World.UNKNOWN;
         this.online = false;
         this.updateTime = new Date();
-
-        EventTracker.getVertx().setPeriodic(60000, id ->
-        {
-            //Player cached data expires after 5 minutes.
-            if(new Date().getTime() - updateTime.getTime() >= 300000)
-            {
-                EventTracker.getDynamicDataManager().removeCharacter(characterID);
-            }
-        });
     }
 
     public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
@@ -48,15 +38,6 @@ public class CharacterInfo
         this.zone = Zone.getZoneByID(zoneID);
         this.world = World.getWorldByID(worldID);
         this.online = online;
-
-        EventTracker.getVertx().setPeriodic(60000, id ->
-        {
-            //Player cached data expires after 5 minutes.
-            if(new Date().getTime() - updateTime.getTime() >= 300000)
-            {
-                EventTracker.getDynamicDataManager().removeCharacter(characterID);
-            }
-        });
     }
 
     public Faction getFaction()
@@ -122,10 +103,5 @@ public class CharacterInfo
     public void setOnline(boolean online)
     {
         this.online = online;
-    }
-    
-    public void update()
-    {
-        this.updateTime = new Date();
     }
 }

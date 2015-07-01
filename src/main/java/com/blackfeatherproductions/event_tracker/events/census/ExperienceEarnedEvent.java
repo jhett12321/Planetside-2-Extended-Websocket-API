@@ -99,7 +99,7 @@ public class ExperienceEarnedEvent implements Event
         if(character.getFaction() != faction)
         {
             character.setFaction(faction);
-            character.update();
+            dynamicDataManager.update(characterID);
         }
 
         //Event Data

@@ -18,8 +18,9 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class DynamicDataManager
 {
-    private final Map<String, CharacterInfo> characters = new ConcurrentHashMap<String, CharacterInfo>();
-    private final Map<World, WorldInfo> worlds = new HashMap<World, WorldInfo>();
+    private final Map<String, CharacterInfo> characters = new ConcurrentHashMap<>();
+    private final Map<String, Date> characterDataTimers = new ConcurrentHashMap<>();
+    private final Map<World, WorldInfo> worlds = new HashMap<>();
 
     public DynamicDataManager()
     {
@@ -53,6 +54,19 @@ public class DynamicDataManager
 
                         EventTracker.getEventHandler().handleEvent("MetagameEvent", dummyPayload, Environment.WEBSOCKET_SERVICE);
                     }
+                }
+            }
+        });
+        
+        //Deletes character data that has reached the expiration period.
+        vertx.setPeriodic(600000, id ->
+        {
+            for(Entry<String, Date> character : characterDataTimers.entrySet())
+            {
+                //Player cached data expires after 5 minutes.
+                if(new Date().getTime() - character.getValue().getTime() >= 30000)
+                {
+                    characters.remove(character.getKey());
                 }
             }
         });
@@ -127,10 +141,11 @@ public class DynamicDataManager
             characterInfo.setZone(Zone.getZoneByID(zoneID));
             characterInfo.setWorld(World.getWorldByID(worldID));
             characterInfo.setOnline(online);
-            characterInfo.update();
+            update(characterID);
         }
 
         characters.put(characterID, characterInfo);
+        characterDataTimers.put(characterID, new Date());
     }
 
     //World Data
@@ -153,9 +168,12 @@ public class DynamicDataManager
     {
         return worlds;
     }
-
-    public void removeCharacter(String characterID)
+    
+    public void update(String characterID)
     {
-        characters.remove(characterID);
+        if(characterDataTimers.containsKey(characterID))
+        {
+            characterDataTimers.put(characterID, new Date());
+        }
     }
 }

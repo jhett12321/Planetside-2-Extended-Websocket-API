@@ -129,13 +129,13 @@ public class VehicleDestroyEvent implements Event
         if(attacker_character.getFaction() != attacker_faction)
         {
             attacker_character.setFaction(attacker_faction);
-            attacker_character.update();
+            dynamicDataManager.update(attackerCharacterID);
         }
         
         if(victim_character.getFaction() != victim_faction)
         {
             victim_character.setFaction(victim_faction);
-            victim_character.update();
+            dynamicDataManager.update(victimCharacterID);
         }
 
         //Event Data

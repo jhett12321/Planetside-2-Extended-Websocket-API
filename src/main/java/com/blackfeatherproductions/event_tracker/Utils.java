@@ -102,7 +102,7 @@ public class Utils
     }
 
     /**
-     * Calculates Territory Control for the given world
+     * Calculates Territory Control for the given world + zone
      *
      * @param world The World to calculate territory control for.
      * @param zone The World's zone to calculate territory control for.
@@ -139,9 +139,9 @@ public class Utils
             }
         }
 
-        Integer controlVS = 0;
-        Integer controlNC = 0;
-        Integer controlTR = 0;
+        int controlVS = 0;
+        int controlNC = 0;
+        int controlTR = 0;
 
         if (totalRegions > 0)
         {
@@ -150,7 +150,7 @@ public class Utils
             controlTR = (int) Math.floor(facilitiesTR / totalRegions * 100);
         }
 
-        float majorityControl = controlVS;
+        int majorityControl = controlVS;
         Faction majorityController = Faction.VS;
 
         if (controlNC > majorityControl)
@@ -165,6 +165,7 @@ public class Utils
 
         if (controlTR > majorityControl)
         {
+            majorityControl = controlTR;
             majorityController = Faction.TR;
         }
         else if (controlTR == majorityControl)
@@ -174,9 +175,9 @@ public class Utils
 
         JsonObject controlInfo = new JsonObject();
 
-        controlInfo.put("control_vs", controlVS.toString());
-        controlInfo.put("control_nc", controlNC.toString());
-        controlInfo.put("control_tr", controlTR.toString());
+        controlInfo.put("control_vs", String.valueOf(controlVS));
+        controlInfo.put("control_nc", String.valueOf(controlNC));
+        controlInfo.put("control_tr", String.valueOf(controlTR));
         controlInfo.put("majority_controller", majorityController.getID());
 
         return controlInfo;
@@ -196,40 +197,44 @@ public class Utils
         float facilitiesVS = 0;
         float facilitiesNC = 0;
         float facilitiesTR = 0;
-
+        
         for (ZoneInfo zone : dynamicDataManager.getWorldInfo(world).getZones().values())
         {
-            for (FacilityInfo facility : zone.getFacilities().values())
+            for (Entry<Facility, FacilityInfo> facility : zone.getFacilities().entrySet())
             {
-                totalRegions++;
+                //Territory Control ignores warpgates.
+                if (!facility.getKey().getTypeID().equals("7"))
+                {
+                    totalRegions++;
 
-                if (facility.getOwner() == Faction.VS)
-                {
-                    facilitiesVS++;
-                }
-                else if (facility.getOwner() == Faction.NC)
-                {
-                    facilitiesNC++;
-                }
-                else if (facility.getOwner() == Faction.TR)
-                {
-                    facilitiesTR++;
+                    if (facility.getValue().getOwner() == Faction.VS)
+                    {
+                        facilitiesVS++;
+                    }
+                    else if (facility.getValue().getOwner() == Faction.NC)
+                    {
+                        facilitiesNC++;
+                    }
+                    else if (facility.getValue().getOwner() == Faction.TR)
+                    {
+                        facilitiesTR++;
+                    }
                 }
             }
         }
 
-        Float controlVS = 0f;
-        Float controlNC = 0f;
-        Float controlTR = 0f;
+        int controlVS = 0;
+        int controlNC = 0;
+        int controlTR = 0;
 
         if (totalRegions > 0)
         {
-            controlVS = (float) Math.floor(facilitiesVS / totalRegions * 100);
-            controlNC = (float) Math.floor(facilitiesNC / totalRegions * 100);
-            controlTR = (float) Math.floor(facilitiesTR / totalRegions * 100);
+            controlVS = (int) Math.floor(facilitiesVS / totalRegions * 100);
+            controlNC = (int) Math.floor(facilitiesNC / totalRegions * 100);
+            controlTR = (int) Math.floor(facilitiesTR / totalRegions * 100);
         }
 
-        float majorityControl = controlVS;
+        int majorityControl = controlVS;
         Faction majorityController = Faction.VS;
 
         if (controlNC > majorityControl)
@@ -244,6 +249,7 @@ public class Utils
 
         if (controlTR > majorityControl)
         {
+            majorityControl = controlTR;
             majorityController = Faction.TR;
         }
         else if (controlTR == majorityControl)
@@ -253,9 +259,9 @@ public class Utils
 
         JsonObject controlInfo = new JsonObject();
 
-        controlInfo.put("control_vs", controlVS.toString());
-        controlInfo.put("control_nc", controlNC.toString());
-        controlInfo.put("control_tr", controlTR.toString());
+        controlInfo.put("control_vs", String.valueOf(controlVS));
+        controlInfo.put("control_nc", String.valueOf(controlNC));
+        controlInfo.put("control_tr", String.valueOf(controlTR));
         controlInfo.put("majority_controller", majorityController.getID());
 
         return controlInfo;
