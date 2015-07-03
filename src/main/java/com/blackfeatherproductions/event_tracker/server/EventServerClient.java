@@ -111,7 +111,6 @@ public class EventServerClient
         }
 
         JsonObject returnSubscriptions = new JsonObject();
-
         JsonObject returnObject = new JsonObject();
 
         for (Entry<Class<? extends Event>, JsonObject> subscription : subscriptions.entrySet())
@@ -221,24 +220,32 @@ public class EventServerClient
 
                     for (Entry<String, Object> world : subscription.getJsonObject(property))
                     {
-                        if (!messageFilters.getJsonArray(property).contains(world.getKey()))
+                        //This world has been modified by our unsubscribe
+                        if (messageFilters.getJsonArray(property).contains(world.getKey()) && messageFilters.getJsonArray("zones").size() > 0)
                         {
                             JsonObject worldObject = new JsonObject();
                             JsonArray zoneArray = new JsonArray();
                             worldObject.put("zones", zoneArray);
-
-                            filteredObject.put(world.getKey(), worldObject);
-                        }
-
-                        if (subscription.containsKey("zones"))
-                        {
-                            for (int i = 0; i < subscription.getJsonArray("zones").size(); i++)
+                            
+                            for (int i = 0; i < subscription.getJsonObject(property).getJsonObject(world.getKey()).getJsonArray("zones").size(); i++)
                             {
-                                if (!messageFilters.getJsonArray("zones").contains(subscription.getJsonArray("zones").getString(i)))
+                                if (!messageFilters.getJsonArray("zones").contains(subscription.getJsonObject(property).getJsonObject(world.getKey()).getJsonArray("zones").getString(i)))
                                 {
-                                    filteredObject.getJsonObject(world.getKey()).getJsonArray("zones").add(subscription.getJsonArray("zones").getString(i));
+                                    worldObject.getJsonArray("zones").add(subscription.getJsonObject(property).getJsonObject(world.getKey()).getJsonArray("zones").getString(i));
                                 }
                             }
+                            
+                            //Only add this world if our zones is greater than 0
+                            if(worldObject.getJsonArray("zones").size() > 0)
+                            {
+                                filteredObject.put(world.getKey(), worldObject);
+                            }
+                        }
+                        
+                        //Put our existing world back into the subscription if we are not unsubscribing from it.
+                        else if(!messageFilters.getJsonArray(property).contains(world.getKey()))
+                        {
+                            filteredObject.put(world.getKey(), subscription.getJsonObject(property).getJsonObject(world.getKey()));
                         }
                     }
 

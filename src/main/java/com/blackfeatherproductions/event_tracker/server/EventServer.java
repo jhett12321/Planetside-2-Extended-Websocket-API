@@ -7,18 +7,17 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 
-import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
-import io.vertx.core.streams.Pump;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
@@ -34,33 +33,26 @@ import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
 import com.blackfeatherproductions.event_tracker.server.actions.FacilityStatus;
 import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
 
-//TODO Make bad JSON more verbose for clients, and not throw exceptions.
-//TODO Refactor "useAND" to "exclusive mode"
-//TODO Implement subscription mode
-//4am thoughts:
-//4:14 AM - Jhett12321: how about if there are two things you pass to the subscription
-//4:15 AM - Jhett12321: the first is a list of filters that the event must contain data for all (so if you pass it headshots, and worlds, it MUST be a headshot in one of the given worlds)
-//4:16 AM - Jhett12321: the second is a list of filters that must contain at least one match (if you give it a zone and a world, it can be in that zone on any world, or any zone in that specific world)
-//4:19 AM - Jhett12321: so the flow would be it would loop through the "must match" list, and check to see if all of the filters contain a match
-//4:19 AM - Jhett12321: if those pass, it moves on to the "one match" list, and if any of those filters match it sends the event
 public class EventServer
 {
     private final Config config;
 
     //API Key Database
     private final String dbUrl;
+    
+    //MySQL authentication
+    private static final boolean AUTH_ENABLED = true;
 
     //Actions
     private final Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<>();
 
     //Client Info
-    public final Map<ServerWebSocket, EventServerClient> clientConnections = new HashMap<>();
+    private final Map<ServerWebSocket, EventServerClient> clientConnections = new ConcurrentHashMap<>();
 
     public EventServer()
     {
         config = EventTracker.getConfig();
-        Vertx vertx = EventTracker.getVertx();
-
+        
         //API Key Database
         dbUrl = "jdbc:mysql://" + config.getDbHost() + "/" + config.getDbName();
 
@@ -68,12 +60,10 @@ public class EventServer
         registerActions();
         
         //Websocket Server
-        HttpServer server = vertx.createHttpServer(new HttpServerOptions().setPort(config.getServerPort()));
+        HttpServer server = EventTracker.getVertx().createHttpServer(new HttpServerOptions().setPort(config.getServerPort()));
         
         server.websocketHandler(clientConnection ->
         {
-            Pump.pump(clientConnection, clientConnection).start();
-            
             Map<String, String> queryPairs = new LinkedHashMap<>();
 
             String query = clientConnection.query();
@@ -92,26 +82,38 @@ public class EventServer
             }
 
             final String apiKey = queryPairs.get("apikey");
-
-            final String apiName = verifyAPIKey(apiKey);
+            final String apiName;
+            
+            if(AUTH_ENABLED)
+            {
+                apiName = verifyAPIKey(apiKey);
+            }
+            else
+            {
+                apiName = "AUTH DISABLED";
+            }
+            
             if (apiName != null)
             {
                 clientConnection.closeHandler(v ->
                 {
-                    clientConnections.remove(clientConnection);
                     EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Closed) API Key: " + apiKey);
+                    
+                    EventServerClient client = clientConnections.remove(clientConnection);
                 });
                 
                 clientConnection.endHandler(v ->
                 {
-                    clientConnections.remove(clientConnection);
                     EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Ended) API Key: " + apiKey);
+                    
+                    EventServerClient client = clientConnections.remove(clientConnection);
                 });
                 
                 clientConnection.exceptionHandler(e ->
                 {
-                    clientConnections.remove(clientConnection);
                     EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Exception) API Key: " + apiKey);
+                    
+                    EventServerClient client = clientConnections.remove(clientConnection);
                 });
 
                 clientConnection.handler(data ->
@@ -134,7 +136,7 @@ public class EventServer
                         handleClientMessage(clientConnection, message);
                     }
                 });
-
+                
                 clientConnections.put(clientConnection, new EventServerClient(clientConnection, apiKey, apiName));
                 EventTracker.getLogger().info("Client " + apiName + " Connected! API Key: " + apiKey);
 
@@ -284,8 +286,11 @@ public class EventServer
         messageToSend.put("event_type", eventClass.getAnnotation(EventInfo.class).eventName());
         messageToSend.put("environment", event.getEnvironment().toString().toLowerCase());
 
-        for (Entry<ServerWebSocket, EventServerClient> connection : clientConnections.entrySet())
+        Iterator<Entry<ServerWebSocket, EventServerClient>> connectionIter = clientConnections.entrySet().iterator();
+        
+        while(connectionIter.hasNext())
         {
+            Entry<ServerWebSocket, EventServerClient> connection = connectionIter.next();
             Boolean sendMessage = null;
 
             EventType eventType = eventClass.getAnnotation(EventInfo.class).eventType();
