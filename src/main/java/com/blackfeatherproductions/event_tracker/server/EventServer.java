@@ -39,9 +39,6 @@ public class EventServer
 
     //API Key Database
     private final String dbUrl;
-    
-    //MySQL authentication
-    private static final boolean AUTH_ENABLED = true;
 
     //Actions
     private final Map<ActionInfo, Class<? extends Action>> actions = new LinkedHashMap<>();
@@ -84,7 +81,7 @@ public class EventServer
             final String apiKey = queryPairs.get("apikey");
             final String apiName;
             
-            if(AUTH_ENABLED)
+            if(config.isAuthEnabled())
             {
                 apiName = verifyAPIKey(apiKey);
             }

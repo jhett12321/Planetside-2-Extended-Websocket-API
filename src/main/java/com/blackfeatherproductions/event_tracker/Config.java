@@ -18,6 +18,8 @@ public class Config
     private Integer maxFailures;
 
     //Database Properties
+    private Boolean authEnabled;
+    
     private Integer dbConnectionLimit;
     private String dbHost;
     private String dbUser;
@@ -61,6 +63,8 @@ public class Config
             maxFailures = Integer.valueOf(prop.getProperty("maxFailures", "20"));
 
             //Database Properties
+            authEnabled = prop.getProperty("authEnabled", "true").equalsIgnoreCase("true");
+            
             dbConnectionLimit = Integer.valueOf(prop.getProperty("dbConnectionLimit", "100"));
             dbHost = prop.getProperty("dbHost", "127.0.0.1");
             dbUser = prop.getProperty("dbUser", "eventTracker");
@@ -127,5 +131,10 @@ public class Config
     public String getDbName()
     {
         return dbName;
+    }
+    
+    public Boolean isAuthEnabled()
+    {
+        return authEnabled;
     }
 }
