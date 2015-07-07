@@ -1,5 +1,8 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.util.function.Consumer;
+
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
@@ -11,10 +14,12 @@ import com.blackfeatherproductions.event_tracker.feeds.CensusPS4US;
 import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.server.EventServer;
 
-public class EventTracker
+public class EventTracker extends AbstractVerticle
 {
-    //Vertx
-    private static Vertx vertx = Vertx.vertx();
+    //Instance
+    public static EventTracker inst;
+    
+    //Logger
     private static Logger logger = LoggerFactory.getLogger(io.vertx.core.logging.JULLogDelegateFactory.class);
 
     //Data
@@ -31,6 +36,27 @@ public class EventTracker
 
     public static void main(String[] args)
     {
+        Consumer<Vertx> runner = vertx -> {
+            try
+            {
+                vertx.deployVerticle(EventTracker.class.getName());
+            }
+            catch (Throwable t)
+            {
+              t.printStackTrace();
+            }
+        };
+        
+        Vertx vertx = Vertx.vertx();
+        runner.accept(vertx);
+        
+    }
+    
+    @Override
+    public void start()
+    {
+        inst = this;
+        
         //Logging
         logger.info("Planetside 2 Extended Push API v" + MavenInfo.getVersion());
         logger.info("Starting up...");
@@ -55,11 +81,6 @@ public class EventTracker
         new CensusPS4US();
         new CensusPS4EU();
         new CensusRest();
-    }
-
-    public static Vertx getVertx()
-    {
-        return vertx;
     }
 
     public static QueryManager getQueryManager()

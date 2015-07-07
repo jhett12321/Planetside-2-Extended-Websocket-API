@@ -9,7 +9,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.WebSocket;
-import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
@@ -49,7 +48,7 @@ public class Census
     //================================================================================
     public Census()
     {
-        Vertx vertx = EventTracker.getVertx();
+        Vertx vertx = EventTracker.inst.getVertx();
 
         client = vertx.createHttpClient(options);
 

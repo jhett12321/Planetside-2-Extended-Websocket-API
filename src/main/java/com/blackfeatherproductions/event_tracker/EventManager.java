@@ -50,7 +50,7 @@ public class EventManager
         registerEvents();
 
         //Process Event Queue
-        EventTracker.getVertx().setPeriodic(100, id ->
+        EventTracker.inst.getVertx().setPeriodic(100, id ->
         {
             for (int i = 0; i < queuedListeners.size(); i++)
             {

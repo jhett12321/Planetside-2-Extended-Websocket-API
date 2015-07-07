@@ -54,7 +54,7 @@ public class PopulationManager implements Query
 
     public PopulationManager()
     {
-        Vertx vertx = EventTracker.getVertx();
+        Vertx vertx = EventTracker.inst.getVertx();
 
         //Create Population Stores
         for (Environment environment : Environment.values())

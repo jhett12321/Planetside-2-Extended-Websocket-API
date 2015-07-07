@@ -32,7 +32,7 @@ import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
 public class QueryManager
 {
     //Utils
-    private final Vertx vertx = EventTracker.getVertx();
+    private final Vertx vertx = EventTracker.inst.getVertx();
     private final Logger logger = EventTracker.getLogger();
 
     //Character Queries
@@ -61,7 +61,7 @@ public class QueryManager
         }
 
         //Query Processor
-        EventTracker.getVertx().setPeriodic(1000, id ->
+        EventTracker.inst.getVertx().setPeriodic(1000, id ->
         {
             //Grab whatever is in the character queues, and split them into 150 character chunks.
             for (int i = 0; i < queuedCharacterQueries.size(); i++)

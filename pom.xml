@@ -5,14 +5,14 @@
 
   <groupId>com.blackfeatherproductions</groupId>
   <artifactId>EventTracker</artifactId>
-  <version>1.4.3</version>
+  <version>1.4.4</version>
   <name>Planetside 2 Extended Push API</name>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     
     <!-- the main class -->
-    <main.class>com.blackfeatherproductions.event_tracker.EventTracker</main.class>
+    <main.verticle>com.blackfeatherproductions.event_tracker.EventTracker</main.verticle>
 
     <!--Dependency versions-->
     <vertx.version>3.0.0</vertx.version>
@@ -91,7 +91,7 @@
                         <transformers>
                             <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                 <manifestEntries>
-                                    <Main-Class>${main.class}</Main-Class>
+                                    <Main-Verticle>${main.verticle}</Main-Verticle>
                                 </manifestEntries>
                             </transformer>
                             <transformer implementation="org.apache.maven.plugins.shade.resource.AppendingTransformer">

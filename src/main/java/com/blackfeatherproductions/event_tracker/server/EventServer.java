@@ -18,6 +18,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.ServerWebSocket;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
+import io.vertx.core.streams.Pump;
 
 import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.EventTracker;
@@ -57,10 +58,12 @@ public class EventServer
         registerActions();
         
         //Websocket Server
-        HttpServer server = EventTracker.getVertx().createHttpServer(new HttpServerOptions().setPort(config.getServerPort()));
+        HttpServer server = EventTracker.inst.getVertx().createHttpServer(new HttpServerOptions().setPort(config.getServerPort()));
         
         server.websocketHandler(clientConnection ->
         {
+            Pump.pump(clientConnection, clientConnection);
+            
             Map<String, String> queryPairs = new LinkedHashMap<>();
 
             String query = clientConnection.query();
