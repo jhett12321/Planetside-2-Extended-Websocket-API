@@ -11,6 +11,7 @@ import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
+import com.blackfeatherproductions.event_tracker.data_static.FacilityType;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -56,14 +57,14 @@ public class WorldQuery implements Query
 
                 String facility_id = data_static_facility_info.getString("facility_id");
                 String facility_name = data_static_facility_info.getString("facility_name");
-                String facility_type = data_static_facility_info.getString("facility_type");
                 String facility_type_id = data_static_facility_info.getString("facility_type_id");
 
                 Facility facility = Facility.getFacilityByID(facility_id);
+                FacilityType facility_type = FacilityType.getFacilityTypeByID(facility_type_id);
 
                 if (facility == null)
                 {
-                    Facility.facilities.put(facility_id, new Facility(facility_id, facility_name, facility_type, facility_type_id));
+                    Facility.facilities.put(facility_id, new Facility(facility_id, facility_name, facility_type));
                     facility = Facility.getFacilityByID(facility_id);
                 }
 

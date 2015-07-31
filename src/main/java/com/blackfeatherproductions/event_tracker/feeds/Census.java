@@ -88,7 +88,7 @@ public class Census
         websocketConnectState = WebsocketConnectState.CONNECTING;
         startTime = new Date().getTime();
 
-        client.websocket("/streaming?environment=ps2&service-id=s:" + config.getSoeServiceID(), ws ->
+        client.websocket("/streaming?environment=ps2&service-id=s:" + config.getServiceID(), ws ->
         {
             websocket = ws;
             websocket.handler(data ->

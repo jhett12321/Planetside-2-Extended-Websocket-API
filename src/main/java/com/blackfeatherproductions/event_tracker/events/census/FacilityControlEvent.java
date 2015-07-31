@@ -99,7 +99,7 @@ public class FacilityControlEvent implements Event
 
         //Event Data
         eventData.put("facility_id", facility_id);
-        eventData.put("facility_type_id", facility.getTypeID());
+        eventData.put("facility_type_id", facility.getType().getID());
         eventData.put("outfit_id", outfit_id);
         eventData.put("duration_held", duration_held);
 
@@ -118,7 +118,7 @@ public class FacilityControlEvent implements Event
 
         //Filter Data
         filterData.put("facilities", new JsonArray().add(facility_id));
-        filterData.put("facility_types", new JsonArray().add(facility.getTypeID()));
+        filterData.put("facility_types", new JsonArray().add(facility.getType().getID()));
         filterData.put("outfits", new JsonArray().add(outfit_id));
         filterData.put("factions", new JsonArray().add(new_faction.getID()).add(old_faction.getID()));
         filterData.put("captures", new JsonArray().add(is_capture));

@@ -30,6 +30,12 @@ public class EventTracker extends AbstractVerticle
     private static DynamicDataManager dynamicDataManager;
     private static QueryManager queryManager;
     private static PopulationManager populationManager;
+    
+    //Feeds
+    private static Census census;
+    private static CensusPS4US censusPS4US;
+    private static CensusPS4EU censusPS4EU;
+    private static CensusRest censusRest;
 
     //Event Server
     private static EventServer eventServer;
@@ -65,7 +71,7 @@ public class EventTracker extends AbstractVerticle
         config = new Config();
 
         //Static Data
-        new StaticDataManager();
+        StaticDataManager.Init();
 
         //Managers and Handlers
         dynamicDataManager = new DynamicDataManager();
@@ -77,10 +83,10 @@ public class EventTracker extends AbstractVerticle
         eventServer = new EventServer();
 
         //Feeds
-        new Census();
-        new CensusPS4US();
-        new CensusPS4EU();
-        new CensusRest();
+        census = new Census();
+        censusPS4US = new CensusPS4US();
+        censusPS4EU = new CensusPS4EU();
+        censusRest = new CensusRest();
     }
 
     public static QueryManager getQueryManager()

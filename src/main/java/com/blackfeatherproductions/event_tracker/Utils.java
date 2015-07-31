@@ -11,6 +11,7 @@ import io.vertx.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
+import com.blackfeatherproductions.event_tracker.data_static.FacilityType;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -120,7 +121,7 @@ public class Utils
         for (Entry<Facility, FacilityInfo> facility : dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().entrySet())
         {
             //Territory Control ignores warpgates.
-            if (!facility.getKey().getTypeID().equals("7"))
+            if (facility.getKey().getType() != FacilityType.WARPGATE)
             {
                 totalRegions++;
 
@@ -203,7 +204,7 @@ public class Utils
             for (Entry<Facility, FacilityInfo> facility : zone.getFacilities().entrySet())
             {
                 //Territory Control ignores warpgates.
-                if (!facility.getKey().getTypeID().equals("7"))
+                if (facility.getKey().getType() != FacilityType.WARPGATE)
                 {
                     totalRegions++;
 

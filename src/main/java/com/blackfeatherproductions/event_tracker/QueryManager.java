@@ -34,6 +34,7 @@ public class QueryManager
     //Utils
     private final Vertx vertx = EventTracker.inst.getVertx();
     private final Logger logger = EventTracker.getLogger();
+    private final Config config = EventTracker.getConfig();
 
     //Character Queries
     private Queue<CharacterQuery> queuedCharacterQueries = new ConcurrentLinkedQueue<>();
@@ -45,7 +46,7 @@ public class QueryManager
 
     //Http Client
     HttpClientOptions options = new HttpClientOptions()
-            .setDefaultHost("census.daybreakgames.com")
+            .setDefaultHost(config.getCensusHostname())
             .setKeepAlive(true)
             .setMaxPoolSize(30);
     HttpClient client;
@@ -172,7 +173,7 @@ public class QueryManager
             }
         }
 
-        final String query = "/s:" + EventTracker.getConfig().getSoeServiceID() + "/get/" + queryPrefix + "/" + censusQuery.getRawQuery();
+        final String query = "/s:" + EventTracker.getConfig().getServiceID() + "/get/" + queryPrefix + "/" + censusQuery.getRawQuery();
 
         client.getNow(query, response ->
         {

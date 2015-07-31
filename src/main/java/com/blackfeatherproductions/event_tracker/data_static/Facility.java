@@ -9,15 +9,13 @@ public class Facility
 
     private final String id;
     private final String name;
-    private final String type;
-    private final String typeID;
+    private final FacilityType type;
 
-    public Facility(String id, String name, String type, String typeID)
+    public Facility(String id, String name, FacilityType type)
     {
         this.id = id;
         this.name = name;
         this.type = type;
-        this.typeID = typeID;
     }
 
     public String getID()
@@ -30,14 +28,9 @@ public class Facility
         return name;
     }
 
-    public String getType()
+    public FacilityType getType()
     {
         return type;
-    }
-
-    public String getTypeID()
-    {
-        return typeID;
     }
 
     public static Facility getFacilityByID(String id)

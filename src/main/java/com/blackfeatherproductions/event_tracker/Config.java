@@ -9,17 +9,20 @@ import java.util.Properties;
 
 public class Config
 {
-    //SOE Service ID
-    private String soeServiceID;
+    //Service ID
+    private String serviceID;
 
     //Server Listen Port
     private Integer serverPort;
-
+    
+    //Census
+    private String censusHostname;
     private Integer maxFailures;
 
-    //Database Properties
+    //Authentication
     private Boolean authEnabled;
     
+    //Authentication DB
     private Integer dbConnectionLimit;
     private String dbHost;
     private String dbUser;
@@ -33,7 +36,7 @@ public class Config
         if (!properties.exists())
         {
             EventTracker.getLogger().warn("No Config Found! Generating new default config (eventTracker.properties).");
-            EventTracker.getLogger().warn("It is strongly recommended that you update your database info and DGC service ID's before continuing use.");
+            EventTracker.getLogger().warn("It is strongly recommended that you update your database/Authentication info and Service ID's before continuing use.");
 
             InputStream defaultProperties = (getClass().getResourceAsStream("/defaults/eventTracker.properties"));
             try
@@ -55,16 +58,20 @@ public class Config
 
             prop.load(input);
 
-            //SOE Service ID
-            soeServiceID = prop.getProperty("soeServiceID", "example");
+            //Service ID
+            serviceID = prop.getProperty("serviceID", "example");
 
             //Server Listen Port
             serverPort = Integer.valueOf(prop.getProperty("serverPort", "8080"));
+            
+            //Census
+            censusHostname = String.valueOf(prop.getProperty("censusHostname", "census.daybreakgames.com"));
             maxFailures = Integer.valueOf(prop.getProperty("maxFailures", "20"));
 
-            //Database Properties
-            authEnabled = prop.getProperty("authEnabled", "true").equalsIgnoreCase("true");
+            //Authentication
+            authEnabled = prop.getProperty("authEnabled", "false").equalsIgnoreCase("true");
             
+            //Authentication DB
             dbConnectionLimit = Integer.valueOf(prop.getProperty("dbConnectionLimit", "100"));
             dbHost = prop.getProperty("dbHost", "127.0.0.1");
             dbUser = prop.getProperty("dbUser", "eventTracker");
@@ -98,9 +105,14 @@ public class Config
         return serverPort;
     }
 
-    public String getSoeServiceID()
+    public String getServiceID()
     {
-        return soeServiceID;
+        return serviceID;
+    }
+    
+    public String getCensusHostname()
+    {
+        return censusHostname;
     }
 
     public Integer getMaxFailures()

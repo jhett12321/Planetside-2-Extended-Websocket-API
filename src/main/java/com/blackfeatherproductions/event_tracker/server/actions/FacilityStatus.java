@@ -50,7 +50,7 @@ public class FacilityStatus implements Action
                                 JsonObject facility = new JsonObject();
 
                                 facility.put("facility_id", facilityInfo.getKey().getID());
-                                facility.put("facility_type_id", facilityInfo.getKey().getTypeID());
+                                facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                                 facility.put("owner", facilityInfo.getValue().getOwner().getID());
                                 facility.put("zone_id", zone.getID());
 

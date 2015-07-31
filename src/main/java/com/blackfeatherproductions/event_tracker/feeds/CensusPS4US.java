@@ -88,7 +88,7 @@ public class CensusPS4US
         websocketConnectState = WebsocketConnectState.CONNECTING;
         startTime = new Date().getTime();
 
-        client.websocket("/streaming?environment=ps2ps4us&service-id=s:" + config.getSoeServiceID(), ws ->
+        client.websocket("/streaming?environment=ps2ps4us&service-id=s:" + config.getServiceID(), ws ->
         {
             websocket = ws;
             websocket.handler(data ->

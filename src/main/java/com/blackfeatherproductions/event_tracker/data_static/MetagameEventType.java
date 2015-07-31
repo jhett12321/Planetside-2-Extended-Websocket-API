@@ -11,17 +11,17 @@ public class MetagameEventType
     private final String name;
     private final String desc;
     private final Zone zone;
-    private final String facilityID;
-    private final String facilityTypeID;
+    private final String categoryID;
+    private final FacilityType facilityType;
 
-    public MetagameEventType(String id, String name, String desc, Zone zone, String facilityID, String facilityTypeID)
+    public MetagameEventType(String id, String name, String desc, Zone zone, String categoryID, FacilityType facilityType)
     {
         this.id = id;
         this.name = name;
         this.desc = desc;
         this.zone = zone;
-        this.facilityID = facilityID;
-        this.facilityTypeID = facilityTypeID;
+        this.categoryID = categoryID;
+        this.facilityType = facilityType;
     }
 
     public String getID()
@@ -44,16 +44,16 @@ public class MetagameEventType
         return zone;
     }
 
-    public String getFacilityID()
+    public String getCategoryID()
     {
-        return facilityID;
+        return categoryID;
     }
-
-    public String getFacilityTypeID()
+    
+    public FacilityType getFacilityType()
     {
-        return facilityTypeID;
+        return facilityType;
     }
-
+    
     public static MetagameEventType getMetagameEventTypeByID(String id)
     {
         return metagameEventTypes.get(id);
