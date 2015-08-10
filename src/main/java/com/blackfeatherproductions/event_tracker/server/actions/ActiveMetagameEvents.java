@@ -24,7 +24,7 @@ public class ActiveMetagameEvents implements Action
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)
     {
         JsonObject response = new JsonObject();
-        response.put("action", "activeAlerts");
+        response.put("action", "activeMetagameEvents");
 
         JsonObject worlds = new JsonObject();
 
@@ -79,7 +79,7 @@ public class ActiveMetagameEvents implements Action
         {
             for (Entry<World, WorldInfo> world : dynamicDataManager.getAllWorldInfo().entrySet())
             {
-                JsonObject metagameEvents = new JsonObject();
+                JsonArray metagameEvents = new JsonArray();
 
                 for (MetagameEventInfo metagameEventInfo : world.getValue().getActiveMetagameEvents().values())
                 {
@@ -92,7 +92,7 @@ public class ActiveMetagameEvents implements Action
                     metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                     metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
 
-                    JsonObject facilities = new JsonObject();
+                    JsonArray facilities = new JsonArray();
 
                     for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
                     {
@@ -103,12 +103,12 @@ public class ActiveMetagameEvents implements Action
                         facility.put("owner", facilityInfo.getValue().getOwner().getID());
                         facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
 
-                        facilities.put(facilityInfo.getKey().getID(), facility);
+                        facilities.add(facility);
                     }
 
                     metagameEvent.put("facilities", facilities);
 
-                    metagameEvents.put(metagameEventInfo.getInstanceID(), metagameEvent);
+                    metagameEvents.add(metagameEvent);
                 }
 
                 worlds.put(world.getKey().getID(), metagameEvents);
