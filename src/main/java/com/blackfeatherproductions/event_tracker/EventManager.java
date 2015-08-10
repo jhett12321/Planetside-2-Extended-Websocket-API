@@ -33,6 +33,7 @@ import com.blackfeatherproductions.event_tracker.events.extended.PopulationChang
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationCharacterListListener;
 import com.blackfeatherproductions.event_tracker.events.listeners.PopulationEventListener;
 import com.blackfeatherproductions.event_tracker.events.service.ServiceStateChangeEvent;
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 
 public class EventManager
 {
@@ -66,7 +67,7 @@ public class EventManager
 
     public void handleEvent(String eventName, JsonObject payload, Environment environment)
     {
-        if (Utils.isValidPayload(payload))
+        if (CensusUtils.isValidPayload(payload))
         {
             boolean eventHandled = false;
 

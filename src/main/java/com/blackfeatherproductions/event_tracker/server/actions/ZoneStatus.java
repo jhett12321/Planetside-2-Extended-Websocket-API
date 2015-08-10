@@ -7,11 +7,12 @@ import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 @ActionInfo(actionNames = "zoneStatus")
 public class ZoneStatus implements Action
@@ -30,7 +31,7 @@ public class ZoneStatus implements Action
         {
             for (int i = 0; i < actionData.getJsonArray("worlds").size(); i++)
             {
-                if (Utils.isValidWorld(actionData.getJsonArray("worlds").getString(i)))
+                if (CensusUtils.isValidWorld(actionData.getJsonArray("worlds").getString(i)))
                 {
                     World world = World.getWorldByID(actionData.getJsonArray("worlds").getString(i));
 
@@ -50,7 +51,7 @@ public class ZoneStatus implements Action
                         zone.put("locked", locked);
                         zone.put("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
-                        JsonObject controlInfo = Utils.calculateTerritoryControl(world, zoneInfo.getKey());
+                        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zoneInfo.getKey());
 
                         zone.put("control_vs", controlInfo.getString("control_vs"));
                         zone.put("control_nc", controlInfo.getString("control_nc"));
@@ -84,7 +85,7 @@ public class ZoneStatus implements Action
                     zone.put("locked", locked);
                     zone.put("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
-                    JsonObject controlInfo = Utils.calculateTerritoryControl(world.getKey(), zoneInfo.getKey());
+                    JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zoneInfo.getKey());
 
                     zone.put("control_vs", controlInfo.getString("control_vs"));
                     zone.put("control_nc", controlInfo.getString("control_nc"));

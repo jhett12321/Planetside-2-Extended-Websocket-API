@@ -32,7 +32,10 @@ import com.blackfeatherproductions.event_tracker.server.actions.Action;
 import com.blackfeatherproductions.event_tracker.server.actions.ActionInfo;
 import com.blackfeatherproductions.event_tracker.server.actions.ActiveAlerts;
 import com.blackfeatherproductions.event_tracker.server.actions.FacilityStatus;
+import com.blackfeatherproductions.event_tracker.server.actions.ActiveMetagameEvents;
+import com.blackfeatherproductions.event_tracker.server.actions.WorldStatus;
 import com.blackfeatherproductions.event_tracker.server.actions.ZoneStatus;
+import com.blackfeatherproductions.event_tracker.utils.ServerUtils;
 
 public class EventServer
 {
@@ -210,6 +213,10 @@ public class EventServer
 
     private void registerActions()
     {
+        registerAction(ActiveMetagameEvents.class);
+        registerAction(WorldStatus.class);
+        
+        //TODO Deprecated Actions
         registerAction(ActiveAlerts.class);
         registerAction(ZoneStatus.class);
         registerAction(FacilityStatus.class);
@@ -217,6 +224,9 @@ public class EventServer
 
     private void handleClientMessage(ServerWebSocket clientConnection, JsonObject message)
     {
+        //Parse and validate this message. This also fixes some syntax issues, e.g. using JStrings instead of JArrays
+        ServerUtils.parseMessage(message);
+        
         String eventType = message.getString("event");
         String action = message.getString("action");
 

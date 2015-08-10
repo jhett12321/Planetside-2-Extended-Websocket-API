@@ -6,7 +6,6 @@ import io.vertx.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
@@ -20,6 +19,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "MetagameEvent",
@@ -212,7 +212,7 @@ public class MetagameEvent implements Event
         }
 
         //Raw Data - Territory Control
-        JsonObject controlInfo = Utils.calculateTerritoryControl(world, zone);
+        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
         String control_vs = controlInfo.getString("control_vs");
         String control_nc = controlInfo.getString("control_nc");
         String control_tr = controlInfo.getString("control_tr");

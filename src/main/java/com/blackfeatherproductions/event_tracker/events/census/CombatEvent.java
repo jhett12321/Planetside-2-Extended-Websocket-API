@@ -10,7 +10,6 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
@@ -19,6 +18,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 
 @EventInfo(eventType = EventType.EVENT,
         eventName = "Combat",
@@ -73,12 +73,12 @@ public class CombatEvent implements Event
             attackerCharacterID = payload.getString("attacker_character_id");
             victimCharacterID = payload.getString("character_id");
 
-            if (!Utils.isValidCharacter(victimCharacterID))
+            if (!CensusUtils.isValidCharacter(victimCharacterID))
             {
                 victimCharacterID = attackerCharacterID;
             }
 
-            if (!Utils.isValidCharacter(attackerCharacterID))
+            if (!CensusUtils.isValidCharacter(attackerCharacterID))
             {
                 attackerCharacterID = victimCharacterID;
             }

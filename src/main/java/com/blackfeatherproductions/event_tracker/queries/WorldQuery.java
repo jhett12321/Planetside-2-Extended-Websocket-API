@@ -7,7 +7,6 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
@@ -15,6 +14,7 @@ import com.blackfeatherproductions.event_tracker.data_static.FacilityType;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 public class WorldQuery implements Query
 {
@@ -74,7 +74,7 @@ public class WorldQuery implements Query
 
         for (Zone zone : Zone.getValidZones())
         {
-            JsonObject territoryControl = Utils.calculateTerritoryControl(world, zone);
+            JsonObject territoryControl = TerritoryUtils.calculateTerritoryControl(world, zone);
 
             dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);
 

@@ -15,9 +15,9 @@ import com.blackfeatherproductions.event_tracker.Config;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 
 public class Census
 {
@@ -123,7 +123,7 @@ public class Census
                         {
                             if (message.getString("online").equals("true"))
                             {
-                                for (String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
+                                for (String worldID : CensusUtils.getWorldIDsFromEndpointString(message.getString("detail")))
                                 {
                                     updateEndpointStatus(worldID, true);
                                 }
@@ -131,7 +131,7 @@ public class Census
 
                             else
                             {
-                                for (String worldID : Utils.getWorldIDsFromEndpointString(message.getString("detail")))
+                                for (String worldID : CensusUtils.getWorldIDsFromEndpointString(message.getString("detail")))
                                 {
                                     updateEndpointStatus(worldID, false);
                                 }
@@ -148,7 +148,7 @@ public class Census
                             {
                                 if (endpoint.getValue().equals("true"))
                                 {
-                                    for (String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
+                                    for (String worldID : CensusUtils.getWorldIDsFromEndpointString(endpoint.getKey()))
                                     {
                                         updateEndpointStatus(worldID, true);
                                     }
@@ -156,7 +156,7 @@ public class Census
 
                                 else
                                 {
-                                    for (String worldID : Utils.getWorldIDsFromEndpointString(endpoint.getKey()))
+                                    for (String worldID : CensusUtils.getWorldIDsFromEndpointString(endpoint.getKey()))
                                     {
                                         updateEndpointStatus(worldID, false);
                                     }

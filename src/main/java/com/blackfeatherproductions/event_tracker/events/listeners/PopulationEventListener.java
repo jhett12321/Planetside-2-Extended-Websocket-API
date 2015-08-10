@@ -9,7 +9,6 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
@@ -19,6 +18,7 @@ import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 
 @EventInfo(eventType = EventType.LISTENER,
         eventName = "PopulationEventListener",
@@ -70,12 +70,12 @@ public class PopulationEventListener implements Event
             attackerCharacterID = payload.getString("attacker_character_id");
             characterID = payload.getString("character_id");
 
-            if (!Utils.isValidCharacter(characterID))
+            if (!CensusUtils.isValidCharacter(characterID))
             {
                 characterID = attackerCharacterID;
             }
 
-            if (!Utils.isValidCharacter(attackerCharacterID))
+            if (!CensusUtils.isValidCharacter(attackerCharacterID))
             {
                 attackerCharacterID = characterID;
             }

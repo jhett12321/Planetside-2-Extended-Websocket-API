@@ -7,11 +7,11 @@ import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
-import com.blackfeatherproductions.event_tracker.Utils;
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 
 @ActionInfo(actionNames = "facilityStatus")
 public class FacilityStatus implements Action
@@ -30,7 +30,7 @@ public class FacilityStatus implements Action
 
             for (int i = 0; i < actionData.getJsonArray("worlds").size(); i++)
             {
-                if (Utils.isValidWorld(actionData.getJsonArray("worlds").getString(i)))
+                if (CensusUtils.isValidWorld(actionData.getJsonArray("worlds").getString(i)))
                 {
                     World world = World.getWorldByID(actionData.getJsonArray("worlds").getString(i));
 
@@ -39,7 +39,7 @@ public class FacilityStatus implements Action
 
                     for (int j = 0; j < actionData.getJsonArray("zones").size(); j++)
                     {
-                        if (Utils.isValidZone(actionData.getJsonArray("zones").getString(j)))
+                        if (CensusUtils.isValidZone(actionData.getJsonArray("zones").getString(j)))
                         {
                             Zone zone = Zone.getZoneByID(actionData.getJsonArray("zones").getString(j));
 
