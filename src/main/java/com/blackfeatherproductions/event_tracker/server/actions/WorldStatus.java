@@ -68,23 +68,6 @@ public class WorldStatus implements Action
                 {
                     JsonObject zoneObj = new JsonObject();
 
-                    //Facility Data
-                    JsonArray facilities = new JsonArray();
-
-                    for (Entry<Facility, FacilityInfo> facilityInfo : zone.getValue().getFacilities().entrySet())
-                    {
-                        JsonObject facility = new JsonObject();
-
-                        facility.put("facility_id", facilityInfo.getKey().getID());
-                        facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
-                        facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                        facility.put("zone_id", zone.getKey().getID());
-
-                        facilities.add(facility);
-                    }
-
-                    zoneObj.put("facilities", facilities);
-
                     //Zone Info
                     String locked = "0";
 
@@ -101,6 +84,23 @@ public class WorldStatus implements Action
                     zoneObj.put("control_vs", controlInfo.getString("control_vs"));
                     zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                     zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+                    
+                    //Facility Data
+                    JsonArray facilities = new JsonArray();
+
+                    for (Entry<Facility, FacilityInfo> facilityInfo : zone.getValue().getFacilities().entrySet())
+                    {
+                        JsonObject facility = new JsonObject();
+
+                        facility.put("facility_id", facilityInfo.getKey().getID());
+                        facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
+                        facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                        facility.put("zone_id", zone.getKey().getID());
+
+                        facilities.add(facility);
+                    }
+
+                    zoneObj.put("facilities", facilities);
 
                     //Push this to our main zone list.
                     zones.put(zone.getKey().getID(), zoneObj);
@@ -135,23 +135,6 @@ public class WorldStatus implements Action
                         
                         JsonObject zoneObj = new JsonObject();
                         
-                        //Facility Data
-                        JsonArray facilities = new JsonArray();
-
-                        for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().entrySet())
-                        {
-                            JsonObject facility = new JsonObject();
-
-                            facility.put("facility_id", facilityInfo.getKey().getID());
-                            facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
-                            facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                            facility.put("zone_id", zone.getID());
-
-                            facilities.add(facility);
-                        }
-                        
-                        zoneObj.put("facilities", facilities);
-                        
                         //Zone Info
                         ZoneInfo zoneInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone);
                         
@@ -170,6 +153,23 @@ public class WorldStatus implements Action
                         zoneObj.put("control_vs", controlInfo.getString("control_vs"));
                         zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                         zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+                        
+                        //Facility Data
+                        JsonArray facilities = new JsonArray();
+
+                        for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().entrySet())
+                        {
+                            JsonObject facility = new JsonObject();
+
+                            facility.put("facility_id", facilityInfo.getKey().getID());
+                            facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
+                            facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                            facility.put("zone_id", zone.getID());
+
+                            facilities.add(facility);
+                        }
+                        
+                        zoneObj.put("facilities", facilities);
 
                         //Push this to our main zone list.
                         zones.put(zone.getID(), zoneObj);
@@ -201,23 +201,6 @@ public class WorldStatus implements Action
 
                     JsonObject zoneObj = new JsonObject();
 
-                    //Facility Data
-                    JsonArray facilities = new JsonArray();
-
-                    for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(zone).getFacilities().entrySet())
-                    {
-                        JsonObject facility = new JsonObject();
-
-                        facility.put("facility_id", facilityInfo.getKey().getID());
-                        facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
-                        facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                        facility.put("zone_id", zone.getID());
-
-                        facilities.add(facility);
-                    }
-
-                    zoneObj.put("facilities", facilities);
-
                     //Zone Info
                     ZoneInfo zoneInfo = world.getValue().getZoneInfo(zone);
 
@@ -236,6 +219,23 @@ public class WorldStatus implements Action
                     zoneObj.put("control_vs", controlInfo.getString("control_vs"));
                     zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                     zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+                    
+                    //Facility Data
+                    JsonArray facilities = new JsonArray();
+
+                    for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(zone).getFacilities().entrySet())
+                    {
+                        JsonObject facility = new JsonObject();
+
+                        facility.put("facility_id", facilityInfo.getKey().getID());
+                        facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
+                        facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                        facility.put("zone_id", zone.getID());
+
+                        facilities.add(facility);
+                    }
+
+                    zoneObj.put("facilities", facilities);
 
                     //Push this to our main zone list.
                     zones.put(zone.getID(), zoneObj);
@@ -262,23 +262,6 @@ public class WorldStatus implements Action
             {
                 JsonObject zoneObj = new JsonObject();
 
-                //Facility Data
-                JsonArray facilities = new JsonArray();
-
-                for (Entry<Facility, FacilityInfo> facilityInfo : zone.getValue().getFacilities().entrySet())
-                {
-                    JsonObject facility = new JsonObject();
-
-                    facility.put("facility_id", facilityInfo.getKey().getID());
-                    facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
-                    facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                    facility.put("zone_id", zone.getKey().getID());
-
-                    facilities.add(facility);
-                }
-
-                zoneObj.put("facilities", facilities);
-
                 //Zone Info
                 String locked = "0";
 
@@ -295,6 +278,23 @@ public class WorldStatus implements Action
                 zoneObj.put("control_vs", controlInfo.getString("control_vs"));
                 zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                 zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+                
+                //Facility Data
+                JsonArray facilities = new JsonArray();
+
+                for (Entry<Facility, FacilityInfo> facilityInfo : zone.getValue().getFacilities().entrySet())
+                {
+                    JsonObject facility = new JsonObject();
+
+                    facility.put("facility_id", facilityInfo.getKey().getID());
+                    facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
+                    facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                    facility.put("zone_id", zone.getKey().getID());
+
+                    facilities.add(facility);
+                }
+
+                zoneObj.put("facilities", facilities);
 
                 //Push this to our main zone list.
                 zones.put(zone.getKey().getID(), zoneObj);
