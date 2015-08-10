@@ -43,9 +43,12 @@ public class ServerUtils
                     parsedProperty = (String) rawData;
                 }
 
-                if (!parsedProperty.equals("true") && !parsedProperty.equals("false"))
+                if(property.equals("all"))
                 {
-                    parsedProperty = "true";
+                    if (!parsedProperty.equals("true") && !parsedProperty.equals("false"))
+                    {
+                        parsedProperty = "true";
+                    }
                 }
 
                 message.remove(property);
