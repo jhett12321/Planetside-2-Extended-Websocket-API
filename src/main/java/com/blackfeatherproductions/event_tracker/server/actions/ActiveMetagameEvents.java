@@ -49,10 +49,12 @@ public class ActiveMetagameEvents implements Action
 
                             metagameEvent.put("instance_id", metagameEventInfo.getInstanceID());
                             metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
-                            metagameEvent.put("start_time", metagameEventInfo.getStartTime());
-                            metagameEvent.put("end_time", metagameEventInfo.getEndTime());
                             metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                             metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
+                            metagameEvent.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                            metagameEvent.put("start_time", metagameEventInfo.getStartTime());
+                            metagameEvent.put("end_time", metagameEventInfo.getEndTime());
+
                             
                             JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, metagameEventInfo.getType().getZone());
                             String control_vs = controlInfo.getString("control_vs");
@@ -106,10 +108,11 @@ public class ActiveMetagameEvents implements Action
 
                         metagameEvent.put("instance_id", metagameEventInfo.getInstanceID());
                         metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
-                        metagameEvent.put("start_time", metagameEventInfo.getStartTime());
-                        metagameEvent.put("end_time", metagameEventInfo.getEndTime());
                         metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                         metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
+                        metagameEvent.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                        metagameEvent.put("start_time", metagameEventInfo.getStartTime());
+                        metagameEvent.put("end_time", metagameEventInfo.getEndTime());
                         
                         JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), metagameEventInfo.getType().getZone());
                         String control_vs = controlInfo.getString("control_vs");
