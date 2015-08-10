@@ -39,6 +39,8 @@ public class ActiveMetagameEvents implements Action
                     
                     if(dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().size() > 0)
                     {
+                        JsonObject worldObj = new JsonObject();
+                        
                         JsonArray metagameEvents = new JsonArray();
 
                         for (MetagameEventInfo metagameEventInfo : dynamicDataManager.getWorldInfo(world).getActiveMetagameEvents().values())
@@ -79,8 +81,10 @@ public class ActiveMetagameEvents implements Action
 
                             metagameEvents.add(metagameEvent);
                         }
+                        
+                        worldObj.put("metagame_events", metagameEvents);
 
-                        worlds.put(world.getID(), metagameEvents);
+                        worlds.put(world.getID(), worldObj);
                     }
                 }
             }
@@ -92,6 +96,8 @@ public class ActiveMetagameEvents implements Action
             {
                 if(world.getValue().getActiveMetagameEvents().size() > 0)
                 {
+                    JsonObject worldObj = new JsonObject();
+                    
                     JsonArray metagameEvents = new JsonArray();
 
                     for (MetagameEventInfo metagameEventInfo : world.getValue().getActiveMetagameEvents().values())
@@ -133,7 +139,9 @@ public class ActiveMetagameEvents implements Action
                         metagameEvents.add(metagameEvent);
                     }
 
-                    worlds.put(world.getKey().getID(), metagameEvents);
+                    worldObj.put("metagame_events", metagameEvents);
+
+                    worlds.put(world.getKey().getID(), worldObj);
                 }
             }
         }

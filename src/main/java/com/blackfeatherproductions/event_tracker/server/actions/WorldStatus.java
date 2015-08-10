@@ -27,27 +27,25 @@ public class WorldStatus implements Action
     {
         JsonObject response = new JsonObject();
         response.put("action", "worldStatus");
-
-        JsonObject worlds = new JsonObject();
         
         if (actionData.containsKey("worlds") && actionData.containsKey("zones"))
         {
-            worlds.put("worlds", processWorldZone(actionData));
+            response.put("worlds", processWorldZone(actionData));
         }
         
         else if(actionData.containsKey("worlds"))
         {
-            worlds.put("worlds", processWorld(actionData));
+            response.put("worlds", processWorld(actionData));
         }
         
         else if(actionData.containsKey("zones"))
         {
-            worlds.put("worlds", processZone(actionData));
+            response.put("worlds", processZone(actionData));
         }
         
         else
         {
-            worlds.put("worlds", processAll(actionData));
+            response.put("worlds", processAll(actionData));
         }
 
         clientConnection.writeFinalTextFrame(response.encode());
