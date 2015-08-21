@@ -186,7 +186,7 @@ public class EventServer
 
                 dbConnection = DriverManager.getConnection(dbUrl, config.getDbUser(), config.getDbPassword());
 
-                PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM `APIKeys` WHERE api_key = ? AND enabled = 1");
+                PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM `api_keys` WHERE api_key = ? AND enabled = 1");
                 query.setString(1, apiKey);
                 ResultSet resultSet = query.executeQuery();
 
@@ -201,7 +201,7 @@ public class EventServer
                 
                 if(apiName != null)
                 {
-                    query = dbConnection.prepareStatement("UPDATE `APIKeys` SET lastAuth = ? WHERE api_key = ?");
+                    query = dbConnection.prepareStatement("UPDATE `api_keys` SET last_auth = ? WHERE api_key = ?");
                     query.setInt(1, (int) (new Date().getTime() / 1000));
                     query.setString(2, apiKey);
                     
