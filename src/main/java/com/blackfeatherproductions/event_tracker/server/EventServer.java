@@ -7,6 +7,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -185,7 +186,7 @@ public class EventServer
 
                 dbConnection = DriverManager.getConnection(dbUrl, config.getDbUser(), config.getDbPassword());
 
-                PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM APIKeys WHERE api_key = ? AND enabled = 1");
+                PreparedStatement query = dbConnection.prepareStatement("SELECT * FROM `APIKeys` WHERE api_key = ? AND enabled = 1");
                 query.setString(1, apiKey);
                 ResultSet resultSet = query.executeQuery();
 
@@ -197,6 +198,18 @@ public class EventServer
                 }
 
                 query.close();
+                
+                if(apiName != null)
+                {
+                    query = dbConnection.prepareStatement("UPDATE `APIKeys` SET lastAuth = ? WHERE api_key = ?");
+                    query.setInt(1, (int) (new Date().getTime() / 1000));
+                    query.setString(2, apiKey);
+                    
+                    query.executeUpdate();
+                    
+                    query.close();
+                }
+                
                 dbConnection.close();
 
                 return apiName;

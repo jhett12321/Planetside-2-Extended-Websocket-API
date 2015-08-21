@@ -283,32 +283,35 @@ public class CensusPS4US
 
     private void updateEndpointStatus(String worldID, Boolean newValue)
     {
-        Boolean currentServerStatus = false;
-        World world = World.getWorldByID(worldID);
-
-        if (!managedWorlds.contains(world))
+        if(CensusUtils.isValidWorld(worldID))
         {
-            managedWorlds.add(world);
-        }
+            Boolean currentServerStatus = false;
+            World world = World.getWorldByID(worldID);
 
-        if (EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)) != null)
-        {
-            currentServerStatus = EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)).isOnline();
-        }
-
-        if (!currentServerStatus.equals(newValue))
-        {
-            if (newValue)
+            if (!managedWorlds.contains(world))
             {
-                //Data is (now) being received for this world.
-                //Query Census for World Data.
-                queryManager.queryWorld(worldID, Environment.PS4_US);
+                managedWorlds.add(world);
             }
 
-            else
+            if (EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)) != null)
             {
-                //No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
-                EventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
+                currentServerStatus = EventTracker.getDynamicDataManager().getWorldInfo(World.getWorldByID(worldID)).isOnline();
+            }
+
+            if (!currentServerStatus.equals(newValue))
+            {
+                if (newValue && CensusUtils.isValidWorld(worldID))
+                {
+                    //Data is (now) being received for this world.
+                    //Query Census for World Data.
+                    queryManager.queryWorld(worldID, Environment.PS4_US);
+                }
+
+                else
+                {
+                    //No data is being received from this feed. Cached data for this world is invalidated, and must be updated.
+                    EventTracker.getDynamicDataManager().getWorldInfo(world).setOnline(false);
+                }
             }
         }
     }

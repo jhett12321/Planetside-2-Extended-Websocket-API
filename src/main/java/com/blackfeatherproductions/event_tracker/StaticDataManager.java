@@ -34,14 +34,10 @@ public class StaticDataManager
         World.worlds.put("1000", new World("1000", "Genudine"));
         World.worlds.put("1001", new World("1001", "Palos"));
         World.worlds.put("1002", new World("1002", "Crux"));
-        World.worlds.put("1003", new World("1003", "Searhus"));
-        World.worlds.put("1004", new World("1004", "Xelas"));
 
         //PS4EU
         World.worlds.put("2000", new World("2000", "Ceres"));
         World.worlds.put("2001", new World("2001", "Lithcorp"));
-        World.worlds.put("2002", new World("2002", "Rashnu"));
-        World.worlds.put("2003", new World("2003", "Dahaka"));
 
         //Zones
         Zone.UNKNOWN = new Zone("0", "Unknown", "INTERNAL: This is an unknown zone.");
