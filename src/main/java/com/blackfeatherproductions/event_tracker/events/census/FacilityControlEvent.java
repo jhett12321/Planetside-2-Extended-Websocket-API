@@ -6,6 +6,7 @@ import io.vertx.core.json.JsonObject;
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
+import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
@@ -88,7 +89,10 @@ public class FacilityControlEvent implements Event
         //Update Internal Data
         if (is_capture.equals("1"))
         {
-            dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
+            ZoneInfo zoneInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone);
+            
+            zoneInfo.getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
+            TerritoryUtils.validateBlockingRegions(zoneInfo); //NYI - TODO
         }
 
         //Territory Control

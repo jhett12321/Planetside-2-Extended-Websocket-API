@@ -15,9 +15,9 @@ public class StaticDataManager
     {
         //Initialises Static Game Data
 
-        //TODO 1.4 Query Census for all required static data
-        //TODO 1.4 All Data Types need to eventually have their own class.
-        //TODO 1.4 Types to be implemented: achievement, item/weapon, vehicle, directive
+        //TODO FUTURE Query Census for all required static data
+        //TODO FUTURE All Data Types need to eventually have their own class.
+        //TODO FUTURE Types to be implemented: achievement, item/weapon, vehicle, directive
         //Worlds
         World.UNKNOWN = new World("0", "Unknown");
         World.worlds.put("0", World.UNKNOWN);
@@ -121,5 +121,8 @@ public class StaticDataManager
         MetagameEventType.metagameEventTypes.put("53", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", Zone.AMERISH, "5", FacilityType.NONE));
         MetagameEventType.metagameEventTypes.put("54", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", Zone.HOSSIN, "5", FacilityType.NONE));
         MetagameEventType.metagameEventTypes.put("106", new MetagameEventType("106", "Conquest","Capture bases and kill enemies to earn points", Zone.INDAR, "6", FacilityType.NONE));
+        
+        //Facilities (CENSUS)
+        EventTracker.getQueryManager().queryFacilityStaticData();
     }
 }

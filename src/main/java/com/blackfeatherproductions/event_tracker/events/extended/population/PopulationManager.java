@@ -26,7 +26,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
-import java.util.EnumMap;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class PopulationManager implements Query
@@ -36,18 +35,18 @@ public class PopulationManager implements Query
     private final QueryManager queryManager = EventTracker.getQueryManager();
 
     //Online Characters
-    private Map<Environment, Map<String, OnlinePlayer>> envOnlinePlayers = new EnumMap<>(Environment.class);
+    private Map<Environment, Map<String, OnlinePlayer>> envOnlinePlayers = new HashMap<>();
 
     //Characters that have passed the dirty stage.
-    private Map<Environment, List<String>> envCharactersToCheck = new EnumMap<>(Environment.class);
+    private Map<Environment, List<String>> envCharactersToCheck = new HashMap<>();
 
     //Population Data
-    private Map<Environment, PopulationStore> envTotalPopulations = new EnumMap<>(Environment.class);
-    private Map<Environment, Map<World, PopulationStore>> envWorldPopulations = new EnumMap<>(Environment.class);
-    private Map<Environment, Map<String, PopulationStore>> envZonePopulations = new EnumMap<>(Environment.class);
+    private Map<Environment, PopulationStore> envTotalPopulations = new HashMap<>();
+    private Map<Environment, Map<World, PopulationStore>> envWorldPopulations = new HashMap<>();
+    private Map<Environment, Map<String, PopulationStore>> envZonePopulations = new HashMap<>();
     
     //Event Lockouts (Used when feeds are offline)
-    private Map<Environment, Boolean> envOnline = new EnumMap<>(Environment.class);
+    private Map<Environment, Boolean> envOnline = new HashMap<>();
 
     //Instance used for query manager.
     private Query self = this;
@@ -57,7 +56,7 @@ public class PopulationManager implements Query
         Vertx vertx = EventTracker.inst.getVertx();
 
         //Create Population Stores
-        for (Environment environment : Environment.values())
+        for (Environment environment : Environment.getEnvironments())
         {
             //Environment statuses
             envOnline.put(environment, false);

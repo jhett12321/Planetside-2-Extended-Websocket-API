@@ -3,6 +3,7 @@ package com.blackfeatherproductions.event_tracker;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -28,6 +29,7 @@ import com.blackfeatherproductions.event_tracker.queries.Query;
 import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
 import com.blackfeatherproductions.event_tracker.queries.QueryPriorityComparator;
 import com.blackfeatherproductions.event_tracker.queries.WorldQuery;
+import com.blackfeatherproductions.event_tracker.queries.static_data.StaticFacilityListQuery;
 
 public class QueryManager
 {
@@ -38,8 +40,8 @@ public class QueryManager
 
     //Character Queries
     private Queue<CharacterQuery> queuedCharacterQueries = new ConcurrentLinkedQueue<>();
-    private Map<Environment, List<String>> envCharacters = new EnumMap<>(Environment.class);
-    private Map<Environment, List<CharacterQuery>> envCallbacks = new EnumMap<>(Environment.class);
+    private Map<Environment, List<String>> envCharacters = new HashMap<>();
+    private Map<Environment, List<CharacterQuery>> envCallbacks = new HashMap<>();
 
     //Queries
     private final Queue<CensusQuery> queuedQueries = new PriorityBlockingQueue<>(100, new QueryPriorityComparator());
@@ -55,7 +57,7 @@ public class QueryManager
     {
         client = vertx.createHttpClient(options);
 
-        for (Environment environment : Environment.values())
+        for (Environment environment : Environment.getEnvironments())
         {
             envCharacters.put(environment, new ArrayList<>());
             envCallbacks.put(environment, new ArrayList<>());
@@ -120,10 +122,20 @@ public class QueryManager
     {
         this.queuedCharacterQueries.add(new CharacterQuery(characterID, environment, callbackEvent));
     }
+    
+    public void queryFacilityStaticData()
+    {
+        for(Environment environment : Environment.getEnvironments())
+        {
+            //Facility/Regions
+            queryCensus("map_region?c:limit=1000&c:join=facility_link^on:facility_id^to:facility_id_a^show:facility_id_a'facility_id_b^list:1^inject_at:connecting_links",
+                    QueryPriority.HIGHEST, environment, false, false, new StaticFacilityListQuery());
+        }
+    }
 
     public void queryWorld(String worldID, Environment environment)
     {
-        queryCensus("map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region^show:facility_id'facility_name'facility_type'facility_type_id",
+        queryCensus("map?world_id=" + worldID + "&zone_ids=2,4,6,8",
                 QueryPriority.HIGHEST, environment, false, false, new WorldQuery(worldID));
     }
 
@@ -146,34 +158,8 @@ public class QueryManager
         {
             return;
         }
-        String queryPrefix;
-        switch (censusQuery.getEnvironment())
-        {
-            case PC:
-            {
-                queryPrefix = "ps2:v2";
-                break;
-            }
-            case PS4_US:
-            {
-                queryPrefix = "ps2ps4us:v2";
-                break;
-            }
-            case PS4_EU:
-            {
-                queryPrefix = "ps2ps4eu:v2";
-                break;
-            }
-            default:
-            {
-                EventTracker.getLogger().warn("[Census REST] - An unsupported environment was sent for querying. Ignoring query...");
-                censusQuery.getCallback().receiveData(null, censusQuery.getEnvironment());
 
-                return;
-            }
-        }
-
-        final String query = "/s:" + EventTracker.getConfig().getServiceID() + "/get/" + queryPrefix + "/" + censusQuery.getRawQuery();
+        final String query = "/s:" + EventTracker.getConfig().getServiceID() + "/get/" + censusQuery.getEnvironment().censusEndpoint + "/" + censusQuery.getRawQuery();
 
         client.getNow(query, response ->
         {

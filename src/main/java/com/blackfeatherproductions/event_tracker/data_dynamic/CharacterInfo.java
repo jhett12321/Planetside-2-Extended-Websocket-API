@@ -47,7 +47,7 @@ public class CharacterInfo
 
     public String getOutfitID()
     {
-        return outfitID; //TODO 1.3 map outfits for translator
+        return outfitID; //TODO FUTURE map outfits for translator
     }
 
     public String getCharacterID()

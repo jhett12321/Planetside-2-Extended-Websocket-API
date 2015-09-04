@@ -35,6 +35,7 @@ public class WorldQuery implements Query
 
         JsonArray map_list = data.getJsonArray("map_list");
 
+        //Update Facility Data.
         for (int i = 0; i < map_list.size(); i++)
         {
             JsonObject data_zone = data.getJsonArray("map_list").getJsonObject(i);
@@ -43,30 +44,21 @@ public class WorldQuery implements Query
 
             ZoneInfo zoneInfo = worldInfo.getZoneInfo(zone);
 
-            JsonArray data_facilities = data_zone.getJsonObject("Regions").getJsonArray("Row");
+            JsonArray regions = data_zone.getJsonObject("Regions").getJsonArray("Row");
 
-            for (int j = 0; j < data_facilities.size(); j++)
+            for (int j = 0; j < regions.size(); j++)
             {
-                JsonObject data_facility = data_facilities.getJsonObject(j);
+                JsonObject region = regions.getJsonObject(j);
 
-                JsonObject data_facility_info = data_facility.getJsonObject("RowData");
+                JsonObject region_info = region.getJsonObject("RowData");
 
-                Faction owner = Faction.getFactionByID(data_facility_info.getString("FactionId"));
+                Faction owner = Faction.getFactionByID(region_info.getString("FactionId"));
 
-                JsonObject data_static_facility_info = data_facility_info.getJsonObject("map_region");
+                JsonObject map_region = region_info.getJsonObject("map_region");
 
-                String facility_id = data_static_facility_info.getString("facility_id");
-                String facility_name = data_static_facility_info.getString("facility_name");
-                String facility_type_id = data_static_facility_info.getString("facility_type_id");
+                String facility_id = map_region.getString("facility_id");
 
                 Facility facility = Facility.getFacilityByID(facility_id);
-                FacilityType facility_type = FacilityType.getFacilityTypeByID(facility_type_id);
-
-                if (facility == null)
-                {
-                    Facility.facilities.put(facility_id, new Facility(facility_id, facility_name, facility_type));
-                    facility = Facility.getFacilityByID(facility_id);
-                }
 
                 zoneInfo.getFacility(facility).setOwner(owner);
             }

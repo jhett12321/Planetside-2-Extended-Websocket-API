@@ -1,6 +1,8 @@
 package com.blackfeatherproductions.event_tracker.utils;
 
+import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import io.vertx.core.json.JsonObject;
 
@@ -17,6 +19,12 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 public class TerritoryUtils
 {
     private static final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    
+    //TODO Determine if there are no possible paths back to this faction's Warpgate.
+    public static void validateBlockingRegions(ZoneInfo zoneInfo)
+    {
+        
+    }
     
     /**
      * Calculates Territory Control for the given world + zone
@@ -35,7 +43,7 @@ public class TerritoryUtils
         float facilitiesTR = 0;
         for (Map.Entry<Facility, FacilityInfo> facility : TerritoryUtils.dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).getFacilities().entrySet())
         {
-            if (facility.getKey().getType() != FacilityType.WARPGATE)
+            if (facility.getKey().getType() != FacilityType.WARPGATE && !facility.getValue().isBlocked())
             {
                 totalRegions++;
                 if (facility.getValue().getOwner() == Faction.VS)
@@ -107,7 +115,7 @@ public class TerritoryUtils
         {
             for (Map.Entry<Facility, FacilityInfo> facility : zone.getFacilities().entrySet())
             {
-                if (facility.getKey().getType() != FacilityType.WARPGATE)
+                if (facility.getKey().getType() != FacilityType.WARPGATE && !facility.getValue().isBlocked())
                 {
                     totalRegions++;
                     if (facility.getValue().getOwner() == Faction.VS)
