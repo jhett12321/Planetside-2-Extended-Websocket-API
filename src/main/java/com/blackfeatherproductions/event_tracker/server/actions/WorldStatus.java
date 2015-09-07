@@ -85,17 +85,24 @@ public class WorldStatus implements Action
                     zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                     zoneObj.put("control_tr", controlInfo.getString("control_tr"));
                     
+                    zoneObj.put("total_vs", controlInfo.getString("total_vs"));
+                    zoneObj.put("total_nc", controlInfo.getString("total_nc"));
+                    zoneObj.put("total_tr", controlInfo.getString("total_tr"));
+                    
                     //Facility Data
                     JsonArray facilities = new JsonArray();
 
                     for (Entry<Facility, FacilityInfo> facilityInfo : zone.getValue().getFacilities().entrySet())
                     {
                         JsonObject facility = new JsonObject();
+                        
+                        String blocked = facilityInfo.getValue().isBlocked() ? "1" : "0";
 
                         facility.put("facility_id", facilityInfo.getKey().getID());
+                        facility.put("facility_name", facilityInfo.getKey().getName());
                         facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                         facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                        facility.put("zone_id", zone.getKey().getID());
+                        facility.put("blocked", blocked);
 
                         facilities.add(facility);
                     }
@@ -149,10 +156,14 @@ public class WorldStatus implements Action
                         zoneObj.put("locked_by", zoneInfo.getLockingFaction().getID());
                         
                         JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
-                        
+
                         zoneObj.put("control_vs", controlInfo.getString("control_vs"));
                         zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                         zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+
+                        zoneObj.put("total_vs", controlInfo.getString("total_vs"));
+                        zoneObj.put("total_nc", controlInfo.getString("total_nc"));
+                        zoneObj.put("total_tr", controlInfo.getString("total_tr"));
                         
                         //Facility Data
                         JsonArray facilities = new JsonArray();
@@ -161,10 +172,13 @@ public class WorldStatus implements Action
                         {
                             JsonObject facility = new JsonObject();
 
+                            String blocked = facilityInfo.getValue().isBlocked() ? "1" : "0";
+
                             facility.put("facility_id", facilityInfo.getKey().getID());
+                            facility.put("facility_name", facilityInfo.getKey().getName());
                             facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                             facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                            facility.put("zone_id", zone.getID());
+                            facility.put("blocked", blocked);
 
                             facilities.add(facility);
                         }
@@ -220,17 +234,24 @@ public class WorldStatus implements Action
                     zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                     zoneObj.put("control_tr", controlInfo.getString("control_tr"));
                     
+                    zoneObj.put("total_vs", controlInfo.getString("total_vs"));
+                    zoneObj.put("total_nc", controlInfo.getString("total_nc"));
+                    zoneObj.put("total_tr", controlInfo.getString("total_tr"));
+                    
                     //Facility Data
                     JsonArray facilities = new JsonArray();
 
                     for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(zone).getFacilities().entrySet())
                     {
                         JsonObject facility = new JsonObject();
+                        
+                        String blocked = facilityInfo.getValue().isBlocked() ? "1" : "0";
 
                         facility.put("facility_id", facilityInfo.getKey().getID());
+                        facility.put("facility_name", facilityInfo.getKey().getName());
                         facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                         facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                        facility.put("zone_id", zone.getID());
+                        facility.put("blocked", blocked);
 
                         facilities.add(facility);
                     }
@@ -278,6 +299,10 @@ public class WorldStatus implements Action
                 zoneObj.put("control_vs", controlInfo.getString("control_vs"));
                 zoneObj.put("control_nc", controlInfo.getString("control_nc"));
                 zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+
+                zoneObj.put("total_vs", controlInfo.getString("total_vs"));
+                zoneObj.put("total_nc", controlInfo.getString("total_nc"));
+                zoneObj.put("total_tr", controlInfo.getString("total_tr"));
                 
                 //Facility Data
                 JsonArray facilities = new JsonArray();
@@ -286,10 +311,13 @@ public class WorldStatus implements Action
                 {
                     JsonObject facility = new JsonObject();
 
+                    String blocked = facilityInfo.getValue().isBlocked() ? "1" : "0";
+
                     facility.put("facility_id", facilityInfo.getKey().getID());
+                    facility.put("facility_name", facilityInfo.getKey().getName());
                     facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                     facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                    facility.put("zone_id", zone.getKey().getID());
+                    facility.put("blocked", blocked);
 
                     facilities.add(facility);
                 }

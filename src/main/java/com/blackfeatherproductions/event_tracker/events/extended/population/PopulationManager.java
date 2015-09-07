@@ -18,7 +18,7 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.OnlinePlayer;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.queries.Query;
 import com.blackfeatherproductions.event_tracker.queries.QueryPriority;
 

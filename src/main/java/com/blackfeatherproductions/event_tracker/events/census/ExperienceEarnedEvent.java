@@ -11,7 +11,7 @@ import com.blackfeatherproductions.event_tracker.DynamicDataManager;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.events.EventType;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;

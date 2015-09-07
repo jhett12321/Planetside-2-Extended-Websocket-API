@@ -61,19 +61,30 @@ public class ActiveMetagameEvents implements Action
                             String control_nc = controlInfo.getString("control_nc");
                             String control_tr = controlInfo.getString("control_tr");
                             
+                            String total_vs = controlInfo.getString("total_vs");
+                            String total_nc = controlInfo.getString("total_nc");
+                            String total_tr = controlInfo.getString("total_tr");
+                            
                             metagameEvent.put("control_vs", control_vs);
                             metagameEvent.put("control_nc", control_nc);
                             metagameEvent.put("control_tr", control_tr);
+                            
+                            metagameEvent.put("total_vs", total_vs);
+                            metagameEvent.put("total_nc", total_nc);
+                            metagameEvent.put("total_tr", total_tr);
 
                             JsonArray facilities = new JsonArray();
 
                             for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
                             {
                                 JsonObject facility = new JsonObject();
+                                
+                                String blocked = facilityInfo.getValue().isBlocked() ? "1" : "0";
 
                                 facility.put("facility_id", facilityInfo.getKey().getID());
                                 facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                                 facility.put("owner", facilityInfo.getValue().getOwner().getID());
+                                facility.put("blocked", blocked);
                                 facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
 
                                 facilities.add(facility);
@@ -119,9 +130,17 @@ public class ActiveMetagameEvents implements Action
                         String control_nc = controlInfo.getString("control_nc");
                         String control_tr = controlInfo.getString("control_tr");
 
+                        String total_vs = controlInfo.getString("total_vs");
+                        String total_nc = controlInfo.getString("total_nc");
+                        String total_tr = controlInfo.getString("total_tr");
+
                         metagameEvent.put("control_vs", control_vs);
                         metagameEvent.put("control_nc", control_nc);
                         metagameEvent.put("control_tr", control_tr);
+
+                        metagameEvent.put("total_vs", total_vs);
+                        metagameEvent.put("total_nc", total_nc);
+                        metagameEvent.put("total_tr", total_tr);
 
                         JsonArray facilities = new JsonArray();
 

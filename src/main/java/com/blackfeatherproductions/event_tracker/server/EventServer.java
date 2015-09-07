@@ -303,11 +303,11 @@ public class EventServer
         JsonObject eventData = event.getEventData();
         
         //Put the event's environment into the filter data
-        eventFilterData.put("environments", new JsonArray().add(event.getEnvironment().toString().toLowerCase()));
+        eventFilterData.put("environments", new JsonArray().add(event.getEnvironment().fieldName));
 
         messageToSend.put("payload", eventData);
         messageToSend.put("event_type", eventClass.getAnnotation(EventInfo.class).eventName());
-        messageToSend.put("environment", event.getEnvironment().toString().toLowerCase());
+        messageToSend.put("environment", event.getEnvironment().fieldName);
 
         Iterator<Entry<ServerWebSocket, EventServerClient>> connectionIter = clientConnections.entrySet().iterator();
         

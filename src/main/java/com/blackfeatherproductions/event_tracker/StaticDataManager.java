@@ -3,6 +3,7 @@ package com.blackfeatherproductions.event_tracker;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.data_static.FacilityType;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.MetagameEventType;
@@ -18,6 +19,18 @@ public class StaticDataManager
         //TODO FUTURE Query Census for all required static data
         //TODO FUTURE All Data Types need to eventually have their own class.
         //TODO FUTURE Types to be implemented: achievement, item/weapon, vehicle, directive
+        
+        //Environments
+        Environment.PC = new Environment("PC", "pc", "ps2:v2");
+        Environment.PS4_US = new Environment("PS4_US", "ps4_us", "ps2ps4us:v2");
+        Environment.PS4_EU = new Environment("PS4_EU", "ps4_eu", "ps2ps4eu:v2");
+        Environment.WEBSOCKET_SERVICE = new Environment("WEBSOCKET_SERVICE", "websocket_service", null);
+        
+        Environment.environments.add(Environment.PC);
+        Environment.environments.add(Environment.PS4_US);
+        Environment.environments.add(Environment.PS4_EU);
+        Environment.environments.add(Environment.WEBSOCKET_SERVICE);
+        
         //Worlds
         World.UNKNOWN = new World("0", "Unknown");
         World.worlds.put("0", World.UNKNOWN);
@@ -121,7 +134,10 @@ public class StaticDataManager
         MetagameEventType.metagameEventTypes.put("53", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", Zone.AMERISH, "5", FacilityType.NONE));
         MetagameEventType.metagameEventTypes.put("54", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", Zone.HOSSIN, "5", FacilityType.NONE));
         MetagameEventType.metagameEventTypes.put("106", new MetagameEventType("106", "Conquest","Capture bases and kill enemies to earn points", Zone.INDAR, "6", FacilityType.NONE));
-        
+    }
+    
+    protected static void CensusInit()
+    {
         //Facilities (CENSUS)
         EventTracker.getQueryManager().queryFacilityStaticData();
     }

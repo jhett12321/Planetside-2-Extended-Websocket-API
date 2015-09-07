@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
@@ -216,6 +216,10 @@ public class MetagameEvent implements Event
         String control_vs = controlInfo.getString("control_vs");
         String control_nc = controlInfo.getString("control_nc");
         String control_tr = controlInfo.getString("control_tr");
+        
+        String total_vs = controlInfo.getString("total_vs");
+        String total_nc = controlInfo.getString("total_nc");
+        String total_tr = controlInfo.getString("total_tr");
 
         if (Integer.parseInt(control_vs) >= 100 || Integer.parseInt(control_nc) >= 100 || Integer.parseInt(control_tr) >= 100)
         {
@@ -239,6 +243,9 @@ public class MetagameEvent implements Event
             eventData.put("control_vs", control_vs);
             eventData.put("control_nc", control_nc);
             eventData.put("control_tr", control_tr);
+            eventData.put("total_vs", total_vs);
+            eventData.put("total_nc", total_nc);
+            eventData.put("total_tr", total_tr);
             eventData.put("domination", domination);
             eventData.put("zone_id", zone.getID());
             eventData.put("world_id", world.getID());

@@ -5,7 +5,7 @@ import java.util.Map;
 
 import io.vertx.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;

@@ -38,7 +38,10 @@ public class Facility
     
     public void addConnectingFacility(Facility facility)
     {
-        connectedFacilities.add(facility);
+        if(!connectedFacilities.contains(facility))
+        {
+            connectedFacilities.add(facility);
+        }
     }
     
     public List<Facility> getConnectedFacilities()

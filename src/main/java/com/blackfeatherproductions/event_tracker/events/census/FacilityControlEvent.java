@@ -4,7 +4,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
@@ -72,6 +72,8 @@ public class FacilityControlEvent implements Event
     public void processEvent()
     {
         //Raw Data
+        boolean isInternalEvent = payload.containsKey("is_blocked_update");
+        
         String facility_id = payload.getString("facility_id");
         Facility facility = Facility.getFacilityByID(facility_id);
         String outfit_id = payload.getString("outfit_id");
@@ -85,21 +87,19 @@ public class FacilityControlEvent implements Event
         String timestamp = payload.getString("timestamp");
         Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
         World world = World.getWorldByID(payload.getString("world_id"));
+        
+        ZoneInfo zoneInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone);
 
         //Update Internal Data
-        if (is_capture.equals("1"))
+        if (is_capture.equals("1") && !isInternalEvent)
         {
-            ZoneInfo zoneInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone);
-            
             zoneInfo.getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
-            TerritoryUtils.validateBlockingRegions(zoneInfo); //NYI - TODO
+
+            TerritoryUtils.updateFacilityBlockedStatus(environment, world, zone, timestamp);
         }
 
-        //Territory Control
-        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
-        String control_vs = controlInfo.getString("control_vs");
-        String control_nc = controlInfo.getString("control_nc");
-        String control_tr = controlInfo.getString("control_tr");
+        //Facility Blocked State
+        String blocked = zoneInfo.getFacility(facility).isBlocked() ? "1" : "0";
 
         //Event Data
         eventData.put("facility_id", facility_id);
@@ -111,10 +111,29 @@ public class FacilityControlEvent implements Event
         eventData.put("old_faction_id", old_faction.getID());
 
         eventData.put("is_capture", is_capture);
+        
+        eventData.put("blocked", blocked);
+        
+        //Territory Control
+        if(!isInternalEvent)
+        {
+            JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
+            String control_vs = controlInfo.getString("control_vs");
+            String control_nc = controlInfo.getString("control_nc");
+            String control_tr = controlInfo.getString("control_tr");
 
-        eventData.put("control_vs", control_vs);
-        eventData.put("control_nc", control_nc);
-        eventData.put("control_tr", control_tr);
+            String total_vs = controlInfo.getString("total_vs");
+            String total_nc = controlInfo.getString("total_nc");
+            String total_tr = controlInfo.getString("total_tr");
+            
+            eventData.put("control_vs", control_vs);
+            eventData.put("control_nc", control_nc);
+            eventData.put("control_tr", control_tr);
+
+            eventData.put("total_vs", total_vs);
+            eventData.put("total_nc", total_nc);
+            eventData.put("total_tr", total_tr);
+        }
 
         eventData.put("timestamp", timestamp);
         eventData.put("zone_id", zone.getID());

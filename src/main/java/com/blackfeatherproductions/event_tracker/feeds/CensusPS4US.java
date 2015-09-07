@@ -12,7 +12,7 @@ import io.vertx.core.http.WebSocket;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.Config;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;

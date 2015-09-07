@@ -1,13 +1,14 @@
 package com.blackfeatherproductions.event_tracker;
 
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
+
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
@@ -40,8 +41,8 @@ public class QueryManager
 
     //Character Queries
     private Queue<CharacterQuery> queuedCharacterQueries = new ConcurrentLinkedQueue<>();
-    private Map<Environment, List<String>> envCharacters = new HashMap<>();
-    private Map<Environment, List<CharacterQuery>> envCallbacks = new HashMap<>();
+    private Map<Environment, List<String>> envCharacters = new ConcurrentHashMap<>();
+    private Map<Environment, List<CharacterQuery>> envCallbacks = new ConcurrentHashMap<>();
 
     //Queries
     private final Queue<CensusQuery> queuedQueries = new PriorityBlockingQueue<>(100, new QueryPriorityComparator());
@@ -125,17 +126,17 @@ public class QueryManager
     
     public void queryFacilityStaticData()
     {
-        for(Environment environment : Environment.getEnvironments())
+        for(Environment environment : Environment.getValidEnvironments())
         {
             //Facility/Regions
-            queryCensus("map_region?c:limit=1000&c:join=facility_link^on:facility_id^to:facility_id_a^show:facility_id_a'facility_id_b^list:1^inject_at:connecting_links",
+            queryCensus("map_region?c:limit=2000&c:join=facility_link^on:facility_id^to:facility_id_b^inject_at:connecting_links.inbound^list:1,facility_link^on:facility_id^to:facility_id_a^inject_at:connecting_links.outbound^list:1",
                     QueryPriority.HIGHEST, environment, false, false, new StaticFacilityListQuery());
         }
     }
 
     public void queryWorld(String worldID, Environment environment)
     {
-        queryCensus("map?world_id=" + worldID + "&zone_ids=2,4,6,8",
+        queryCensus("map?world_id=" + worldID + "&zone_ids=2,4,6,8&c:join=map_region^on:Regions.Row.RowData.RegionId^to:map_region_id^inject_at:map_region",
                 QueryPriority.HIGHEST, environment, false, false, new WorldQuery(worldID));
     }
 

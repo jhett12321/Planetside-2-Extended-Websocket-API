@@ -1,5 +1,7 @@
 package com.blackfeatherproductions.event_tracker;
 
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
+
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.events.Event;

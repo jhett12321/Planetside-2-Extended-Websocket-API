@@ -1,6 +1,6 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class CensusQuery

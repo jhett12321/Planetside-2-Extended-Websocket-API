@@ -4,13 +4,12 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
-import com.blackfeatherproductions.event_tracker.data_static.FacilityType;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
@@ -59,8 +58,9 @@ public class WorldQuery implements Query
                 String facility_id = map_region.getString("facility_id");
 
                 Facility facility = Facility.getFacilityByID(facility_id);
-
+                
                 zoneInfo.getFacility(facility).setOwner(owner);
+                zoneInfo.getFacility(facility).setBlocked(false);
             }
         }
 
@@ -87,6 +87,9 @@ public class WorldQuery implements Query
                 dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NS);
                 dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(false);
             }
+            
+            //Update all zone block statuses.
+            TerritoryUtils.updateFacilityBlockedStatus(environment, world, zone, null);
         }
 
         //Update Metagame Events

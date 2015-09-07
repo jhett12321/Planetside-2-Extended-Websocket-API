@@ -6,7 +6,7 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.DynamicDataManager;
-import com.blackfeatherproductions.event_tracker.Environment;
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
 import com.blackfeatherproductions.event_tracker.EventTracker;
 import com.blackfeatherproductions.event_tracker.QueryManager;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
@@ -33,8 +33,8 @@ public class StaticFacilityListQuery implements Query
 
             Facility facility = Facility.getFacilityByID(facility_id);
             FacilityType facility_type = FacilityType.getFacilityTypeByID(facility_type_id);
-
-            if (facility == null)
+            
+            if(facility == null)
             {
                 Facility.facilities.put(facility_id, new Facility(facility_id, facility_name, facility_type));
             }
@@ -46,21 +46,41 @@ public class StaticFacilityListQuery implements Query
             JsonObject map_region = map_region_list.getJsonObject(i);
             
             String facility_id = map_region.getString("facility_id");
-            String facility_name = map_region.getString("facility_name");
-            String facility_type_id = map_region.getString("facility_type_id");
 
             Facility facility = Facility.getFacilityByID(facility_id);
-            FacilityType facility_type = FacilityType.getFacilityTypeByID(facility_type_id);
             
-            JsonArray connecting_links = map_region.getJsonArray("connecting_links");
-           
-            for (int j = 0; j < connecting_links.size(); j++)
+            if(map_region.containsKey("connecting_links"))
             {
-                Facility connectingFacility = Facility.getFacilityByID(connecting_links.getJsonObject(j).getString("facility_id_b"));
+                JsonObject connecting_links = map_region.getJsonObject("connecting_links");
                 
-                if(connectingFacility != null)
+                if(connecting_links.containsKey("inbound"))
                 {
-                    facility.addConnectingFacility(connectingFacility);
+                    JsonArray inboundLinks = connecting_links.getJsonArray("inbound");
+                    
+                    for (int j = 0; j < inboundLinks.size(); j++)
+                    {
+                        Facility connectingFacility = Facility.getFacilityByID(inboundLinks.getJsonObject(j).getString("facility_id_a"));
+
+                        if(connectingFacility != null)
+                        {
+                            facility.addConnectingFacility(connectingFacility);
+                        }
+                    }
+                }
+                
+                if(connecting_links.containsKey("outbound"))
+                {
+                    JsonArray outboundLinks = connecting_links.getJsonArray("outbound");
+                    
+                    for (int j = 0; j < outboundLinks.size(); j++)
+                    {
+                        Facility connectingFacility = Facility.getFacilityByID(outboundLinks.getJsonObject(j).getString("facility_id_b"));
+
+                        if(connectingFacility != null)
+                        {
+                            facility.addConnectingFacility(connectingFacility);
+                        }
+                    }
                 }
             }
         }

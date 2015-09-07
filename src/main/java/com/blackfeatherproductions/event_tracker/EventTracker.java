@@ -78,6 +78,9 @@ public class EventTracker extends AbstractVerticle
         queryManager = new QueryManager();
         populationManager = new PopulationManager();
         eventManager = new EventManager();
+        
+        //Static Data (Retrieved)
+        StaticDataManager.CensusInit();
 
         //Event Server
         eventServer = new EventServer();
