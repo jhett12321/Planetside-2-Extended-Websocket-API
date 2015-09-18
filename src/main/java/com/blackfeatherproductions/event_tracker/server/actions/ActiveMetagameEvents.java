@@ -14,6 +14,7 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryInfo;
 import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 @ActionInfo(actionNames = "activeMetagameEvents")
@@ -55,15 +56,14 @@ public class ActiveMetagameEvents implements Action
                             metagameEvent.put("start_time", metagameEventInfo.getStartTime());
                             metagameEvent.put("end_time", metagameEventInfo.getEndTime());
 
+                            TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, metagameEventInfo.getType().getZone());
+                            String control_vs = String.valueOf(controlInfo.controlVS);
+                            String control_nc = String.valueOf(controlInfo.controlNC);
+                            String control_tr = String.valueOf(controlInfo.controlTR);
                             
-                            JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, metagameEventInfo.getType().getZone());
-                            String control_vs = controlInfo.getString("control_vs");
-                            String control_nc = controlInfo.getString("control_nc");
-                            String control_tr = controlInfo.getString("control_tr");
-                            
-                            String total_vs = controlInfo.getString("total_vs");
-                            String total_nc = controlInfo.getString("total_nc");
-                            String total_tr = controlInfo.getString("total_tr");
+                            String total_vs = String.valueOf(controlInfo.totalVS);
+                            String total_nc = String.valueOf(controlInfo.totalNC);
+                            String total_tr = String.valueOf(controlInfo.totalTR);
                             
                             metagameEvent.put("control_vs", control_vs);
                             metagameEvent.put("control_nc", control_nc);
@@ -125,14 +125,14 @@ public class ActiveMetagameEvents implements Action
                         metagameEvent.put("start_time", metagameEventInfo.getStartTime());
                         metagameEvent.put("end_time", metagameEventInfo.getEndTime());
                         
-                        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), metagameEventInfo.getType().getZone());
-                        String control_vs = controlInfo.getString("control_vs");
-                        String control_nc = controlInfo.getString("control_nc");
-                        String control_tr = controlInfo.getString("control_tr");
+                        TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), metagameEventInfo.getType().getZone());
+                        String control_vs = String.valueOf(controlInfo.controlVS);
+                        String control_nc = String.valueOf(controlInfo.controlNC);
+                        String control_tr = String.valueOf(controlInfo.controlTR);
 
-                        String total_vs = controlInfo.getString("total_vs");
-                        String total_nc = controlInfo.getString("total_nc");
-                        String total_tr = controlInfo.getString("total_tr");
+                        String total_vs = String.valueOf(controlInfo.totalVS);
+                        String total_nc = String.valueOf(controlInfo.totalNC);
+                        String total_tr = String.valueOf(controlInfo.totalTR);
 
                         metagameEvent.put("control_vs", control_vs);
                         metagameEvent.put("control_nc", control_nc);

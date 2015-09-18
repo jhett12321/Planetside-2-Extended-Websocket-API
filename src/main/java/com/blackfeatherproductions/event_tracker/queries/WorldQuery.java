@@ -13,6 +13,7 @@ import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryInfo;
 import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 public class WorldQuery implements Query
@@ -66,19 +67,19 @@ public class WorldQuery implements Query
 
         for (Zone zone : Zone.getValidZones())
         {
-            JsonObject territoryControl = TerritoryUtils.calculateTerritoryControl(world, zone);
+            TerritoryInfo territoryControl = TerritoryUtils.calculateTerritoryControl(world, zone);
 
             dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLocked(true);
 
-            if (territoryControl.getString("control_vs").equals("100"))
+            if (territoryControl.controlVS == 100)
             {
                 dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.VS);
             }
-            else if (territoryControl.getString("control_nc").equals("100"))
+            else if (territoryControl.controlNC == 100)
             {
                 dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.NC);
             }
-            else if (territoryControl.getString("control_tr").equals("100"))
+            else if (territoryControl.controlTR == 100)
             {
                 dynamicDataManager.getWorldInfo(world).getZoneInfo(zone).setLockingFaction(Faction.TR);
             }

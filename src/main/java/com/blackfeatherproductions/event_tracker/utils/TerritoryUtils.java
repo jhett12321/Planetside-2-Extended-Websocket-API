@@ -19,7 +19,7 @@ import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class TerritoryUtils
-{
+{    
     private static final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
     
     /**
@@ -33,72 +33,75 @@ public class TerritoryUtils
     public static void updateFacilityBlockedStatus(Environment environment, World world, Zone zone, String timestamp)
     {
         ZoneInfo zoneInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone);
+
+        List<Entry<Facility, FacilityInfo>> warpgates = new ArrayList<>();
+
+        for (Entry<Facility, FacilityInfo> regionNode : zoneInfo.getFacilities().entrySet())
+        {
+            if(regionNode.getKey().getType() == FacilityType.WARPGATE)
+            {
+                warpgates.add(regionNode);
+            }
+        }
+
+        List<Facility> checkedFacilities = new ArrayList<>();
+        List<Facility> connectedFacilities = new ArrayList<>();
+        
+        for(Entry<Facility, FacilityInfo> warpgate : warpgates)
+        {
+            checkWarpgateConnections(warpgate.getValue().getOwner(), warpgate.getKey(), zoneInfo, checkedFacilities, connectedFacilities);
+        }
         
         for (Entry<Facility, FacilityInfo> regionNode : zoneInfo.getFacilities().entrySet())
         {
-            if(regionNode.getKey().getType() != FacilityType.WARPGATE)
+            boolean blocked = !connectedFacilities.contains(regionNode.getKey());
+
+            if(blocked != regionNode.getValue().isBlocked())
             {
-                Faction originalOwner = regionNode.getValue().getOwner();
+                //Update the blocked status of this facility.
+                regionNode.getValue().setBlocked(blocked);
 
-                List<Facility> checkedFacilities = new ArrayList<>();
-
-                boolean blocked = validateRegionNodeBlocked(originalOwner, regionNode.getKey(), zoneInfo, checkedFacilities);
-                
-                if(blocked != regionNode.getValue().isBlocked())
+                //Send an additional FacilityControl event with the updated info.
+                if(timestamp != null)
                 {
-                    //Update the blocked status of this facility.
-                    regionNode.getValue().setBlocked(blocked);
-                    
-                    //Send an additional FacilityControl event with the updated info.
-                    if(timestamp != null)
-                    {
-                        JsonObject payload = new JsonObject();
-                        payload.put("event_name", "FacilityControl");
-                        payload.put("timestamp", timestamp);
-                        payload.put("world_id", world.getID());
-                        payload.put("old_faction_id", regionNode.getValue().getOwner().getID());
-                        payload.put("outfit_id", "0");
-                        payload.put("new_faction_id", regionNode.getValue().getOwner().getID());
-                        payload.put("facility_id", regionNode.getKey().getID());
-                        payload.put("zone_id", zone.getID());
+                    JsonObject payload = new JsonObject();
+                    payload.put("event_name", "FacilityControl");
+                    payload.put("timestamp", timestamp);
+                    payload.put("world_id", world.getID());
+                    payload.put("old_faction_id", regionNode.getValue().getOwner().getID());
+                    payload.put("outfit_id", "0");
+                    payload.put("new_faction_id", regionNode.getValue().getOwner().getID());
+                    payload.put("facility_id", regionNode.getKey().getID());
+                    payload.put("zone_id", zone.getID());
 
-                        payload.put("is_blocked_update", "1");
+                    payload.put("is_blocked_update", "1");
 
-                        String eventName = payload.getString("event_name");
+                    String eventName = payload.getString("event_name");
 
-                        EventTracker.getEventHandler().handleEvent(eventName, payload, environment);
-                    }
+                    EventTracker.getEventHandler().handleEvent(eventName, payload, environment);
                 }
             }
         }
     }
-    
-    private static boolean validateRegionNodeBlocked(Faction originalOwner, Facility facility, ZoneInfo zoneInfo, List<Facility> checkedFacilities)
+
+    private static void checkWarpgateConnections(Faction originalOwner, Facility facility, ZoneInfo zoneInfo, List<Facility> checkedFacilities, List<Facility> connectedFacilities)
     {
         checkedFacilities.add(facility);
-        
+
+        if(zoneInfo.getFacility(facility).getOwner() == originalOwner)
+        {
+            connectedFacilities.add(facility);
+        }
+
         for(Facility adjFacility : facility.getConnectedFacilities())
         {
             FacilityInfo adjFacilityInfo = zoneInfo.getFacility(adjFacility);
-            
+
             if(adjFacilityInfo.getOwner() == originalOwner && !checkedFacilities.contains(adjFacility))
             {
-                if(adjFacility.getType() == FacilityType.WARPGATE)
-                {
-                    return false;
-                }
-                
-                else 
-                {
-                    if(!validateRegionNodeBlocked(originalOwner, adjFacility, zoneInfo, checkedFacilities))
-                    {
-                        return false;
-                    }
-                }
+                checkWarpgateConnections(originalOwner, adjFacility, zoneInfo, checkedFacilities, connectedFacilities);
             }
         }
-        
-        return true;
     }
     
     /**
@@ -110,10 +113,9 @@ public class TerritoryUtils
      * @return A JsonObject containing string values for territory control, and
      * the majority controller (if any).
      */
-    public static JsonObject calculateTerritoryControl(World world, Zone zone)
+    public static TerritoryInfo calculateTerritoryControl(World world, Zone zone)
     {
         float totalFacilities = 0;
-        float blockedFacilities = 0;
         
         float facilitiesVS = 0;
         float facilitiesNC = 0;
@@ -129,10 +131,10 @@ public class TerritoryUtils
         {
             if (facility.getKey().getType() != FacilityType.WARPGATE)
             {
+                totalFacilities++;
+                
                 if(facility.getValue().isBlocked())
                 {
-                    blockedFacilities++;
-
                     if (facility.getValue().getOwner() == Faction.VS)
                     {
                         blockedFacilitiesVS++;
@@ -151,8 +153,6 @@ public class TerritoryUtils
                 
                 else
                 {
-                    totalFacilities++;
-
                     if (facility.getValue().getOwner() == Faction.VS)
                     {
                         facilitiesVS++;
@@ -182,19 +182,14 @@ public class TerritoryUtils
             controlVS = (int) Math.floor(facilitiesVS / totalFacilities * 100);
             controlNC = (int) Math.floor(facilitiesNC / totalFacilities * 100);
             controlTR = (int) Math.floor(facilitiesTR / totalFacilities * 100);
-        }
-        
-        float totalBlockedFacilities = totalFacilities + blockedFacilities;
-        
-        if(totalBlockedFacilities > 0)
-        {
-            float totalBlockedFacilitiesVS = facilitiesVS + blockedFacilitiesVS;
-            float totalBlockedFacilitiesNC = facilitiesVS + blockedFacilitiesNC;
-            float totalBlockedFacilitiesTR = facilitiesVS + blockedFacilitiesTR;
             
-            blockedControlVS = (int) Math.floor(totalBlockedFacilitiesVS / totalBlockedFacilities * 100);
-            blockedControlNC = (int) Math.floor(totalBlockedFacilitiesNC / totalBlockedFacilities * 100);
-            blockedControlTR = (int) Math.floor(totalBlockedFacilitiesTR / totalBlockedFacilities * 100);
+            float totalBlockedFacilitiesVS = facilitiesVS + blockedFacilitiesVS;
+            float totalBlockedFacilitiesNC = facilitiesNC + blockedFacilitiesNC;
+            float totalBlockedFacilitiesTR = facilitiesTR + blockedFacilitiesTR;
+            
+            blockedControlVS = (int) Math.floor(totalBlockedFacilitiesVS / totalFacilities * 100);
+            blockedControlNC = (int) Math.floor(totalBlockedFacilitiesNC / totalFacilities * 100);
+            blockedControlTR = (int) Math.floor(totalBlockedFacilitiesTR / totalFacilities * 100);
         }
         
         int majorityControl = controlVS;
@@ -222,15 +217,7 @@ public class TerritoryUtils
             majorityController = Faction.NS;
         }
         
-        JsonObject controlInfo = new JsonObject();
-        
-        controlInfo.put("control_vs", String.valueOf(controlVS));
-        controlInfo.put("control_nc", String.valueOf(controlNC));
-        controlInfo.put("control_tr", String.valueOf(controlTR));
-        controlInfo.put("majority_controller", majorityController.getID());
-        controlInfo.put("total_vs", String.valueOf(blockedControlVS));
-        controlInfo.put("total_nc", String.valueOf(blockedControlNC));
-        controlInfo.put("total_tr", String.valueOf(blockedControlTR));
+        TerritoryInfo controlInfo = new TerritoryInfo(controlVS, controlNC, controlTR, majorityController, blockedControlVS, blockedControlNC, blockedControlTR);
         
         return controlInfo;
     }

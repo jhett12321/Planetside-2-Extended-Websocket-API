@@ -19,6 +19,7 @@ import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.events.EventInfo;
 import com.blackfeatherproductions.event_tracker.events.EventPriority;
 import com.blackfeatherproductions.event_tracker.events.EventType;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryInfo;
 import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 @EventInfo(eventType = EventType.EVENT,
@@ -212,14 +213,14 @@ public class MetagameEvent implements Event
         }
 
         //Raw Data - Territory Control
-        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
-        String control_vs = controlInfo.getString("control_vs");
-        String control_nc = controlInfo.getString("control_nc");
-        String control_tr = controlInfo.getString("control_tr");
-        
-        String total_vs = controlInfo.getString("total_vs");
-        String total_nc = controlInfo.getString("total_nc");
-        String total_tr = controlInfo.getString("total_tr");
+        TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
+        String control_vs = String.valueOf(controlInfo.controlVS);
+        String control_nc = String.valueOf(controlInfo.controlNC);
+        String control_tr = String.valueOf(controlInfo.controlTR);
+
+        String total_vs = String.valueOf(controlInfo.totalVS);
+        String total_nc = String.valueOf(controlInfo.totalNC);
+        String total_tr = String.valueOf(controlInfo.totalTR);
 
         if (Integer.parseInt(control_vs) >= 100 || Integer.parseInt(control_nc) >= 100 || Integer.parseInt(control_tr) >= 100)
         {

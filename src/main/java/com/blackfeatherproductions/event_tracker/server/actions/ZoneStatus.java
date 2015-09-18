@@ -12,6 +12,7 @@ import com.blackfeatherproductions.event_tracker.data_dynamic.ZoneInfo;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryInfo;
 import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 @ActionInfo(actionNames = "zoneStatus")
@@ -51,11 +52,11 @@ public class ZoneStatus implements Action
                         zone.put("locked", locked);
                         zone.put("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
-                        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zoneInfo.getKey());
+                        TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, zoneInfo.getKey());
 
-                        zone.put("control_vs", controlInfo.getString("control_vs"));
-                        zone.put("control_nc", controlInfo.getString("control_nc"));
-                        zone.put("control_tr", controlInfo.getString("control_tr"));
+                        zone.put("control_vs", String.valueOf(controlInfo.controlVS));
+                        zone.put("control_nc", String.valueOf(controlInfo.controlNC));
+                        zone.put("control_tr", String.valueOf(controlInfo.controlTR));
 
                         zones.put(zoneInfo.getKey().getID(), zone);
                     }
@@ -85,11 +86,11 @@ public class ZoneStatus implements Action
                     zone.put("locked", locked);
                     zone.put("locked_by", zoneInfo.getValue().getLockingFaction().getID());
 
-                    JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zoneInfo.getKey());
+                    TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zoneInfo.getKey());
 
-                    zone.put("control_vs", controlInfo.getString("control_vs"));
-                    zone.put("control_nc", controlInfo.getString("control_nc"));
-                    zone.put("control_tr", controlInfo.getString("control_tr"));
+                    zone.put("control_vs", String.valueOf(controlInfo.controlVS));
+                    zone.put("control_nc", String.valueOf(controlInfo.controlNC));
+                    zone.put("control_tr", String.valueOf(controlInfo.controlTR));
 
                     zones.put(zoneInfo.getKey().getID(), zone);
                 }

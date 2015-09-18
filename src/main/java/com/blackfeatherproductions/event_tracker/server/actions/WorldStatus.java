@@ -15,6 +15,7 @@ import com.blackfeatherproductions.event_tracker.data_static.Facility;
 import com.blackfeatherproductions.event_tracker.data_static.World;
 import com.blackfeatherproductions.event_tracker.data_static.Zone;
 import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
+import com.blackfeatherproductions.event_tracker.utils.TerritoryInfo;
 import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 @ActionInfo(actionNames = "worldStatus")
@@ -79,15 +80,14 @@ public class WorldStatus implements Action
                     zoneObj.put("locked", locked);
                     zoneObj.put("locked_by", zone.getValue().getLockingFaction().getID());
 
-                    JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone.getKey());
-
-                    zoneObj.put("control_vs", controlInfo.getString("control_vs"));
-                    zoneObj.put("control_nc", controlInfo.getString("control_nc"));
-                    zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+                    TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone.getKey());
+                    zoneObj.put("control_vs", String.valueOf(controlInfo.controlVS));
+                    zoneObj.put("control_nc", String.valueOf(controlInfo.controlNC));
+                    zoneObj.put("control_tr", String.valueOf(controlInfo.controlTR));
                     
-                    zoneObj.put("total_vs", controlInfo.getString("total_vs"));
-                    zoneObj.put("total_nc", controlInfo.getString("total_nc"));
-                    zoneObj.put("total_tr", controlInfo.getString("total_tr"));
+                    zoneObj.put("total_vs", String.valueOf(controlInfo.totalVS));
+                    zoneObj.put("total_nc", String.valueOf(controlInfo.totalNC));
+                    zoneObj.put("total_tr", String.valueOf(controlInfo.totalTR));
                     
                     //Facility Data
                     JsonArray facilities = new JsonArray();
@@ -155,15 +155,15 @@ public class WorldStatus implements Action
                         zoneObj.put("locked", locked);
                         zoneObj.put("locked_by", zoneInfo.getLockingFaction().getID());
                         
-                        JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
+                        TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
+                        
+                        zoneObj.put("control_vs", String.valueOf(controlInfo.controlVS));
+                        zoneObj.put("control_nc", String.valueOf(controlInfo.controlNC));
+                        zoneObj.put("control_tr", String.valueOf(controlInfo.controlTR));
 
-                        zoneObj.put("control_vs", controlInfo.getString("control_vs"));
-                        zoneObj.put("control_nc", controlInfo.getString("control_nc"));
-                        zoneObj.put("control_tr", controlInfo.getString("control_tr"));
-
-                        zoneObj.put("total_vs", controlInfo.getString("total_vs"));
-                        zoneObj.put("total_nc", controlInfo.getString("total_nc"));
-                        zoneObj.put("total_tr", controlInfo.getString("total_tr"));
+                        zoneObj.put("total_vs", String.valueOf(controlInfo.totalVS));
+                        zoneObj.put("total_nc", String.valueOf(controlInfo.totalNC));
+                        zoneObj.put("total_tr", String.valueOf(controlInfo.totalTR));
                         
                         //Facility Data
                         JsonArray facilities = new JsonArray();
@@ -228,15 +228,15 @@ public class WorldStatus implements Action
                     zoneObj.put("locked", locked);
                     zoneObj.put("locked_by", zoneInfo.getLockingFaction().getID());
 
-                    JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zone);
-
-                    zoneObj.put("control_vs", controlInfo.getString("control_vs"));
-                    zoneObj.put("control_nc", controlInfo.getString("control_nc"));
-                    zoneObj.put("control_tr", controlInfo.getString("control_tr"));
+                    TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zone);
                     
-                    zoneObj.put("total_vs", controlInfo.getString("total_vs"));
-                    zoneObj.put("total_nc", controlInfo.getString("total_nc"));
-                    zoneObj.put("total_tr", controlInfo.getString("total_tr"));
+                    zoneObj.put("control_vs", String.valueOf(controlInfo.controlVS));
+                    zoneObj.put("control_nc", String.valueOf(controlInfo.controlNC));
+                    zoneObj.put("control_tr", String.valueOf(controlInfo.controlTR));
+                    
+                    zoneObj.put("total_vs", String.valueOf(controlInfo.totalVS));
+                    zoneObj.put("total_nc", String.valueOf(controlInfo.totalNC));
+                    zoneObj.put("total_tr", String.valueOf(controlInfo.totalTR));
                     
                     //Facility Data
                     JsonArray facilities = new JsonArray();
@@ -294,15 +294,15 @@ public class WorldStatus implements Action
                 zoneObj.put("locked", locked);
                 zoneObj.put("locked_by", zone.getValue().getLockingFaction().getID());
 
-                JsonObject controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zone.getKey());
+                TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), zone.getKey());
+                
+                zoneObj.put("control_vs", String.valueOf(controlInfo.controlVS));
+                zoneObj.put("control_nc", String.valueOf(controlInfo.controlNC));
+                zoneObj.put("control_tr", String.valueOf(controlInfo.controlTR));
 
-                zoneObj.put("control_vs", controlInfo.getString("control_vs"));
-                zoneObj.put("control_nc", controlInfo.getString("control_nc"));
-                zoneObj.put("control_tr", controlInfo.getString("control_tr"));
-
-                zoneObj.put("total_vs", controlInfo.getString("total_vs"));
-                zoneObj.put("total_nc", controlInfo.getString("total_nc"));
-                zoneObj.put("total_tr", controlInfo.getString("total_tr"));
+                zoneObj.put("total_vs", String.valueOf(controlInfo.totalVS));
+                zoneObj.put("total_nc", String.valueOf(controlInfo.totalNC));
+                zoneObj.put("total_tr", String.valueOf(controlInfo.totalTR));
                 
                 //Facility Data
                 JsonArray facilities = new JsonArray();
