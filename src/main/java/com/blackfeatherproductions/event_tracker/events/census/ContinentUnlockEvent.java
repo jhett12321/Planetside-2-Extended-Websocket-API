@@ -88,7 +88,7 @@ public class ContinentUnlockEvent implements Event
         
         //Re-sync territory control
         //TODO remove if no-longer required
-        queryManager.queryWorld(world.getID(), environment);
+        //queryManager.queryWorld(world.getID(), environment);
 
         //Event Data
         eventData.put("vs_population", vs_population);

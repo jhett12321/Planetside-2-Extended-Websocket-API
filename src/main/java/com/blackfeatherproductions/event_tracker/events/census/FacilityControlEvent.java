@@ -24,7 +24,7 @@ import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
         priority = EventPriority.NORMAL,
         filters =
         {
-            "facilties", "facility_types", "outfits", "factions", "captures", "zones", "worlds"
+            "facilties", "facility_types", "outfits", "factions", "captures", "blocks", "zones", "worlds"
         })
 public class FacilityControlEvent implements Event
 {
@@ -73,7 +73,7 @@ public class FacilityControlEvent implements Event
     public void processEvent()
     {
         //Raw Data
-        boolean isInternalEvent = payload.containsKey("is_blocked_update");
+        String isBlockedUpdate = payload.containsKey("is_blocked_update") ? "1" : "0";
         
         String facility_id = payload.getString("facility_id");
         Facility facility = Facility.getFacilityByID(facility_id);
@@ -92,11 +92,17 @@ public class FacilityControlEvent implements Event
         ZoneInfo zoneInfo = dynamicDataManager.getWorldInfo(world).getZoneInfo(zone);
 
         //Update Internal Data
-        if (is_capture.equals("1") && !isInternalEvent)
+        if (is_capture.equals("1") && isBlockedUpdate.equals("0"))
         {
             zoneInfo.getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
 
             TerritoryUtils.updateFacilityBlockedStatus(environment, world, zone, timestamp);
+            eventData.put("duration_held", duration_held);
+        }
+        
+        else if(isBlockedUpdate.equals("1"))
+        {
+            is_capture = "-1";
         }
 
         //Facility Blocked State
@@ -106,17 +112,17 @@ public class FacilityControlEvent implements Event
         eventData.put("facility_id", facility_id);
         eventData.put("facility_type_id", facility.getType().getID());
         eventData.put("outfit_id", outfit_id);
-        eventData.put("duration_held", duration_held);
 
         eventData.put("new_faction_id", new_faction.getID());
         eventData.put("old_faction_id", old_faction.getID());
 
         eventData.put("is_capture", is_capture);
+        eventData.put("is_block_update", isBlockedUpdate);
         
         eventData.put("blocked", blocked);
         
         //Territory Control
-        if(!isInternalEvent)
+        if(isBlockedUpdate.equals("0"))
         {
             TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, zone);
             
@@ -147,6 +153,7 @@ public class FacilityControlEvent implements Event
         filterData.put("outfits", new JsonArray().add(outfit_id));
         filterData.put("factions", new JsonArray().add(new_faction.getID()).add(old_faction.getID()));
         filterData.put("captures", new JsonArray().add(is_capture));
+        filterData.put("blocks", new JsonArray().add(isBlockedUpdate));
         filterData.put("zones", new JsonArray().add(zone.getID()));
         filterData.put("worlds", new JsonArray().add(world.getID()));
 

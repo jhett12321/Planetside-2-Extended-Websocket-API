@@ -1,5 +1,7 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.util.Date;
+
 import com.blackfeatherproductions.event_tracker.data_static.Environment;
 
 import io.vertx.core.json.JsonObject;
@@ -14,6 +16,9 @@ public class QueuedEvent
     private final Event event;
     private final JsonObject payload;
     private final Environment environment;
+    
+    private final Integer eventTimestamp;
+    private final Long creationTimestamp = new Date().getTime();
 
     public QueuedEvent(EventPriority priority, Event event, JsonObject payload, Environment environment)
     {
@@ -21,6 +26,8 @@ public class QueuedEvent
         this.event = event;
         this.payload = payload;
         this.environment = environment;
+        
+        this.eventTimestamp = payload.containsKey("timestamp") ? Integer.valueOf(payload.getString("timestamp")) : null;
     }
 
     public void processEvent()
@@ -31,5 +38,15 @@ public class QueuedEvent
     public EventPriority getPriority()
     {
         return priority;
+    }
+    
+    public Integer getEventTimestamp()
+    {
+        return eventTimestamp;
+    }
+    
+    public Long getCreationTimestamp()
+    {
+        return creationTimestamp;
     }
 }
