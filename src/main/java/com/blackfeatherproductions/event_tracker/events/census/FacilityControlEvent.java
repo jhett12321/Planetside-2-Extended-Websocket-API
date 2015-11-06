@@ -78,7 +78,6 @@ public class FacilityControlEvent implements Event
         String facility_id = payload.getString("facility_id");
         Facility facility = Facility.getFacilityByID(facility_id);
         String outfit_id = payload.getString("outfit_id");
-        String duration_held = payload.getString("duration_held");
 
         Faction new_faction = Faction.getFactionByID(payload.getString("new_faction_id"));
         Faction old_faction = Faction.getFactionByID(payload.getString("old_faction_id"));
@@ -97,7 +96,6 @@ public class FacilityControlEvent implements Event
             zoneInfo.getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
 
             TerritoryUtils.updateFacilityBlockedStatus(environment, world, zone, timestamp);
-            eventData.put("duration_held", duration_held);
         }
         
         else if(isBlockedUpdate.equals("1"))
@@ -117,6 +115,12 @@ public class FacilityControlEvent implements Event
         eventData.put("old_faction_id", old_faction.getID());
 
         eventData.put("is_capture", is_capture);
+        
+        if(payload.containsKey("duration_held"))
+        {
+            eventData.put("duration_held", payload.getString("duration_held"));
+        }
+        
         eventData.put("is_block_update", isBlockedUpdate);
         
         eventData.put("blocked", blocked);
