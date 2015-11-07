@@ -1,6 +1,12 @@
 package com.blackfeatherproductions.event_tracker;
 
+import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
+import java.util.Date;
 import java.util.function.Consumer;
+import java.util.logging.Level;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
@@ -20,7 +26,7 @@ public class EventTracker extends AbstractVerticle
     public static EventTracker inst;
     
     //Logger
-    private static Logger logger = LoggerFactory.getLogger(io.vertx.core.logging.JULLogDelegateFactory.class);
+    private static Logger logger;
 
     //Data
     private static Config config;
@@ -63,7 +69,23 @@ public class EventTracker extends AbstractVerticle
     {
         inst = this;
         
-        //Logging
+        //Move Existing Logs.
+        try
+        {
+            File existingLog = new File("eventTracker.log");
+            File renLog = new File("eventTracker_" + String.valueOf(new Date().getTime()) + ".log");
+
+            if(existingLog.exists())
+            {
+                Files.move(existingLog.toPath(), renLog.toPath(), REPLACE_EXISTING);
+            }
+        }
+        catch (IOException ex)
+        {
+        }
+        
+        logger = LoggerFactory.getLogger(io.vertx.core.logging.JULLogDelegateFactory.class);
+        
         logger.info("Planetside 2 Extended Push API v" + MavenInfo.getVersion());
         logger.info("Starting up...");
 
