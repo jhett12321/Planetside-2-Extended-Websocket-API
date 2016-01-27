@@ -226,21 +226,39 @@ public class QueryManager
 
     private void censusQueryFailed(CensusQuery censusQuery)
     {
-        if (censusQuery.getFailureCount() >= EventTracker.getConfig().getMaxFailures() && censusQuery.isFailureAllowed())
+        if (censusQuery.getFailureCount() >= EventTracker.getConfig().getMaxFailures())
         {
-            logger.error("[Census REST] Census Failure Limit Reached. Dropping query.");
+            if(censusQuery.isFailureAllowed())
+            {
+                logger.error("[Census REST] Census Failure Limit Reached. Dropping query.");
 
-            censusQuery.getCallback().receiveData(null, censusQuery.getEnvironment());
-            censusQuery.setFailureCount(EventTracker.getConfig().getMaxFailures());
+                censusQuery.getCallback().receiveData(null, censusQuery.getEnvironment());
+                censusQuery.setFailureCount(EventTracker.getConfig().getMaxFailures());
+            }
+            
+            else
+            {
+                int delay = EventTracker.getConfig().getRequiredQueryFailureDelay();
+                logger.error("[Census REST] Census Failure Limit Reached for query, but is a required query for operation. Delaying " + delay + "ms until next attempt.");
+                
+                EventTracker.inst.getVertx().setTimer(delay, id ->
+                {
+                    retryQuery(censusQuery);
+                });
+            }
         }
 
         else
         {
-            logger.warn("[Census REST] Retrying query...");
             censusQuery.incrementFailureCount();
-            queuedQueries.add(censusQuery);
-
             logger.warn("[Census REST] Failed Query " + String.valueOf(censusQuery.getFailureCount()) + "/" + EventTracker.getConfig().getMaxFailures().toString());
+            retryQuery(censusQuery);
         }
+    }
+    
+    private void retryQuery(CensusQuery censusQuery)
+    {
+        logger.warn("[Census REST] Retrying query...");
+        queuedQueries.add(censusQuery);
     }
 }

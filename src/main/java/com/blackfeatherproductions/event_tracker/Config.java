@@ -18,6 +18,7 @@ public class Config
     //Census
     private String censusHostname;
     private Integer maxFailures;
+    private Integer requiredQueryFailureDelay;
 
     //Authentication
     private Boolean authEnabled;
@@ -67,6 +68,7 @@ public class Config
             //Census
             censusHostname = String.valueOf(prop.getProperty("censusHostname", "census.daybreakgames.com"));
             maxFailures = Integer.valueOf(prop.getProperty("maxFailures", "20"));
+            requiredQueryFailureDelay = Integer.valueOf(prop.getProperty("requiredQueryFailureDelay", "300000"));
 
             //Authentication
             authEnabled = prop.getProperty("authEnabled", "false").equalsIgnoreCase("true");
@@ -118,6 +120,11 @@ public class Config
     public Integer getMaxFailures()
     {
         return maxFailures;
+    }
+    
+    public Integer getRequiredQueryFailureDelay()
+    {
+        return requiredQueryFailureDelay;
     }
 
     public Integer getDbConnectionLimit()
