@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Properties;
 
 public class Config
@@ -29,6 +31,9 @@ public class Config
     private String dbUser;
     private String dbPassword;
     private String dbName;
+
+    //Census Fixes
+    private ArrayList<String> ignoredFacilities;
 
     public Config()
     {
@@ -79,6 +84,9 @@ public class Config
             dbUser = prop.getProperty("dbUser", "eventTracker");
             dbPassword = prop.getProperty("dbPassword", "password");
             dbName = prop.getProperty("dbName", "ps2_events");
+
+            //Census Fixes
+            ignoredFacilities = new ArrayList<>(Arrays.asList(prop.getProperty("ignoredFacilities", "").split(",")));
         }
 
         catch (IOException ex)
@@ -155,5 +163,10 @@ public class Config
     public Boolean isAuthEnabled()
     {
         return authEnabled;
+    }
+
+    public ArrayList<String> getIgnoredFacilities()
+    {
+        return ignoredFacilities;
     }
 }

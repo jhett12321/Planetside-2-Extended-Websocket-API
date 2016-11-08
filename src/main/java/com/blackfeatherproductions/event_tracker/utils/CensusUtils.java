@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.blackfeatherproductions.event_tracker.EventTracker;
 import io.vertx.core.json.JsonObject;
 
 import com.blackfeatherproductions.event_tracker.data_static.World;
@@ -40,6 +41,13 @@ public class CensusUtils
 
     public static boolean isValidPayload(JsonObject payload)
     {
+        if(payload.containsKey("facility_id"))
+        {
+            if (!isValidFacility(payload.getString("facility_id")))
+            {
+                return false;
+            }
+        }
         if (payload.containsKey("zone_id"))
         {
             if (!isValidZone(payload.getString("zone_id")))
@@ -87,5 +95,14 @@ public class CensusUtils
     {
         return Zone.zones.containsKey(zoneID);
     }
-    
+
+    /**
+     * Checks to see if the given Facility ID is valid (i.e. not marked as an invalid facility)
+     * @param facilityID
+     * @return
+     */
+    public static boolean isValidFacility(String facilityID)
+    {
+        return !EventTracker.getConfig().getIgnoredFacilities().contains(facilityID);
+    }
 }

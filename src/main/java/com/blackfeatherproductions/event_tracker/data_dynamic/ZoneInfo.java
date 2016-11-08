@@ -60,17 +60,17 @@ public class ZoneInfo
      */
     public FacilityInfo getFacility(Facility facility)
     {
-        if (facility != null)
+        if (facility == null)
         {
-            if (!facilities.containsKey(facility))
-            {
-                facilities.put(facility, new FacilityInfo());
-            }
-
-            return facilities.get(facility);
+            return null;
         }
 
-        return null;
+        if (!facilities.containsKey(facility))
+        {
+            facilities.put(facility, new FacilityInfo());
+        }
+
+        return facilities.get(facility);
     }
 
     public Map<Facility, FacilityInfo> getFacilities()

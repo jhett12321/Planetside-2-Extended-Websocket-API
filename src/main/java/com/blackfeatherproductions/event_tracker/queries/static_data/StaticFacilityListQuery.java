@@ -2,6 +2,7 @@ package com.blackfeatherproductions.event_tracker.queries.static_data;
 
 import com.blackfeatherproductions.event_tracker.queries.*;
 
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -28,6 +29,12 @@ public class StaticFacilityListQuery implements Query
             JsonObject map_region = map_region_list.getJsonObject(i);
             
             String facility_id = map_region.getString("facility_id");
+
+            if(!CensusUtils.isValidFacility(facility_id))
+            {
+                continue;
+            }
+
             String facility_name = map_region.getString("facility_name");
             String facility_type_id = map_region.getString("facility_type_id");
 

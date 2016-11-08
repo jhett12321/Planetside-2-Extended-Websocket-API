@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.queries;
 
+import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -58,10 +59,13 @@ public class WorldQuery implements Query
 
                 String facility_id = map_region.getString("facility_id");
 
-                Facility facility = Facility.getFacilityByID(facility_id);
-                
-                zoneInfo.getFacility(facility).setOwner(owner);
-                zoneInfo.getFacility(facility).setBlocked(false);
+                if(CensusUtils.isValidFacility(facility_id))
+                {
+                    Facility facility = Facility.getFacilityByID(facility_id);
+
+                    zoneInfo.getFacility(facility).setOwner(owner);
+                    zoneInfo.getFacility(facility).setBlocked(false);
+                }
             }
         }
 
