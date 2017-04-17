@@ -314,145 +314,169 @@ public class EventServer
         while(connectionIter.hasNext())
         {
             Entry<ServerWebSocket, EventServerClient> connection = connectionIter.next();
-            Boolean sendMessage = null;
-
             EventType eventType = eventClass.getAnnotation(EventInfo.class).eventType();
 
+            // Don't send Listener events to clients.
+            if(eventType.equals(EventType.LISTENER))
+            {
+                return;
+            }
+
+            // This is a service event. This will always be sent.
             if (eventType.equals(EventType.SERVICE))
             {
-                sendMessage = true;
+                connection.getKey().writeFinalTextFrame(messageToSend.encode());
+                return;
             }
 
-            else if (eventType.equals(EventType.EVENT))
-            {
-                //Get Subscription for provided event
-                JsonObject subscription = connection.getValue().getSubscription(eventClass);
+            // Get Subscription for provided event
+            JsonObject subscription = connection.getValue().getSubscription(eventClass);
 
-                if (subscription.getString("all").equals("true"))
+            // Check to see if we should send this event.
+            if(!checkCanSendEvent(subscription, eventFilterData))
+            {
+                return;
+            }
+
+            // Filter out all fields that do not match the fields requested by the client.
+            if (subscription.getJsonArray("show").size() > 0)
+            {
+                JsonObject filteredPayload = new JsonObject();
+
+                for (String field : eventData.fieldNames())
                 {
-                    sendMessage = true;
+                    if (subscription.getJsonArray("show").contains(field))
+                    {
+                        filteredPayload.put(field, eventData.getString(field));
+                    }
                 }
 
+                messageToSend.put("payload", filteredPayload);
+            }
+
+            // Hide any additional fields requested by the client.
+            if (subscription.getJsonArray("hide").size() > 0)
+            {
+                JsonObject filteredPayload = messageToSend.getJsonObject("payload");
+
+                for (String field : eventData.copy().fieldNames())
+                {
+                    if (subscription.getJsonArray("hide").contains(field))
+                    {
+                        filteredPayload.remove(field);
+                    }
+                }
+
+                messageToSend.put("payload", filteredPayload);
+            }
+
+            // Send the event.
+            connection.getKey().writeFinalTextFrame(messageToSend.encode());
+        }
+    }
+
+    private boolean checkCanSendEvent(JsonObject subscription, JsonObject eventFilterData)
+    {
+        // If we are sending all events, no filtering is required.
+        if (subscription.getString("all").equals("true"))
+        {
+            return true;
+        }
+
+        // This will be set when an event filter is not empty.
+        boolean filteredEvent = false;
+
+        for (String subscriptionProperty : subscription.fieldNames())
+        {
+            if (!subscriptionProperty.equals("all") && !subscriptionProperty.equals("useAND") && !subscriptionProperty.equals("show") && !subscriptionProperty.equals("hide"))
+            {
+                JsonArray filterData = eventFilterData.getJsonArray(subscriptionProperty);
+
+                // The worlds filter is special in the fact that a world + zone can be specified.
+                // Separate logic is done to handle this behaviour.
+                if (subscriptionProperty.equals("worlds"))
+                {
+                    JsonObject subscriptionValue = subscription.getJsonObject(subscriptionProperty);
+
+                    // This filter is empty.
+                    if (subscriptionValue.size() == 0)
+                    {
+                         continue;
+                    }
+
+                    // This event has at least 1 filter.
+                    filteredEvent = true;
+
+                    // The filter does not contain any matching worlds.
+                    if (!subscriptionValue.containsKey(filterData.getString(0)))
+                    {
+                        return false;
+                    }
+
+                    JsonArray subscriptionZoneData = subscriptionValue.getJsonObject(filterData.getString(0)).getJsonArray("zones");
+                    JsonArray zoneData = eventFilterData.getJsonArray("zones");
+
+                    // If no zones have been defined, or if we contain a matching zone, go to the next filter.
+                    if (subscriptionZoneData == null || subscriptionZoneData.isEmpty() || subscriptionZoneData.contains(zoneData.getString(0)))
+                    {
+                        continue;
+                    }
+
+                    return false;
+                }
+
+                // For all other filters...
+                JsonArray subscriptionValue = subscription.getJsonArray(subscriptionProperty);
+
+                // This filter is empty. Go to the next.
+                if (subscriptionValue.size() == 0)
+                {
+                    continue;
+                }
+
+                // Some events specify multiple dynamic values (characters, outfits).
+                // These values are checked with AND/OR logic as specified by the client.
+
+                // For AND, we immediately return false if one value does not match.
+                if (subscription.getJsonArray("useAND").contains(subscriptionProperty))
+                {
+                    for (int i = 0; i < filterData.size(); i++)
+                    {
+                        if (!subscriptionValue.contains(filterData.getString(i)))
+                        {
+                            return false;
+                        }
+                    }
+
+                    continue;
+                }
+
+                // For OR, we only return false if nothing matched.
                 else
                 {
-                    for (String subscriptionProperty : subscription.fieldNames())
+                    boolean somethingMatched = false;
+                    for (int i = 0; i < filterData.size(); i++)
                     {
-                        if (!subscriptionProperty.equals("all") && !subscriptionProperty.equals("useAND") && !subscriptionProperty.equals("show") && !subscriptionProperty.equals("hide"))
+                        if (subscriptionValue.contains(filterData.getString(i)))
                         {
-                            JsonArray filterData = eventFilterData.getJsonArray(subscriptionProperty);
-
-                            if (subscriptionProperty.equals("worlds"))
-                            {
-                                JsonObject subscriptionValue = subscription.getJsonObject(subscriptionProperty);
-
-                                if (subscriptionValue.size() > 0)
-                                {
-                                    if (subscriptionValue.containsKey(filterData.getString(0)))
-                                    {
-                                        JsonArray subscriptionZoneData = subscriptionValue.getJsonObject(filterData.getString(0)).getJsonArray("zones");
-                                        JsonArray zoneData = eventFilterData.getJsonArray("zones");
-
-                                        if (subscriptionZoneData == null || subscriptionZoneData.isEmpty() || subscriptionZoneData.contains(zoneData.getString(0)))
-                                        {
-                                            sendMessage = true;
-                                        }
-
-                                        else
-                                        {
-                                            sendMessage = false;
-                                        }
-                                    }
-
-                                    else
-                                    {
-                                        sendMessage = false;
-                                    }
-                                }
-                            }
-
-                            else
-                            {
-                                JsonArray subscriptionValue = subscription.getJsonArray(subscriptionProperty);
-
-                                if (subscriptionValue.size() > 0)
-                                {
-                                    if (subscription.getJsonArray("useAND").contains(subscriptionProperty))
-                                    {
-                                        for (int i = 0; i < filterData.size(); i++)
-                                        {
-                                            if (subscriptionValue.contains(filterData.getString(i)))
-                                            {
-                                                sendMessage = true;
-                                            }
-                                            else if (subscriptionValue.size() > 0)
-                                            {
-                                                sendMessage = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-
-                                    else
-                                    {
-                                        for (int i = 0; i < filterData.size(); i++)
-                                        {
-                                            if (subscriptionValue.contains(filterData.getString(i)))
-                                            {
-                                                sendMessage = true;
-                                            }
-                                            else if (subscriptionValue.size() > 0)
-                                            {
-                                                sendMessage = false;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (sendMessage != null && !sendMessage)
-                            {
-                                break;
-                            }
-                        }
-                    }
-                }
-
-                if (subscription.getJsonArray("show").size() > 0)
-                {
-                    JsonObject filteredPayload = new JsonObject();
-
-                    for (String field : eventData.fieldNames())
-                    {
-                        if (subscription.getJsonArray("show").contains(field))
-                        {
-                            filteredPayload.put(field, eventData.getString(field));
+                            somethingMatched = true;
+                            break;
                         }
                     }
 
-                    messageToSend.put("payload", filteredPayload);
-                }
-
-                if (subscription.getJsonArray("hide").size() > 0)
-                {
-                    JsonObject filteredPayload = messageToSend.getJsonObject("payload");
-
-                    for (String field : eventData.copy().fieldNames())
+                    if(!somethingMatched)
                     {
-                        if (subscription.getJsonArray("hide").contains(field))
-                        {
-                            filteredPayload.remove(field);
-                        }
+                        return false;
                     }
-
-                    messageToSend.put("payload", filteredPayload);
                 }
-            }
-
-            if (sendMessage != null && sendMessage)
-            {
-                connection.getKey().writeFinalTextFrame(messageToSend.encode());
             }
         }
+
+        if(filteredEvent)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
