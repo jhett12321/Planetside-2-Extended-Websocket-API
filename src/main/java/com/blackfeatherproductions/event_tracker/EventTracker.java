@@ -4,9 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
-import java.util.Date;
 import java.util.function.Consumer;
-import java.util.logging.Level;
 
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
@@ -73,7 +71,7 @@ public class EventTracker extends AbstractVerticle
         try
         {
             File existingLog = new File("eventTracker.log");
-            File renLog = new File("eventTracker_" + String.valueOf(new Date().getTime()) + ".log");
+            File renLog = new File("eventTracker_prev.log");
 
             if(existingLog.exists())
             {

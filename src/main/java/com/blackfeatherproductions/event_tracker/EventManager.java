@@ -74,41 +74,15 @@ public class EventManager
             boolean eventHandled = false;
 
             //Listeners
-            for (Entry<EventInfo, Class<? extends Event>> entry : listeners.entrySet())
+            if(processHandlers(eventName, payload, environment, listeners))
             {
-                if (eventName.matches(entry.getKey().listenedEvents()))
-                {
-                    try
-                    {
-                        Event listener = entry.getValue().newInstance();
-
-                        queuedListeners.add(new QueuedEvent(entry.getKey().priority(), listener, payload, environment));
-                        eventHandled = true;
-                    }
-                    catch (InstantiationException | IllegalAccessException e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
+                eventHandled = true;
             }
 
             //Events
-            for (Entry<EventInfo, Class<? extends Event>> entry : events.entrySet())
+            if(processHandlers(eventName, payload, environment, events))
             {
-                if (eventName.matches(entry.getKey().listenedEvents()))
-                {
-                    try
-                    {
-                        Event event = entry.getValue().newInstance();
-
-                        queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload, environment));
-                        eventHandled = true;
-                    }
-                    catch (InstantiationException | IllegalAccessException e)
-                    {
-                        e.printStackTrace();
-                    }
-                }
+                eventHandled = true;
             }
 
             if (!eventHandled && !unknownEvents.contains(eventName))
@@ -120,6 +94,29 @@ public class EventManager
                 unknownEvents.add(eventName);
             }
         }
+    }
+
+    private boolean processHandlers(String eventName, JsonObject payload, Environment environment, Map<EventInfo, Class<? extends Event>> events)
+    {
+        for (Entry<EventInfo, Class<? extends Event>> entry : events.entrySet())
+        {
+            if (eventName.matches(entry.getKey().listenedEvents()))
+            {
+                try
+                {
+                    Event event = entry.getValue().newInstance();
+
+                    queuedEvents.add(new QueuedEvent(entry.getKey().priority(), event, payload, environment));
+                    return true;
+                }
+                catch (InstantiationException | IllegalAccessException e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return false;
     }
 
     private void registerEvents()

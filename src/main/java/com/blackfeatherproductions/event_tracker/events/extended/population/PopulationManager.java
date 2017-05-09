@@ -1,11 +1,6 @@
 package com.blackfeatherproductions.event_tracker.events.extended.population;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 
 import org.apache.commons.lang3.StringUtils;
@@ -27,12 +22,16 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 public class PopulationManager implements Query
 {
     //Utils
     private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
     private final QueryManager queryManager = EventTracker.getQueryManager();
+
+    //Character Pool
+    private Queue<OnlinePlayer> pooledOnlinePlayers = new ConcurrentLinkedQueue<>();
 
     //Online Characters
     private Map<Environment, Map<String, OnlinePlayer>> envOnlinePlayers = new HashMap<>();
@@ -41,6 +40,7 @@ public class PopulationManager implements Query
     private Map<Environment, List<String>> envCharactersToCheck = new HashMap<>();
 
     //Population Data
+    //TODO Why.........
     private Map<Environment, PopulationStore> envTotalPopulations = new HashMap<>();
     private Map<Environment, Map<World, PopulationStore>> envWorldPopulations = new HashMap<>();
     private Map<Environment, Map<String, PopulationStore>> envZonePopulations = new HashMap<>();
@@ -209,8 +209,21 @@ public class PopulationManager implements Query
 
         else
         {
-            //Create a new Online Character
-            player = new OnlinePlayer(faction, outfitID, zone, world);
+            if(!pooledOnlinePlayers.isEmpty())
+            {
+                // Use an existing pooled character
+                player = pooledOnlinePlayers.remove();
+            }
+            else
+            {
+                //Create a new Online Character
+                player = new OnlinePlayer();
+            }
+
+            // Set the data for this online player.
+            player.initialize(faction, outfitID, zone, world);
+
+            //Add the player to the appropriate environment.
             envOnlinePlayers.get(environment).put(characterID, player);
 
             modified = true;
@@ -256,6 +269,9 @@ public class PopulationManager implements Query
 
             //Generate events
             generateEvents(environment, player, false);
+
+            //Return the player to the character pool.
+            pooledOnlinePlayers.add(player);
         }
     }
 

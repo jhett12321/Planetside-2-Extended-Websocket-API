@@ -15,7 +15,7 @@ public class OnlinePlayer
 
     private Date lastEvent;
 
-    public OnlinePlayer(Faction faction, String outfitID, Zone zone, World world)
+    public void initialize(Faction faction, String outfitID, Zone zone, World world)
     {
         this.faction = faction;
         this.outfitID = outfitID;

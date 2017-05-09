@@ -13,7 +13,7 @@ public interface Event
      * @param payload - The raw event payload
      * @param environment - The environment (PC, PS4) for this event.
      */
-    public void preProcessEvent(JsonObject payload, Environment environment);
+    void preProcessEvent(JsonObject payload, Environment environment);
 
     /**
      * This is where final processing of the event should be done. All required
@@ -26,18 +26,18 @@ public interface Event
      *
      * @return The environment (PC, PS4) of this event.
      */
-    public Environment getEnvironment();
+    Environment getEnvironment();
 
     /**
      *
      * @return A list of JsonArrays containing completed filter data as
      * specified by the EventInfo annotation.
      */
-    public JsonObject getFilterData();
+    JsonObject getFilterData();
 
     /**
      *
      * @return The completed event payload of this event.
      */
-    public JsonObject getEventData();
+    JsonObject getEventData();
 }

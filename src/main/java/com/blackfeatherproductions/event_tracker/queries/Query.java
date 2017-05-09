@@ -6,5 +6,5 @@ import com.blackfeatherproductions.event_tracker.data_static.Environment;
 
 public interface Query
 {
-    public void receiveData(JsonObject data, Environment environment);
+    void receiveData(JsonObject data, Environment environment);
 }

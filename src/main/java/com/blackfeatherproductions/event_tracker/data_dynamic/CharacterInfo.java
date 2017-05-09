@@ -17,19 +17,8 @@ public class CharacterInfo
     private boolean online;
     private Date updateTime;
 
-    public CharacterInfo(final String characterID)
-    {
-        this.characterID = characterID;
-        this.characterName = "";
-        this.faction = Faction.NS;
-        this.outfitID = "0";
-        this.zone = Zone.UNKNOWN;
-        this.world = World.UNKNOWN;
-        this.online = false;
-        this.updateTime = new Date();
-    }
 
-    public CharacterInfo(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
+    public void setCharacterData(final String characterID, String characterName, String factionID, String outfitID, String zoneID, String worldID, boolean online)
     {
         this.characterID = characterID;
         this.characterName = characterName;
@@ -38,6 +27,7 @@ public class CharacterInfo
         this.zone = Zone.getZoneByID(zoneID);
         this.world = World.getWorldByID(worldID);
         this.online = online;
+        this.updateTime = new Date();
     }
 
     public Faction getFaction()
@@ -68,6 +58,16 @@ public class CharacterInfo
     public World getWorld()
     {
         return world;
+    }
+
+    public Date getUpdateTime()
+    {
+        return updateTime;
+    }
+
+    public void updateTime()
+    {
+        updateTime = new Date();
     }
 
     public boolean isOnline()

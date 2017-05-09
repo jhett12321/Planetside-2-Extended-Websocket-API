@@ -1,27 +1,26 @@
 package com.blackfeatherproductions.event_tracker;
 
+import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_static.Environment;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.JsonObject;
 
-import com.blackfeatherproductions.event_tracker.data_dynamic.CharacterInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.MetagameEventInfo;
 import com.blackfeatherproductions.event_tracker.data_dynamic.WorldInfo;
-import com.blackfeatherproductions.event_tracker.data_static.Faction;
 import com.blackfeatherproductions.event_tracker.data_static.World;
-import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class DynamicDataManager
 {
+    // Expired character info objects are reused by new queries.
+    private final Queue<CharacterInfo> pooledCharacters = new ConcurrentLinkedQueue<>();
+
     private final Map<String, CharacterInfo> characters = new ConcurrentHashMap<>();
-    private final Map<String, Date> characterDataTimers = new ConcurrentHashMap<>();
     private final Map<World, WorldInfo> worlds = new HashMap<>();
 
     public DynamicDataManager()
@@ -63,12 +62,17 @@ public class DynamicDataManager
         //Deletes character data that has reached the expiration period.
         vertx.setPeriodic(600000, id ->
         {
-            for(Entry<String, Date> character : characterDataTimers.entrySet())
+            Iterator<Entry<String, CharacterInfo>> iter = characters.entrySet().iterator();
+
+            //Player cached data expires after 5 minutes.
+            while(iter.hasNext())
             {
-                //Player cached data expires after 5 minutes.
-                if(new Date().getTime() - character.getValue().getTime() >= 30000)
+                Entry<String, CharacterInfo> character = iter.next();
+
+                if(new Date().getTime() - character.getValue().getUpdateTime().getTime() >= 30000)
                 {
-                    characters.remove(character.getKey());
+                    pooledCharacters.add(character.getValue());
+                    iter.remove();
                 }
             }
         });
@@ -87,67 +91,62 @@ public class DynamicDataManager
 
     public void addCharacterData(String characterID, JsonObject characterData)
     {
-        CharacterInfo characterInfo;
+         CharacterInfo character;
 
         if (characters.containsKey(characterID))
         {
-            characterInfo = characters.get(characterID);
+            character = characters.get(characterID);
         }
         else
         {
-            characterInfo = new CharacterInfo(characterID);
+            // Check to see if we can reuse an older pooled character.
+            if(!pooledCharacters.isEmpty())
+            {
+                character = pooledCharacters.remove();
+            }
+            else
+            {
+                character = new CharacterInfo();
+            }
         }
 
+        String characterName = "";
+        String factionID = "0";
+        String outfitID = "0";
+        String zoneID = "0";
+        String worldID = "0";
+        boolean online = true;
+
+        // We do not have valid data to apply.
         if (characterData != null)
         {
-            String characterName = "";
-            String factionID = "0";
-            String outfitID = "0";
-            String zoneID = "0";
-            String worldID = "0";
-            boolean online = true;
-
-            if (characterData.containsKey("name"))
-            {
+            if (characterData.containsKey("name")) {
                 characterName = characterData.getJsonObject("name").getString("first");
             }
 
-            if (characterData.containsKey("faction_id"))
-            {
+            if (characterData.containsKey("faction_id")) {
                 factionID = characterData.getString("faction_id");
             }
 
-            if (characterData.containsKey("outfit"))
-            {
+            if (characterData.containsKey("outfit")) {
                 outfitID = characterData.getJsonObject("outfit").getString("outfit_id");
             }
 
-            if (characterData.containsKey("last_event"))
-            {
+            if (characterData.containsKey("last_event")) {
                 zoneID = characterData.getJsonObject("last_event").getString("zone_id");
             }
 
-            if (characterData.containsKey("world"))
-            {
+            if (characterData.containsKey("world")) {
                 worldID = characterData.getJsonObject("world").getString("world_id");
             }
 
-            if (characterData.containsKey("online"))
-            {
+            if (characterData.containsKey("online")) {
                 online = !characterData.getJsonObject("online").getString("online_status").equals("0");
             }
-
-            characterInfo.setCharacterName(characterName);
-            characterInfo.setFaction(Faction.getFactionByID(factionID));
-            characterInfo.setOutfitID(outfitID);
-            characterInfo.setZone(Zone.getZoneByID(zoneID));
-            characterInfo.setWorld(World.getWorldByID(worldID));
-            characterInfo.setOnline(online);
-            update(characterID);
         }
 
-        characters.put(characterID, characterInfo);
-        characterDataTimers.put(characterID, new Date());
+        character.setCharacterData(characterID, characterName, factionID, outfitID, zoneID, worldID, online);
+        characters.put(characterID, character);
     }
 
     //World Data
@@ -173,9 +172,11 @@ public class DynamicDataManager
     
     public void update(String characterID)
     {
-        if(characterDataTimers.containsKey(characterID))
+        CharacterInfo charInfo = getCharacterData(characterID);
+
+        if(charInfo != null)
         {
-            characterDataTimers.put(characterID, new Date());
+            charInfo.updateTime();
         }
     }
 }
