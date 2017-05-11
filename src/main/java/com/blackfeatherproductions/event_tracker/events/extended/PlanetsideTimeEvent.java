@@ -61,6 +61,6 @@ public class PlanetsideTimeEvent implements Event
         eventData.put("new_time", payload.getString("new_time"));
         eventData.put("diff", payload.getString("diff"));
 
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }

@@ -27,8 +27,8 @@ import io.vertx.core.json.JsonObject;
 public class ExperienceEarnedEvent implements Event
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     //Raw Data
     private JsonObject payload;
@@ -125,6 +125,6 @@ public class ExperienceEarnedEvent implements Event
         filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }

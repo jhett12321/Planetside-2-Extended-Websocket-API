@@ -11,7 +11,7 @@ import com.blackfeatherproductions.event_tracker.EventTracker;
 
 public class CharacterListQuery implements Query
 {
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
 
     private List<CharacterQuery> callbacks;
 
@@ -43,9 +43,9 @@ public class CharacterListQuery implements Query
                 //Census does not always have data for all characters.
                 //Since the above iterator loops over returned data, and not the requested ids, it does not create these blank entries.
                 //In this case, we create a blank character.
-                if (!EventTracker.getDynamicDataManager().characterDataExists(characterID))
+                if (!EventTracker.instance.getDynamicDataManager().characterDataExists(characterID))
                 {
-                    EventTracker.getDynamicDataManager().addCharacterData(characterID, null);
+                    EventTracker.instance.getDynamicDataManager().addCharacterData(characterID, null);
                 }
             }
 

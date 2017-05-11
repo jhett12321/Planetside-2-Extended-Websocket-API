@@ -27,9 +27,9 @@ import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 public class PopulationEventListener implements Event
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final PopulationManager populationManager = EventTracker.getPopulationManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final PopulationManager populationManager = EventTracker.instance.getPopulationManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     //Raw Data
     private String attackerCharacterID;

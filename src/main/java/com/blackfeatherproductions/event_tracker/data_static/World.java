@@ -36,7 +36,7 @@ public class World
     {
         if (!worlds.containsKey(id))
         {
-            EventTracker.getLogger().warn("World ID " + id + "does not exist! Returning unknown world.");
+            EventTracker.instance.getLogger().warn("World ID " + id + "does not exist! Returning unknown world.");
             return World.UNKNOWN;
         }
         else

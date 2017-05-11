@@ -21,10 +21,10 @@ public class StaticDataManager
         //TODO FUTURE Types to be implemented: achievement, item/weapon, vehicle, directive
         
         //Environments
-        Environment.PC = new Environment("PC", "pc", "ps2:v2");
-        Environment.PS4_US = new Environment("PS4_US", "ps4_us", "ps2ps4us:v2");
-        Environment.PS4_EU = new Environment("PS4_EU", "ps4_eu", "ps2ps4eu:v2");
-        Environment.WEBSOCKET_SERVICE = new Environment("WEBSOCKET_SERVICE", "websocket_service", null);
+        Environment.PC = new Environment("PC", "pc", "ps2:v2", "ps2");
+        Environment.PS4_US = new Environment("PS4_US", "ps4_us", "ps2ps4us:v2", "ps2ps4us");
+        Environment.PS4_EU = new Environment("PS4_EU", "ps4_eu", "ps2ps4eu:v2", "ps2ps4eu");
+        Environment.WEBSOCKET_SERVICE = new Environment("WEBSOCKET_SERVICE", "websocket_service", null, null);
         
         Environment.environments.add(Environment.PC);
         Environment.environments.add(Environment.PS4_US);
@@ -139,6 +139,6 @@ public class StaticDataManager
     protected static void CensusInit()
     {
         //Facilities (CENSUS)
-        EventTracker.getQueryManager().queryFacilityStaticData();
+        EventTracker.instance.getQueryManager().queryFacilityStaticData();
     }
 }

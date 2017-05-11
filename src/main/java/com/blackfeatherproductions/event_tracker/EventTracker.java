@@ -6,40 +6,35 @@ import java.nio.file.Files;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 import java.util.function.Consumer;
 
+import com.blackfeatherproductions.event_tracker.data_static.Environment;
+import com.blackfeatherproductions.event_tracker.feeds.EventFeed;
 import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Vertx;
 import io.vertx.core.logging.Logger;
 import io.vertx.core.logging.LoggerFactory;
 
 import com.blackfeatherproductions.event_tracker.events.extended.population.PopulationManager;
-import com.blackfeatherproductions.event_tracker.feeds.Census;
-import com.blackfeatherproductions.event_tracker.feeds.CensusPS4EU;
-import com.blackfeatherproductions.event_tracker.feeds.CensusPS4US;
-import com.blackfeatherproductions.event_tracker.feeds.CensusRest;
 import com.blackfeatherproductions.event_tracker.server.EventServer;
 
 public class EventTracker extends AbstractVerticle
 {
     //Instance
-    public static EventTracker inst;
-    
-    //Logger
-    private static Logger logger;
+    public static EventTracker instance;
 
-    //Data
-    private static Config config;
+    private Logger logger;
+    private Config config;
 
     //Managers
-    private static EventManager eventManager;
-    private static DynamicDataManager dynamicDataManager;
-    private static QueryManager queryManager;
-    private static PopulationManager populationManager;
+    private EventManager eventManager;
+    private DynamicDataManager dynamicDataManager;
+    private QueryManager queryManager;
+    private PopulationManager populationManager;
     
     //Feeds
-    private static Census census;
-    private static CensusPS4US censusPS4US;
-    private static CensusPS4EU censusPS4EU;
-    private static CensusRest censusRest;
+    private EventFeed census;
+    private EventFeed censusPS4US;
+    private EventFeed censusPS4EU;
+    private EventFeed censusRest;
 
     //Event Server
     private static EventServer eventServer;
@@ -65,7 +60,7 @@ public class EventTracker extends AbstractVerticle
     @Override
     public void start()
     {
-        inst = this;
+        instance = this;
         
         //Move Existing Logs.
         try
@@ -106,43 +101,43 @@ public class EventTracker extends AbstractVerticle
         eventServer = new EventServer();
 
         //Feeds
-        census = new Census();
-        censusPS4US = new CensusPS4US();
-        censusPS4EU = new CensusPS4EU();
-        censusRest = new CensusRest();
+        census = new EventFeed(Environment.PC);
+        censusPS4US = new EventFeed(Environment.PS4_US);
+        censusPS4EU = new EventFeed(Environment.PS4_EU);
+        //censusRest = new EventFeed();
     }
 
-    public static QueryManager getQueryManager()
+    public QueryManager getQueryManager()
     {
         return queryManager;
     }
 
-    public static DynamicDataManager getDynamicDataManager()
+    public DynamicDataManager getDynamicDataManager()
     {
         return dynamicDataManager;
     }
 
-    public static EventServer getEventServer()
+    public EventServer getEventServer()
     {
         return eventServer;
     }
 
-    public static Logger getLogger()
+    public Logger getLogger()
     {
         return logger;
     }
 
-    public static Config getConfig()
+    public Config getConfig()
     {
         return config;
     }
 
-    public static EventManager getEventHandler()
+    public EventManager getEventHandler()
     {
         return eventManager;
     }
 
-    public static PopulationManager getPopulationManager()
+    public PopulationManager getPopulationManager()
     {
         return populationManager;
     }

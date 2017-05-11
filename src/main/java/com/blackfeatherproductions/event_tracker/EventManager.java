@@ -53,7 +53,7 @@ public class EventManager
         registerEvents();
 
         //Process Event Queue
-        EventTracker.inst.getVertx().setPeriodic(100, id ->
+        EventTracker.instance.getVertx().setPeriodic(100, id ->
         {
             for (int i = 0; i < queuedListeners.size(); i++)
             {
@@ -87,9 +87,7 @@ public class EventManager
 
             if (!eventHandled && !unknownEvents.contains(eventName))
             {
-                EventTracker.getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?");
-                EventTracker.getLogger().warn("Payload data:");
-                EventTracker.getLogger().warn(payload.encodePrettily());
+                EventTracker.instance.getLogger().warn("Unhandled Payload for event " + eventName + "! Has Census added a new event?\n\"Payload data:\n" + payload.encodePrettily());
 
                 unknownEvents.add(eventName);
             }
@@ -162,7 +160,7 @@ public class EventManager
         EventInfo info = event.getAnnotation(EventInfo.class);
         if (info == null)
         {
-            EventTracker.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
+            EventTracker.instance.getLogger().warn("Implementing Event Class: " + event.getName() + " is missing a required annotation.");
             return;
         }
 

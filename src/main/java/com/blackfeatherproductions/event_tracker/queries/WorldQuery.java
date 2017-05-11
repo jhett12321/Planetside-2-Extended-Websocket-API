@@ -19,8 +19,8 @@ import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 
 public class WorldQuery implements Query
 {
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     private final World world;
 

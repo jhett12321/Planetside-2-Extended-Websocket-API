@@ -66,9 +66,9 @@ public class CensusQuery
     {
         this.failureCount++;
 
-        if (failureCount > EventTracker.getConfig().getMaxFailures())
+        if (failureCount > EventTracker.instance.getConfig().getMaxFailures())
         {
-            failureCount = EventTracker.getConfig().getMaxFailures();
+            failureCount = EventTracker.instance.getConfig().getMaxFailures();
         }
     }
 

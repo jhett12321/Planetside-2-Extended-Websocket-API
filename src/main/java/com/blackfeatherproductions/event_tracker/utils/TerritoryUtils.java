@@ -20,7 +20,7 @@ import com.blackfeatherproductions.event_tracker.data_static.Zone;
 
 public class TerritoryUtils
 {    
-    private static final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private static final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
     
     /**
      * Validates all facilities in the given zone still contain a connection to a correct Warpgate, updating facilities in the process.
@@ -78,7 +78,7 @@ public class TerritoryUtils
 
                     String eventName = payload.getString("event_name");
 
-                    EventTracker.getEventHandler().handleEvent(eventName, payload, environment);
+                    EventTracker.instance.getEventHandler().handleEvent(eventName, payload, environment);
                 }
             }
         }

@@ -255,7 +255,7 @@ public class EventServerClient
     {
         this.subscriptions.clear();
 
-        for (Class<? extends Event> event : EventTracker.getEventHandler().getRegisteredEvents())
+        for (Class<? extends Event> event : EventTracker.instance.getEventHandler().getRegisteredEvents())
         {
             //Add blank subscription to this client;
             subscriptions.put(event, getBlankSubscription(event));

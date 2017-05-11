@@ -25,7 +25,7 @@ public class DynamicDataManager
 
     public DynamicDataManager()
     {
-        Vertx vertx = EventTracker.inst.getVertx();
+        Vertx vertx = EventTracker.instance.getVertx();
 
         for (World world : World.getValidWorlds())
         {
@@ -43,7 +43,7 @@ public class DynamicDataManager
 
                     if (new Date().after(endTime))
                     {
-                        EventTracker.getLogger().warn("Ending MetagameEvent ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + ": Event is overdue.");
+                        EventTracker.instance.getLogger().warn("Ending MetagameEvent ID " + metagameEvent.getInstanceID() + " on " + worldInfo.getKey().getName() + ": Event is overdue.");
 
                         JsonObject dummyPayload = new JsonObject();
                         dummyPayload.put("instance_id", metagameEvent.getInstanceID());
@@ -53,7 +53,7 @@ public class DynamicDataManager
                         dummyPayload.put("world_id", worldInfo.getKey().getID());
                         dummyPayload.put("event_name", "MetagameEvent");
 
-                        EventTracker.getEventHandler().handleEvent("MetagameEvent", dummyPayload, Environment.WEBSOCKET_SERVICE);
+                        EventTracker.instance.getEventHandler().handleEvent("MetagameEvent", dummyPayload, Environment.WEBSOCKET_SERVICE);
                     }
                 }
             }

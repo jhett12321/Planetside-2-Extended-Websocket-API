@@ -35,9 +35,9 @@ import com.blackfeatherproductions.event_tracker.queries.static_data.StaticFacil
 public class QueryManager
 {
     //Utils
-    private final Vertx vertx = EventTracker.inst.getVertx();
-    private final Logger logger = EventTracker.getLogger();
-    private final Config config = EventTracker.getConfig();
+    private final Vertx vertx = EventTracker.instance.getVertx();
+    private final Logger logger = EventTracker.instance.getLogger();
+    private final Config config = EventTracker.instance.getConfig();
 
     //Character Queries
     private Queue<CharacterQuery> queuedCharacterQueries = new ConcurrentLinkedQueue<>();
@@ -65,7 +65,7 @@ public class QueryManager
         }
 
         //Query Processor
-        EventTracker.inst.getVertx().setPeriodic(1000, id ->
+        EventTracker.instance.getVertx().setPeriodic(1000, id ->
         {
             //Grab whatever is in the character queues, and split them into 150 character chunks.
             for (int i = 0; i < queuedCharacterQueries.size(); i++)
@@ -160,7 +160,7 @@ public class QueryManager
             return;
         }
 
-        final String query = "/s:" + EventTracker.getConfig().getServiceID() + "/get/" + censusQuery.getEnvironment().censusEndpoint + "/" + censusQuery.getRawQuery();
+        final String query = "/s:" + EventTracker.instance.getConfig().getServiceID() + "/get/" + censusQuery.getEnvironment().censusEndpoint + "/" + censusQuery.getRawQuery();
 
         client.getNow(query, response ->
         {
@@ -226,22 +226,22 @@ public class QueryManager
 
     private void censusQueryFailed(CensusQuery censusQuery)
     {
-        if (censusQuery.getFailureCount() >= EventTracker.getConfig().getMaxFailures())
+        if (censusQuery.getFailureCount() >= EventTracker.instance.getConfig().getMaxFailures())
         {
             if(censusQuery.isFailureAllowed())
             {
                 logger.error("[Census REST] Census Failure Limit Reached. Dropping query.");
 
                 censusQuery.getCallback().receiveData(null, censusQuery.getEnvironment());
-                censusQuery.setFailureCount(EventTracker.getConfig().getMaxFailures());
+                censusQuery.setFailureCount(EventTracker.instance.getConfig().getMaxFailures());
             }
             
             else
             {
-                int delay = EventTracker.getConfig().getRequiredQueryFailureDelay();
+                int delay = EventTracker.instance.getConfig().getRequiredQueryFailureDelay();
                 logger.error("[Census REST] Census Failure Limit Reached for query, but is a required query for operation. Delaying " + delay + "ms until next attempt.");
                 
-                EventTracker.inst.getVertx().setTimer(delay, id ->
+                EventTracker.instance.getVertx().setTimer(delay, id ->
                 {
                     retryQuery(censusQuery);
                 });
@@ -251,7 +251,7 @@ public class QueryManager
         else
         {
             censusQuery.incrementFailureCount();
-            logger.warn("[Census REST] Failed Query " + String.valueOf(censusQuery.getFailureCount()) + "/" + EventTracker.getConfig().getMaxFailures().toString());
+            logger.warn("[Census REST] Failed Query " + String.valueOf(censusQuery.getFailureCount()) + "/" + EventTracker.instance.getConfig().getMaxFailures().toString());
             retryQuery(censusQuery);
         }
     }

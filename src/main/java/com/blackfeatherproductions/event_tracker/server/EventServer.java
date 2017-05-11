@@ -53,7 +53,7 @@ public class EventServer
 
     public EventServer()
     {
-        config = EventTracker.getConfig();
+        config = EventTracker.instance.getConfig();
         
         //API Key Database
         dbUrl = "jdbc:mysql://" + config.getDbHost() + "/" + config.getDbName();
@@ -62,7 +62,7 @@ public class EventServer
         registerActions();
         
         //Websocket Server
-        HttpServer server = EventTracker.inst.getVertx().createHttpServer(new HttpServerOptions().setPort(config.getServerPort()));
+        HttpServer server = EventTracker.instance.getVertx().createHttpServer(new HttpServerOptions().setPort(config.getServerPort()));
         
         server.websocketHandler(clientConnection ->
         {
@@ -101,21 +101,21 @@ public class EventServer
             {
                 clientConnection.closeHandler(v ->
                 {
-                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Closed) API Key: " + apiKey);
+                    EventTracker.instance.getLogger().info("Client " + apiName + " Disconnected. (Connection Closed) API Key: " + apiKey);
                     
                     EventServerClient client = clientConnections.remove(clientConnection);
                 });
                 
                 clientConnection.endHandler(v ->
                 {
-                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Ended) API Key: " + apiKey);
+                    EventTracker.instance.getLogger().info("Client " + apiName + " Disconnected. (Connection Ended) API Key: " + apiKey);
                     
                     EventServerClient client = clientConnections.remove(clientConnection);
                 });
                 
                 clientConnection.exceptionHandler(e ->
                 {
-                    EventTracker.getLogger().info("Client " + apiName + " Disconnected. (Connection Exception) API Key: " + apiKey);
+                    EventTracker.instance.getLogger().info("Client " + apiName + " Disconnected. (Connection Exception) API Key: " + apiKey);
                     
                     EventServerClient client = clientConnections.remove(clientConnection);
                 });
@@ -135,14 +135,14 @@ public class EventServer
 
                     if (message != null)
                     {
-                        EventTracker.getLogger().info("Client " + apiName + " Sent Valid JSON Message.");
-                        EventTracker.getLogger().info(message.encodePrettily());
+                        EventTracker.instance.getLogger().info("Client " + apiName + " Sent Valid JSON Message.");
+                        EventTracker.instance.getLogger().info(message.encodePrettily());
                         handleClientMessage(clientConnection, message);
                     }
                 });
                 
                 clientConnections.put(clientConnection, new EventServerClient(clientConnection, apiKey, apiName));
-                EventTracker.getLogger().info("Client " + apiName + " Connected! API Key: " + apiKey);
+                EventTracker.instance.getLogger().info("Client " + apiName + " Connected! API Key: " + apiKey);
 
                 //Send Connection Confirmed Message
                 JsonObject connectMessage = new JsonObject();
@@ -154,7 +154,7 @@ public class EventServer
                 clientConnection.writeFinalTextFrame(connectMessage.encode());
 
                 //Send Service Status Messages
-                for (Entry<World, WorldInfo> worldEntry : EventTracker.getDynamicDataManager().getAllWorldInfo().entrySet())
+                for (Entry<World, WorldInfo> worldEntry : EventTracker.instance.getDynamicDataManager().getAllWorldInfo().entrySet())
                 {
                     JsonObject serviceMessage = new JsonObject();
 
@@ -287,7 +287,7 @@ public class EventServer
         ActionInfo info = action.getAnnotation(ActionInfo.class);
         if (info == null)
         {
-            EventTracker.getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
+            EventTracker.instance.getLogger().warn("Implementing Action Class: " + action.getName() + " is missing a required annotation.");
             return;
         }
 

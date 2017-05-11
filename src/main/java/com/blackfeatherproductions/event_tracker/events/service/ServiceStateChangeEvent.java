@@ -61,6 +61,6 @@ public class ServiceStateChangeEvent implements Event
         eventData.put("world_id", payload.getString("world_id"));
 
         //Broadcast Event
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }

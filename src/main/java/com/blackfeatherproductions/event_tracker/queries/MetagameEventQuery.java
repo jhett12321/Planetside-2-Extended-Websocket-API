@@ -54,7 +54,7 @@ public class MetagameEventQuery implements Query
 
                     String eventName = payload.getString("event_name");
 
-                    EventTracker.getEventHandler().handleEvent(eventName, payload, environment);
+                    EventTracker.instance.getEventHandler().handleEvent(eventName, payload, environment);
                 }
             }
         }

@@ -93,6 +93,6 @@ public class PopulationChangeEvent implements Event
         }
 
         //Broadcast Event
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }

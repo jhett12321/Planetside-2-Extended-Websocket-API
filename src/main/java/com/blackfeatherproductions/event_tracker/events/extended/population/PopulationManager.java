@@ -27,8 +27,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 public class PopulationManager implements Query
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     //Character Pool
     private Queue<OnlinePlayer> pooledOnlinePlayers = new ConcurrentLinkedQueue<>();
@@ -53,7 +53,7 @@ public class PopulationManager implements Query
 
     public PopulationManager()
     {
-        Vertx vertx = EventTracker.inst.getVertx();
+        Vertx vertx = EventTracker.instance.getVertx();
 
         //Create Population Stores
         for (Environment environment : Environment.getEnvironments())
@@ -294,7 +294,7 @@ public class PopulationManager implements Query
                 totalPayload.put("population_tr", totalPopulation.getFactionPopulation(Faction.TR).toString());
                 totalPayload.put("population_unk", totalPopulation.getFactionPopulation(Faction.NS).toString());
 
-                EventTracker.getEventHandler().handleEvent(eventName, totalPayload, environment);
+                EventTracker.instance.getEventHandler().handleEvent(eventName, totalPayload, environment);
 
                 //World Populations
                 PopulationStore worldPopulation = envWorldPopulations.get(environment).get(player.getWorld());
@@ -308,7 +308,7 @@ public class PopulationManager implements Query
                 worldPayload.put("population_unk", worldPopulation.getFactionPopulation(Faction.NS).toString());
                 worldPayload.put("world_id", player.getWorld().getID());
 
-                EventTracker.getEventHandler().handleEvent(eventName, worldPayload, environment);
+                EventTracker.instance.getEventHandler().handleEvent(eventName, worldPayload, environment);
 
                 //World Outfit
                 JsonObject outfitPayload = new JsonObject();
@@ -318,7 +318,7 @@ public class PopulationManager implements Query
                 outfitPayload.put("outfit_id", player.getOutfitID());
                 outfitPayload.put("world_id", player.getWorld().getID());
 
-                EventTracker.getEventHandler().handleEvent(eventName, outfitPayload, environment);
+                EventTracker.instance.getEventHandler().handleEvent(eventName, outfitPayload, environment);
             }
 
             //Zone Populations
@@ -334,7 +334,7 @@ public class PopulationManager implements Query
             zonePayload.put("zone_id", player.getZone().getID());
             zonePayload.put("world_id", player.getWorld().getID());
 
-            EventTracker.getEventHandler().handleEvent(eventName, zonePayload, environment);
+            EventTracker.instance.getEventHandler().handleEvent(eventName, zonePayload, environment);
 
             //Zone Outfit Populations
             JsonObject outfitZonePayload = new JsonObject();
@@ -345,7 +345,7 @@ public class PopulationManager implements Query
             outfitZonePayload.put("zone_id", player.getZone().getID());
             outfitZonePayload.put("world_id", player.getWorld().getID());
 
-            EventTracker.getEventHandler().handleEvent(eventName, outfitZonePayload, environment);
+            EventTracker.instance.getEventHandler().handleEvent(eventName, outfitZonePayload, environment);
         }
     }
 

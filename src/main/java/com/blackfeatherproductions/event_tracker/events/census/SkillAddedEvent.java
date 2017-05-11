@@ -27,8 +27,8 @@ import com.blackfeatherproductions.event_tracker.events.EventType;
 public class SkillAddedEvent implements Event
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     //Raw Data
     private JsonObject payload;
@@ -110,6 +110,6 @@ public class SkillAddedEvent implements Event
         filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }

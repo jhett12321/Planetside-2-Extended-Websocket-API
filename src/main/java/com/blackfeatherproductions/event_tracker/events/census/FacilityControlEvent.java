@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.events.census;
 
+import com.blackfeatherproductions.event_tracker.data_dynamic.FacilityInfo;
 import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 
@@ -29,7 +30,7 @@ import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 public class FacilityControlEvent implements Event
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
 
     //Raw Data
     private JsonObject payload;
@@ -93,7 +94,22 @@ public class FacilityControlEvent implements Event
         //Update Internal Data
         if (is_capture.equals("1") && isBlockedUpdate.equals("0"))
         {
-            zoneInfo.getFacility(Facility.getFacilityByID(facility_id)).setOwner(new_faction);
+            //TODO Changed for Debugging Facilities.
+            Facility fac = Facility.getFacilityByID(facility_id);
+
+            if(fac == null)
+            {
+                EventTracker.instance.getLogger().error("Unknown facility detected: " + facility_id);
+            }
+
+            FacilityInfo facInfo = zoneInfo.getFacility(fac);
+
+            if(facInfo == null)
+            {
+                EventTracker.instance.getLogger().error("Facility Info does not exist for: " + facility_id);
+            }
+
+            facInfo.setOwner(new_faction);
 
             TerritoryUtils.updateFacilityBlockedStatus(environment, world, zone, timestamp);
         }
@@ -162,6 +178,6 @@ public class FacilityControlEvent implements Event
         filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }

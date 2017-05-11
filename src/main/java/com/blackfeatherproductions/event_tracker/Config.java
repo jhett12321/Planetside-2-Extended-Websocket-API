@@ -41,8 +41,8 @@ public class Config
 
         if (!properties.exists())
         {
-            EventTracker.getLogger().warn("No Config Found! Generating new default config (eventTracker.properties).");
-            EventTracker.getLogger().warn("It is strongly recommended that you update your database/Authentication info and Service ID's before continuing use.");
+            EventTracker.instance.getLogger().warn("No Config Found! Generating new default config (eventTracker.properties).");
+            EventTracker.instance.getLogger().warn("It is strongly recommended that you update your database/Authentication info and Service ID's before continuing use.");
 
             InputStream defaultProperties = (getClass().getResourceAsStream("/defaults/eventTracker.properties"));
             try

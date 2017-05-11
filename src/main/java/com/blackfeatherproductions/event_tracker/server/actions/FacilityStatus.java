@@ -16,7 +16,7 @@ import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 @ActionInfo(actionNames = "facilityStatus")
 public class FacilityStatus implements Action
 {
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
 
     @Override
     public void processAction(ServerWebSocket clientConnection, JsonObject actionData)

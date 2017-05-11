@@ -103,6 +103,6 @@ public class CensusUtils
      */
     public static boolean isValidFacility(String facilityID)
     {
-        return !EventTracker.getConfig().getIgnoredFacilities().contains(facilityID);
+        return !EventTracker.instance.getConfig().getIgnoredFacilities().contains(facilityID);
     }
 }

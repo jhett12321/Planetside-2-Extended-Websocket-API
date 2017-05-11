@@ -84,11 +84,11 @@ public class WorldInfo
 
             if (!online)
             {
-                EventTracker.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE.");
+                EventTracker.instance.getLogger().warn("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now OFFLINE.");
             }
             else
             {
-                EventTracker.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online.");
+                EventTracker.instance.getLogger().info("Received Census Server State Message. " + world.getName() + " (" + world.getID() + ") is now Online.");
             }
 
             //Generate Events
@@ -96,7 +96,7 @@ public class WorldInfo
             payload.put("online", online ? "1" : "0");
             payload.put("world_id", world.getID());
 
-            EventTracker.getEventHandler().handleEvent("ServiceStateChange", payload, Environment.WEBSOCKET_SERVICE);
+            EventTracker.instance.getEventHandler().handleEvent("ServiceStateChange", payload, Environment.WEBSOCKET_SERVICE);
         }
     }
 }

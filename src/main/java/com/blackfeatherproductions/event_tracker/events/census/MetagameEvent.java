@@ -33,7 +33,7 @@ import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
 public class MetagameEvent implements Event
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
 
     //Raw Data
     private JsonObject payload;
@@ -262,7 +262,7 @@ public class MetagameEvent implements Event
             filterData.put("worlds", new JsonArray().add(world.getID()));
 
             //Broadcast Event		
-            EventTracker.getEventServer().broadcastEvent(this);
+            EventTracker.instance.getEventServer().broadcastEvent(this);
         }
     }
 }

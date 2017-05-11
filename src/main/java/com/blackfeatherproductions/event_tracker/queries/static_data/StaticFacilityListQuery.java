@@ -15,8 +15,8 @@ import com.blackfeatherproductions.event_tracker.data_static.FacilityType;
 
 public class StaticFacilityListQuery implements Query
 {
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     @Override
     public void receiveData(JsonObject data, Environment environment)

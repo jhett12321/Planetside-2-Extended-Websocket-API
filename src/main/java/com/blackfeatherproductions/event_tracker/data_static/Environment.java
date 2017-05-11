@@ -16,12 +16,14 @@ public class Environment
     public final String localName;
     public final String fieldName;
     public final String censusEndpoint;
+    public final String websocketEndpoint;
     
-    public Environment(String localName, String fieldName, String censusEndpoint)
+    public Environment(String localName, String fieldName, String censusEndpoint, String websocketEndpoint)
     {
         this.localName = localName;
         this.fieldName = fieldName;
         this.censusEndpoint = censusEndpoint;
+        this.websocketEndpoint = websocketEndpoint;
     }
     
     public static List<Environment> getEnvironments()

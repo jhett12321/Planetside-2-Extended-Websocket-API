@@ -31,8 +31,8 @@ import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
 public class CombatEvent implements Event
 {
     //Utils
-    private final DynamicDataManager dynamicDataManager = EventTracker.getDynamicDataManager();
-    private final QueryManager queryManager = EventTracker.getQueryManager();
+    private final DynamicDataManager dynamicDataManager = EventTracker.instance.getDynamicDataManager();
+    private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     //Raw Data
     private JsonObject payload;
@@ -173,6 +173,6 @@ public class CombatEvent implements Event
         filterData.put("worlds", new JsonArray().add(world.getID()));
 
         //Broadcast Event
-        EventTracker.getEventServer().broadcastEvent(this);
+        EventTracker.instance.getEventServer().broadcastEvent(this);
     }
 }
