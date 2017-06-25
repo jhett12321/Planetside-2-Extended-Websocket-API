@@ -252,9 +252,6 @@ public class EventFeed
                 EventTracker.instance.getDynamicDataManager().getWorldInfo(world).setOnline(false);
             }
         }
-
-        //Notify the population manager that we are now offline
-        EventTracker.instance.getPopulationManager().updateEnvironmentStatus(environment, false);
     }
 
     //================================================================================

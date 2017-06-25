@@ -373,7 +373,6 @@ public class EventServer
         }
     }
 
-    // TODO This needs to be rewritten. It is hell to navigate.
     private boolean checkCanSendEvent(JsonObject subscription, JsonObject eventFilterData)
     {
         // If we are sending all events, no filtering is required.

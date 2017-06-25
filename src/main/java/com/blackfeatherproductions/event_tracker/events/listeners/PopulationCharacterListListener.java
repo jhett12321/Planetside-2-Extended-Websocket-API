@@ -29,7 +29,6 @@ public class PopulationCharacterListListener implements Event
     private final QueryManager queryManager = EventTracker.instance.getQueryManager();
 
     //Raw Data
-    private int queriesRemaining;
     private List<String> characterList = new ArrayList<>();
     private JsonObject payload;
 
@@ -78,9 +77,8 @@ public class PopulationCharacterListListener implements Event
 
                     characters.add(characterID);
 
-                    if (characters.size() >= 20)
+                    if (characters.size() >= 10)
                     {
-                        queriesRemaining++;
                         queryManager.queryCharacter(characters, environment, this);
 
                         characters = new ArrayList<>();
@@ -89,7 +87,6 @@ public class PopulationCharacterListListener implements Event
 
                 if (!characters.isEmpty())
                 {
-                    queriesRemaining++;
                     queryManager.queryCharacter(characters, environment, this);
                 }
             }
@@ -99,20 +96,14 @@ public class PopulationCharacterListListener implements Event
     @Override
     public void processEvent()
     {
-        queriesRemaining--;
-        if(queriesRemaining == 0)
+        for (String characterID : characterList)
         {
-            for (String characterID : characterList)
+            CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
+
+            if(character != null)
             {
-                CharacterInfo character = dynamicDataManager.getCharacterData(characterID);
-                
-                if(character != null)
-                {
-                    populationManager.characterOnline(environment, characterID, character.getFaction(), character.getOutfitID(), character.getZone(), character.getWorld());
-                }
+                populationManager.characterOnline(environment, characterID, character.getFaction(), character.getOutfitID(), character.getZone(), character.getWorld());
             }
-            
-            populationManager.updateEnvironmentStatus(environment, true);
         }
     }
 }

@@ -47,6 +47,9 @@ public class QueryManager
     //Queries
     private final Queue<CensusQuery> queuedQueries = new PriorityBlockingQueue<>(100, new QueryPriorityComparator());
 
+    private final int maxQueriesPerCycle = 5;
+    private final int charactersPerQuery = 150;
+
     //Http Client
     HttpClientOptions options = new HttpClientOptions()
             .setDefaultHost(config.getCensusHostname())
@@ -84,7 +87,7 @@ public class QueryManager
 
                 envCallbacks.get(environment).add(characterQuery);
 
-                if (envCharacters.get(characterQuery.getEnvironment()).size() >= 150)
+                if (envCharacters.get(characterQuery.getEnvironment()).size() >= charactersPerQuery)
                 {
                     queryCensus("character?character_id=" + StringUtils.join(envCharacters.get(environment), ",") + "&c:show=character_id,faction_id,name.first&c:join=outfit_member^show:outfit_id^inject_at:outfit,characters_online_status^on:character_id^to:character_id^inject_at:online,characters_world^on:character_id^to:character_id^inject_at:world,characters_event^on:character_id^to:character_id^terms:type=DEATH^inject_at:last_event",
                             QueryPriority.LOWEST, environment, true, true, new CharacterListQuery(envCallbacks.remove(environment)));
@@ -109,6 +112,12 @@ public class QueryManager
             //Process anything we have in the query queue.
             for (int i = 0; i < queuedQueries.size(); i++)
             {
+                if(i > maxQueriesPerCycle)
+                {
+                    EventTracker.instance.getLogger().warn("Hit census query limit (" + maxQueriesPerCycle +") for this cycle! This is typically normal for startup.\n" +
+                            "Current queue size is " + queuedQueries.size());
+                    break;
+                }
                 getCensusData(queuedQueries.poll());
             }
         });
@@ -211,15 +220,11 @@ public class QueryManager
 
             response.exceptionHandler(e ->
             {
-                //This is just warning us that we tried to use a connection that was closed. This will still create a new connection, and do the query anyway, so just ignore it.
-                if (!e.getMessage().equalsIgnoreCase("Connection was closed"))
-                {
-                    logger.warn("[Census REST] A census query resulted in an exception.");
-                    logger.warn("[Census REST] Query: " + query);
-                    logger.warn("[Census REST] Exception: " + e.getMessage());
+                logger.warn("[Census REST] A census query resulted in an exception.");
+                logger.warn("[Census REST] Query: " + query);
+                logger.warn("[Census REST] Exception: " + e.getMessage());
 
-                    censusQueryFailed(censusQuery);
-                }
+                censusQueryFailed(censusQuery);
             });
         });
     }
