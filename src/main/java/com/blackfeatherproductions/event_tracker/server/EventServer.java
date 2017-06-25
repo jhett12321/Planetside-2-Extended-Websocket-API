@@ -294,6 +294,14 @@ public class EventServer
     public void broadcastEvent(Event event)
     {
         Class<? extends Event> eventClass = event.getClass();
+        EventType eventType = eventClass.getAnnotation(EventInfo.class).eventType();
+
+        // Don't send Listener events to clients.
+        if(eventType.equals(EventType.LISTENER))
+        {
+            return;
+        }
+
         JsonObject messageToSend = new JsonObject();
 
         JsonObject eventFilterData = event.getFilterData();
@@ -307,23 +315,16 @@ public class EventServer
         messageToSend.put("environment", event.getEnvironment().fieldName);
 
         Iterator<Entry<ServerWebSocket, EventServerClient>> connectionIter = clientConnections.entrySet().iterator();
-        
+
         while(connectionIter.hasNext())
         {
             Entry<ServerWebSocket, EventServerClient> connection = connectionIter.next();
-            EventType eventType = eventClass.getAnnotation(EventInfo.class).eventType();
-
-            // Don't send Listener events to clients.
-            if(eventType.equals(EventType.LISTENER))
-            {
-                return;
-            }
 
             // This is a service event. This will always be sent.
             if (eventType.equals(EventType.SERVICE))
             {
                 connection.getKey().writeFinalTextFrame(messageToSend.encode());
-                return;
+                continue;
             }
 
             // Get Subscription for provided event
@@ -332,7 +333,7 @@ public class EventServer
             // Check to see if we should send this event.
             if(!checkCanSendEvent(subscription, eventFilterData))
             {
-                return;
+                continue;
             }
 
             // Filter out all fields that do not match the fields requested by the client.
