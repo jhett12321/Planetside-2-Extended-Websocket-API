@@ -7,10 +7,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.util.Date;
-import java.util.Iterator;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -375,10 +372,11 @@ public class EventServer
         }
     }
 
+    // TODO This needs to be rewritten. It is hell to navigate.
     private boolean checkCanSendEvent(JsonObject subscription, JsonObject eventFilterData)
     {
         // If we are sending all events, no filtering is required.
-        if (subscription.getString("all").equals("true"))
+        if(subscription.containsKey("all") && subscription.getString("all").equals("true"))
         {
             return true;
         }
@@ -386,88 +384,98 @@ public class EventServer
         // This will be set when an event filter is not empty.
         boolean filteredEvent = false;
 
+        // These properties are used to change message behaviours outside of filtering.
+        // We do not want them while checking filters.
+        String[] nonFiltered = {"all", "useAND", "show", "hide"};
+        List<String> nonFilteredProperties = Arrays.asList(nonFiltered);
+
         for (String subscriptionProperty : subscription.fieldNames())
         {
-            if (!subscriptionProperty.equals("all") && !subscriptionProperty.equals("useAND") && !subscriptionProperty.equals("show") && !subscriptionProperty.equals("hide"))
+            if(nonFilteredProperties.contains(subscriptionProperty))
             {
-                JsonArray filterData = eventFilterData.getJsonArray(subscriptionProperty);
+                continue;
+            }
 
-                // The worlds filter is special in the fact that a world + zone can be specified.
-                // Separate logic is done to handle this behaviour.
-                if (subscriptionProperty.equals("worlds"))
-                {
-                    JsonObject subscriptionValue = subscription.getJsonObject(subscriptionProperty);
+            JsonArray filterData = eventFilterData.getJsonArray(subscriptionProperty);
 
-                    // This filter is empty.
-                    if (subscriptionValue.size() == 0)
-                    {
-                         continue;
-                    }
+            // The worlds filter is special in the fact that a world + zone can be specified.
+            // Separate logic is done to handle this behaviour.
+            if (subscriptionProperty.equals("worlds"))
+            {
+                JsonObject subscriptionValue = subscription.getJsonObject(subscriptionProperty);
 
-                    // This event has at least 1 filter.
-                    filteredEvent = true;
-
-                    // The filter does not contain any matching worlds.
-                    if (!subscriptionValue.containsKey(filterData.getString(0)))
-                    {
-                        return false;
-                    }
-
-                    JsonArray subscriptionZoneData = subscriptionValue.getJsonObject(filterData.getString(0)).getJsonArray("zones");
-                    JsonArray zoneData = eventFilterData.getJsonArray("zones");
-
-                    // If no zones have been defined, or if we contain a matching zone, go to the next filter.
-                    if (subscriptionZoneData == null || subscriptionZoneData.isEmpty() || subscriptionZoneData.contains(zoneData.getString(0)))
-                    {
-                        continue;
-                    }
-
-                    return false;
-                }
-
-                // For all other filters...
-                JsonArray subscriptionValue = subscription.getJsonArray(subscriptionProperty);
-
-                // This filter is empty. Go to the next.
+                // This filter is empty.
                 if (subscriptionValue.size() == 0)
                 {
                     continue;
                 }
 
-                // Some events specify multiple dynamic values (characters, outfits).
-                // These values are checked with AND/OR logic as specified by the client.
+                // This event has at least 1 filter.
+                filteredEvent = true;
 
-                // For AND, we immediately return false if one value does not match.
-                if (subscription.getJsonArray("useAND").contains(subscriptionProperty))
+                // The filter does not contain any matching worlds.
+                if (!subscriptionValue.containsKey(filterData.getString(0)))
                 {
-                    for (int i = 0; i < filterData.size(); i++)
-                    {
-                        if (!subscriptionValue.contains(filterData.getString(i)))
-                        {
-                            return false;
-                        }
-                    }
+                    return false;
+                }
 
+                JsonArray subscriptionZoneData = subscriptionValue.getJsonObject(filterData.getString(0)).getJsonArray("zones");
+                JsonArray zoneData = eventFilterData.getJsonArray("zones");
+
+                // If no zones have been defined, or if we contain a matching zone, go to the next filter.
+                if (subscriptionZoneData == null || subscriptionZoneData.isEmpty() || subscriptionZoneData.contains(zoneData.getString(0)))
+                {
                     continue;
                 }
 
-                // For OR, we only return false if nothing matched.
-                else
-                {
-                    boolean somethingMatched = false;
-                    for (int i = 0; i < filterData.size(); i++)
-                    {
-                        if (subscriptionValue.contains(filterData.getString(i)))
-                        {
-                            somethingMatched = true;
-                            break;
-                        }
-                    }
+                return false;
+            }
 
-                    if(!somethingMatched)
+            // For all other filters...
+            JsonArray subscriptionValue = subscription.getJsonArray(subscriptionProperty);
+
+            // This filter is empty. Go to the next.
+            if (subscriptionValue.size() == 0)
+            {
+                continue;
+            }
+
+            // This event has at least 1 filter.
+            filteredEvent = true;
+
+            // Some events specify multiple dynamic values (characters, outfits).
+            // These values are checked with AND/OR logic as specified by the client.
+
+            // For AND, we immediately return false if one value does not match.
+            if (subscription.getJsonArray("useAND").contains(subscriptionProperty))
+            {
+                for (int i = 0; i < filterData.size(); i++)
+                {
+                    if (!subscriptionValue.contains(filterData.getString(i)))
                     {
                         return false;
                     }
+                }
+
+                continue;
+            }
+
+            // For OR, we only return false if nothing matched.
+            else
+            {
+                boolean somethingMatched = false;
+                for (int i = 0; i < filterData.size(); i++)
+                {
+                    if (subscriptionValue.contains(filterData.getString(i)))
+                    {
+                        somethingMatched = true;
+                        break;
+                    }
+                }
+
+                if(!somethingMatched)
+                {
+                    return false;
                 }
             }
         }

@@ -5,7 +5,7 @@
 
   <groupId>com.blackfeatherproductions</groupId>
   <artifactId>EventTracker</artifactId>
-  <version>1.6.1</version>
+  <version>1.6.2</version>
   <name>Planetside 2 Extended Push API</name>
 
   <properties>
@@ -15,8 +15,8 @@
     <main.verticle>com.blackfeatherproductions.event_tracker.EventTracker</main.verticle>
 
     <!--Dependency versions-->
-    <vertx.version>3.0.0</vertx.version>
-    <vertx.testtools.version>2.0.3-final</vertx.testtools.version>
+    <vertx.version>3.4.2</vertx.version>
+    <vertx.testtools.version>3.4.2-final</vertx.testtools.version>
     <junit.version>4.11</junit.version>
 
     <!--Library versions-->
