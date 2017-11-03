@@ -123,22 +123,13 @@ public class StaticDataManager
         Faction.factions.put("1", Faction.VS);
         Faction.factions.put("2", Faction.NC);
         Faction.factions.put("3", Faction.TR);
-
-        //Metagame Event Types
-        MetagameEventType.metagameEventTypes.put("1", new MetagameEventType("1", "Feeling the Heat", "Capture Indar within the time limit", Zone.INDAR, "1", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("2", new MetagameEventType("2", "Cold War", "Capture Esamir within the time limit", Zone.ESAMIR, "1", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("3", new MetagameEventType("3", "Seeing Green", "Capture Amerish within the time limit", Zone.AMERISH, "1", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("4", new MetagameEventType("4", "Marsh Madness", "Capture Hossin within the time limit", Zone.HOSSIN, "1", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("51", new MetagameEventType("51", "Indar Pumpkin Hunt", "Seek and destroy pumpkins on Indar", Zone.INDAR, "5", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("52", new MetagameEventType("52", "Esamir Pumpkin Hunt", "Seek and destroy pumpkins on Esamir", Zone.ESAMIR, "5", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("53", new MetagameEventType("53", "Amerish Pumpkin Hunt", "Seek and destroy pumpkins on Amerish", Zone.AMERISH, "5", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("54", new MetagameEventType("54", "Hossin Pumpkin Hunt", "Seek and destroy pumpkins on Hossin", Zone.HOSSIN, "5", FacilityType.NONE));
-        MetagameEventType.metagameEventTypes.put("106", new MetagameEventType("106", "Conquest","Capture bases and kill enemies to earn points", Zone.INDAR, "6", FacilityType.NONE));
     }
     
     protected static void CensusInit()
     {
         //Facilities (CENSUS)
         EventTracker.instance.getQueryManager().queryFacilityStaticData();
+        //Metagame Events
+        EventTracker.instance.getQueryManager().queryMetagameEventStaticData();
     }
 }

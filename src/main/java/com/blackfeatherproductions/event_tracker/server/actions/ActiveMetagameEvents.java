@@ -50,13 +50,12 @@ public class ActiveMetagameEvents implements Action
 
                             metagameEvent.put("instance_id", metagameEventInfo.getInstanceID());
                             metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
-                            metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                             metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
-                            metagameEvent.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                            metagameEvent.put("zone_id", metagameEventInfo.getZone().getID());
                             metagameEvent.put("start_time", metagameEventInfo.getStartTime());
                             metagameEvent.put("end_time", metagameEventInfo.getEndTime());
 
-                            TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, metagameEventInfo.getType().getZone());
+                            TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world, metagameEventInfo.getZone());
                             String control_vs = String.valueOf(controlInfo.controlVS);
                             String control_nc = String.valueOf(controlInfo.controlNC);
                             String control_tr = String.valueOf(controlInfo.controlTR);
@@ -75,7 +74,7 @@ public class ActiveMetagameEvents implements Action
 
                             JsonArray facilities = new JsonArray();
 
-                            for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                            for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getZone()).getFacilities().entrySet())
                             {
                                 JsonObject facility = new JsonObject();
                                 
@@ -85,7 +84,7 @@ public class ActiveMetagameEvents implements Action
                                 facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                                 facility.put("owner", facilityInfo.getValue().getOwner().getID());
                                 facility.put("blocked", blocked);
-                                facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                                facility.put("zone_id", metagameEventInfo.getZone().getID());
 
                                 facilities.add(facility);
                             }
@@ -119,13 +118,12 @@ public class ActiveMetagameEvents implements Action
 
                         metagameEvent.put("instance_id", metagameEventInfo.getInstanceID());
                         metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
-                        metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                         metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
-                        metagameEvent.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                        metagameEvent.put("zone_id", metagameEventInfo.getZone().getID());
                         metagameEvent.put("start_time", metagameEventInfo.getStartTime());
                         metagameEvent.put("end_time", metagameEventInfo.getEndTime());
                         
-                        TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), metagameEventInfo.getType().getZone());
+                        TerritoryInfo controlInfo = TerritoryUtils.calculateTerritoryControl(world.getKey(), metagameEventInfo.getZone());
                         String control_vs = String.valueOf(controlInfo.controlVS);
                         String control_nc = String.valueOf(controlInfo.controlNC);
                         String control_tr = String.valueOf(controlInfo.controlTR);
@@ -144,14 +142,14 @@ public class ActiveMetagameEvents implements Action
 
                         JsonArray facilities = new JsonArray();
 
-                        for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                        for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(metagameEventInfo.getZone()).getFacilities().entrySet())
                         {
                             JsonObject facility = new JsonObject();
 
                             facility.put("facility_id", facilityInfo.getKey().getID());
                             facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                             facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                            facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                            facility.put("zone_id", metagameEventInfo.getZone().getID());
 
                             facilities.add(facility);
                         }

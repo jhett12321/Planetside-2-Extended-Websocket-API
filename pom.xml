@@ -15,7 +15,7 @@
     <main.verticle>com.blackfeatherproductions.event_tracker.EventTracker</main.verticle>
 
     <!--Dependency versions-->
-    <vertx.version>3.4.2</vertx.version>
+    <vertx.version>3.0.0</vertx.version>
     <vertx.testtools.version>3.4.2-final</vertx.testtools.version>
     <junit.version>4.11</junit.version>
 

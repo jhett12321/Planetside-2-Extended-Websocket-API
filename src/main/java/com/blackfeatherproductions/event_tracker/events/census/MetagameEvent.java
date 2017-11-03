@@ -28,7 +28,7 @@ import com.blackfeatherproductions.event_tracker.utils.TerritoryUtils;
         priority = EventPriority.HIGH,
         filters =
         {
-            "metagames", "metagame_types", "facility_types", "categories", "statuses", "dominations", "zones", "worlds"
+            "metagames", "metagame_types", "categories", "statuses", "dominations", "zones", "worlds"
         })
 public class MetagameEvent implements Event
 {
@@ -86,7 +86,6 @@ public class MetagameEvent implements Event
         //Raw Data - To be resolved
         String instance_id;
         String metagame_event_id;
-        String facility_type_id;
         String category_id;
         String start_time = "0";
         String end_time = "0";
@@ -94,7 +93,7 @@ public class MetagameEvent implements Event
         String status_name = null;
         String domination = "0";
 
-        Zone zone;
+        Zone zone = Zone.getZoneByID(payload.getString("zone_id"));
 
         //Raw Data - FacilityControl
         if (event_name.equals("FacilityControl"))
@@ -113,7 +112,7 @@ public class MetagameEvent implements Event
                 return;
             }
 
-            zone = Zone.getZoneByID(payload.getString("zone_id"));
+            metagame_event_id = payload.getString("metagame_event_id");
             
             //Facility Object
             Facility facility = Facility.getFacilityByID(payload.getString("facility_id"));
@@ -122,12 +121,9 @@ public class MetagameEvent implements Event
             MetagameEventInfo metagameEventInfo = null;
             for (MetagameEventInfo info : worldData.getActiveMetagameEvents().values())
             {
-                if (info.getType().getZone() == zone)
+                if(info.getType().getID().equals(metagame_event_id))
                 {
-                    if(info.getType().getFacilityType() == FacilityType.NONE || info.getType().getFacilityType() == facility.getType())
-                    {
-                        metagameEventInfo = info;
-                    }
+                    metagameEventInfo = info;
                 }
             }
 
@@ -140,7 +136,6 @@ public class MetagameEvent implements Event
             {
                 instance_id = metagameEventInfo.getInstanceID();
                 metagame_event_id = metagameEventInfo.getType().getID();
-                facility_type_id = metagameEventInfo.getType().getFacilityType().getID();
                 category_id = metagameEventInfo.getType().getCategoryID();
                 
                 start_time = metagameEventInfo.getStartTime();
@@ -165,11 +160,8 @@ public class MetagameEvent implements Event
         {
             MetagameEventType metagameEventType = MetagameEventType.getMetagameEventTypeByID(payload.getString("metagame_event_id"));
 
-            zone = metagameEventType.getZone();
-
             instance_id = payload.getString("instance_id");
             metagame_event_id = metagameEventType.getID();
-            facility_type_id = metagameEventType.getFacilityType().getID();
             category_id = metagameEventType.getCategoryID();
 
             //Alert End (138->ended, 137->canceled, 136->restarted)
@@ -208,7 +200,7 @@ public class MetagameEvent implements Event
                 }
 
                 //Create a new Metagame Event
-                worldData.addMetagameEvent(instance_id, new MetagameEventInfo(instance_id, metagameEventType, start_time, end_time));
+                worldData.addMetagameEvent(instance_id, new MetagameEventInfo(instance_id, zone, metagameEventType, start_time, end_time));
             }
         }
 
@@ -237,7 +229,6 @@ public class MetagameEvent implements Event
             eventData.put("start_time", start_time);
             eventData.put("end_time", end_time);
             eventData.put("timestamp", timestamp);
-            eventData.put("facility_type_id", facility_type_id);
             eventData.put("category_id", category_id);
             eventData.put("status", status);
             eventData.put("status_name", status_name);
@@ -254,7 +245,6 @@ public class MetagameEvent implements Event
             //Filter Data		
             filterData.put("metagames", new JsonArray().add(instance_id));
             filterData.put("metagame_event_types", new JsonArray().add(metagame_event_id));
-            filterData.put("facility_types", new JsonArray().add(facility_type_id));
             filterData.put("categories", new JsonArray().add(category_id));
             filterData.put("statuses", new JsonArray().add(status));
             filterData.put("dominations", new JsonArray().add(domination));

@@ -12,6 +12,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.PriorityBlockingQueue;
 
+import com.blackfeatherproductions.event_tracker.queries.static_data.MetagameEventTypeQuery;
 import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
@@ -140,6 +141,14 @@ public class QueryManager
             //Facility/Regions
             queryCensus("map_region?c:limit=2000&c:join=facility_link^on:facility_id^to:facility_id_b^inject_at:connecting_links.inbound^list:1,facility_link^on:facility_id^to:facility_id_a^inject_at:connecting_links.outbound^list:1",
                     QueryPriority.HIGHEST, environment, false, false, new StaticFacilityListQuery());
+        }
+    }
+
+    public void queryMetagameEventStaticData()
+    {
+        for(Environment environment : Environment.getValidEnvironments())
+        {
+            queryCensus("metagame_event?c:limit=1000&c:lang=en", QueryPriority.HIGHEST, environment, false, false, new MetagameEventTypeQuery());
         }
     }
 

@@ -1,5 +1,6 @@
 package com.blackfeatherproductions.event_tracker.queries.static_data;
 
+import com.blackfeatherproductions.event_tracker.events.Event;
 import com.blackfeatherproductions.event_tracker.queries.*;
 
 import com.blackfeatherproductions.event_tracker.utils.CensusUtils;
@@ -29,20 +30,21 @@ public class StaticFacilityListQuery implements Query
             JsonObject map_region = map_region_list.getJsonObject(i);
             
             String facility_id = map_region.getString("facility_id");
+            String facility_name = map_region.getString("facility_name");
+            String facility_type_id = map_region.getString("facility_type_id");
 
             if(!CensusUtils.isValidFacility(facility_id))
             {
+                EventTracker.instance.getLogger().info("Ignoring facility ID " + facility_id + " (" + facility_name + ") as it is marked invalid!");
                 continue;
             }
-
-            String facility_name = map_region.getString("facility_name");
-            String facility_type_id = map_region.getString("facility_type_id");
 
             Facility facility = Facility.getFacilityByID(facility_id);
             FacilityType facility_type = FacilityType.getFacilityTypeByID(facility_type_id);
             
             if(facility == null)
             {
+                EventTracker.instance.getLogger().info("Registering facility ID " + facility_id + " (" + facility_name + ")");
                 Facility.facilities.put(facility_id, new Facility(facility_id, facility_name, facility_type));
             }
         }

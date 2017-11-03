@@ -47,19 +47,18 @@ public class ActiveAlerts implements Action
                         metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
                         metagameEvent.put("start_time", metagameEventInfo.getStartTime());
                         metagameEvent.put("end_time", metagameEventInfo.getEndTime());
-                        metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                         metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
 
                         JsonObject facilities = new JsonObject();
 
-                        for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                        for (Entry<Facility, FacilityInfo> facilityInfo : dynamicDataManager.getWorldInfo(world).getZoneInfo(metagameEventInfo.getZone()).getFacilities().entrySet())
                         {
                             JsonObject facility = new JsonObject();
 
                             facility.put("facility_id", facilityInfo.getKey().getID());
                             facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                             facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                            facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                            facility.put("zone_id", metagameEventInfo.getZone().getID());
 
                             facilities.put(facilityInfo.getKey().getID(), facility);
                         }
@@ -90,19 +89,18 @@ public class ActiveAlerts implements Action
                     metagameEvent.put("metagame_event_type_id", metagameEventInfo.getType().getID());
                     metagameEvent.put("start_time", metagameEventInfo.getStartTime());
                     metagameEvent.put("end_time", metagameEventInfo.getEndTime());
-                    metagameEvent.put("facility_type_id", metagameEventInfo.getType().getFacilityType().getID());
                     metagameEvent.put("category_id", metagameEventInfo.getType().getCategoryID());
 
                     JsonObject facilities = new JsonObject();
 
-                    for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(metagameEventInfo.getType().getZone()).getFacilities().entrySet())
+                    for (Entry<Facility, FacilityInfo> facilityInfo : world.getValue().getZoneInfo(metagameEventInfo.getZone()).getFacilities().entrySet())
                     {
                         JsonObject facility = new JsonObject();
 
                         facility.put("facility_id", facilityInfo.getKey().getID());
                         facility.put("facility_type_id", facilityInfo.getKey().getType().getID());
                         facility.put("owner", facilityInfo.getValue().getOwner().getID());
-                        facility.put("zone_id", metagameEventInfo.getType().getZone().getID());
+                        facility.put("zone_id", metagameEventInfo.getZone().getID());
 
                         facilities.put(facilityInfo.getKey().getID(), facility);
                     }
